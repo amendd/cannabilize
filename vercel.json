@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/admin/email/reminders?type=24H",
+      "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/admin/email/reminders?type=2H",
+      "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/admin/email/reminders?type=NOW",
+      "schedule": "*/15 * * * *"
+    }
+  ]
+}

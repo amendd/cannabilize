@@ -1,0 +1,53 @@
+========================================
+   SCHEMA PRISMA CORRIGIDO!
+========================================
+
+PROBLEMA RESOLVIDO:
+- Enums convertidos para String (SQLite nao suporta enums)
+- Relacoes faltantes adicionadas
+- Tipos incompatíveis corrigidos
+- Provider alterado para SQLite
+
+========================================
+   O QUE FOI CORRIGIDO
+========================================
+
+1. Provider: postgresql -> sqlite
+2. Enums removidos:
+   - UserRole -> String
+   - ConsultationStatus -> String
+   - PrescriptionStatus -> String
+   - AnvisaStatus -> String
+   - ImportStatus -> String
+   - PaymentStatus -> String
+
+3. Tipos corrigidos:
+   - Decimal -> Float
+   - String[] (array) -> String
+   - @db.Text removido
+
+4. Relacoes adicionadas:
+   - User.doctors (para Doctor.user)
+   - Consultation.testimonials (para Testimonial.consultation)
+   - Event.images (para EventImage.event)
+
+========================================
+   COMO EXECUTAR AGORA
+========================================
+
+OPCAO 1: Script Completo (RECOMENDADO)
+Duplo clique em: INICIAR_SITE.bat
+
+OPCAO 2: Corrigir e Validar Primeiro
+1. Duplo clique em: CORRIGIR_SCHEMA.bat
+2. Depois execute: INICIAR_SITE.bat
+
+========================================
+   VALIDACAO
+========================================
+
+O schema agora esta valido para SQLite!
+
+Execute: INICIAR_SITE.bat
+
+========================================

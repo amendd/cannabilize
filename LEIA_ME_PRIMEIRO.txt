@@ -1,0 +1,38 @@
+========================================
+  COMO EXECUTAR O SITE
+========================================
+
+PASSO A PASSO SIMPLES:
+
+1. Duplo clique em: INSTALAR_CORRETO.bat
+
+2. Aguarde o script instalar tudo (2-5 minutos)
+
+3. Quando aparecer "Local: http://localhost:3000"
+   ENTAO abra o navegador em: http://localhost:3000
+
+========================================
+IMPORTANTE:
+========================================
+
+- Deixe o terminal ABERTO enquanto o servidor estiver rodando
+- O servidor PRECISA estar rodando para acessar o site
+- So acesse http://localhost:3000 DEPOIS que aparecer "Ready"
+
+========================================
+SE DER ERRO:
+========================================
+
+- Verifique se Node.js esta instalado
+- Verifique sua conexao com internet
+- Tente executar o script novamente
+
+========================================
+ARQUIVOS DISPONIVEIS:
+========================================
+
+- INSTALAR_CORRETO.bat  <- USE ESTE (instalacao limpa)
+- EXECUTAR_AQUI.bat     <- Use se ja instalou antes
+- DIAGNOSTICO.bat       <- Para verificar problemas
+
+========================================

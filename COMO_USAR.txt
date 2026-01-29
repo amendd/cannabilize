@@ -1,0 +1,82 @@
+╔══════════════════════════════════════════════════════════╗
+║     CANNALIZE - PROJETO CENTRALIZADO                      ║
+╚══════════════════════════════════════════════════════════╝
+
+✅ TODOS OS ARQUIVOS ESTÃO AGORA EM UMA ÚNICA PASTA:
+   C:\Users\Gabriel\clickcannabis-replica
+
+═══════════════════════════════════════════════════════════
+🚀 COMO EXECUTAR (MUITO SIMPLES):
+═══════════════════════════════════════════════════════════
+
+1. Vá para a pasta:
+   C:\Users\Gabriel\clickcannabis-replica
+
+2. Duplo clique em:
+   EXECUTAR.bat
+
+3. Aguarde aparecer:
+   "Local: http://localhost:3000"
+
+4. Abra o navegador em:
+   http://localhost:3000
+
+═══════════════════════════════════════════════════════════
+📁 ESTRUTURA ORGANIZADA:
+═══════════════════════════════════════════════════════════
+
+clickcannabis-replica/
+├── EXECUTAR.bat          ← USE ESTE (arquivo principal)
+├── app/                  (aplicação)
+├── components/           (componentes React)
+├── lib/                  (bibliotecas)
+├── prisma/               (banco de dados)
+├── scripts/              (outros scripts .bat)
+└── docs/                 (documentação)
+
+═══════════════════════════════════════════════════════════
+🔑 CREDENCIAIS (após primeira execução):
+═══════════════════════════════════════════════════════════
+
+Admin:    admin@clickcannabis.com / admin123
+Médico:   doctor@clickcannabis.com / doctor123
+
+═══════════════════════════════════════════════════════════
+📍 URLs DO SITE:
+═══════════════════════════════════════════════════════════
+
+- Homepage:     http://localhost:3000
+- Agendamento:  http://localhost:3000/agendamento
+- Login:        http://localhost:3000/login
+- Admin:        http://localhost:3000/admin
+- Paciente:     http://localhost:3000/paciente
+- Sobre Nós:    http://localhost:3000/sobre-nos
+- Blog:         http://localhost:3000/blog
+- Galeria:      http://localhost:3000/galeria
+
+═══════════════════════════════════════════════════════════
+⚠️ IMPORTANTE:
+═══════════════════════════════════════════════════════════
+
+- Deixe o terminal ABERTO enquanto o servidor estiver rodando
+- O servidor PRECISA estar rodando para acessar o site
+- Só acesse http://localhost:3000 DEPOIS que aparecer "Ready"
+
+═══════════════════════════════════════════════════════════
+🛠️ REQUISITOS:
+═══════════════════════════════════════════════════════════
+
+- Node.js 18 ou superior
+- Internet (para instalar dependências na primeira vez)
+
+═══════════════════════════════════════════════════════════
+❌ SE DER ERRO:
+═══════════════════════════════════════════════════════════
+
+1. Verifique se Node.js está instalado
+2. Verifique sua conexão com internet
+3. Execute EXECUTAR.bat novamente
+
+═══════════════════════════════════════════════════════════
+
+🎉 TUDO CENTRALIZADO E ORGANIZADO!

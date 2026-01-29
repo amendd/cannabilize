@@ -1,0 +1,66 @@
+========================================
+   COMO INICIAR O SITE
+========================================
+
+PROBLEMA: Nao encontro o arquivo RESOLVER_TUDO.bat
+
+SOLUCAO: Use um destes arquivos (sao equivalentes):
+
+1. INICIAR_SITE.bat          <- NOVO! Use este
+2. RESOLVER_TUDO.bat         <- Se encontrar
+3. EXECUTAR_FIXO.bat         <- Alternativa
+
+========================================
+   PASSO A PASSO
+========================================
+
+1. Abra a pasta:
+   C:\Users\Gabriel\clickcannabis-replica
+
+2. Procure por um destes arquivos:
+   - INICIAR_SITE.bat
+   - RESOLVER_TUDO.bat
+   - EXECUTAR_FIXO.bat
+
+3. Duplo clique no arquivo
+
+4. Aguarde aparecer: "Local: http://localhost:3000"
+
+5. Abra o navegador em: http://localhost:3000
+
+========================================
+   SE NAO ENCONTRAR OS ARQUIVOS
+========================================
+
+OPCAO 1: Pelo PowerShell
+1. Abra PowerShell
+2. Digite:
+   cd C:\Users\Gabriel\clickcannabis-replica
+   dir *.bat
+3. Execute o que aparecer
+
+OPCAO 2: Buscar no Windows
+1. Pressione Windows + S
+2. Digite: INICIAR_SITE
+3. Clique no resultado
+
+OPCAO 3: Atualizar pasta
+1. No Explorador de Arquivos, pressione F5
+2. Ou feche e abra a pasta novamente
+
+========================================
+   ARQUIVOS DISPONIVEIS
+========================================
+
+INICIAR_SITE.bat          <- USE ESTE!
+RESOLVER_TUDO.bat
+EXECUTAR_FIXO.bat
+LIBERAR_PORTA_3000.bat
+EXECUTAR_OUTRA_PORTA.bat
+EXECUTAR.bat
+EXECUTAR_DEBUG.bat
+VERIFICAR_PROBLEMAS.bat
+
+Todos fazem a mesma coisa: iniciar o servidor!
+
+========================================

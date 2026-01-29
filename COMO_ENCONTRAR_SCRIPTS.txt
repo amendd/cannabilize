@@ -1,0 +1,71 @@
+========================================
+   COMO ENCONTRAR OS SCRIPTS .BAT
+========================================
+
+PROBLEMA: Nao vejo os arquivos .bat na pasta
+
+SOLUCOES:
+
+1. ATUALIZAR A PASTA
+   - Pressione F5 no Explorador de Arquivos
+   - Ou feche e abra a pasta novamente
+
+2. VERIFICAR SE ESTA NA PASTA CERTA
+   - A pasta correta e: C:\Users\Gabriel\clickcannabis-replica
+   - Nao e: C:\Users\Gabriel\OneDrive\Documentos\click
+   - Nao e: C:\Users\Gabriel\OneDrive\Documentos\clickcannabis-replica
+
+3. MOSTRAR ARQUIVOS OCULTOS
+   - No Explorador de Arquivos, clique em "Exibir"
+   - Marque "Itens ocultos" (se nao estiver marcado)
+
+4. ORDENAR POR NOME
+   - Clique na coluna "Nome" para ordenar
+   - Os arquivos .bat comecam com letras maiusculas
+
+========================================
+   ARQUIVOS .BAT DISPONIVEIS
+========================================
+
+RESOLVER_TUDO.bat          <- USE ESTE PRIMEIRO!
+EXECUTAR_FIXO.bat          <- Alternativa
+LIBERAR_PORTA_3000.bat     <- Liberar porta manualmente
+EXECUTAR_OUTRA_PORTA.bat   <- Usar porta 3001
+EXECUTAR.bat               <- Versao normal
+EXECUTAR_DEBUG.bat         <- Modo debug
+
+========================================
+   COMO EXECUTAR
+========================================
+
+OPCAO 1: Pelo Explorador de Arquivos
+1. Abra: C:\Users\Gabriel\clickcannabis-replica
+2. Procure por: RESOLVER_TUDO.bat
+3. Duplo clique no arquivo
+
+OPCAO 2: Pelo CMD/PowerShell
+1. Abra CMD ou PowerShell
+2. Digite:
+   cd C:\Users\Gabriel\clickcannabis-replica
+   dir *.bat
+3. Execute:
+   RESOLVER_TUDO.bat
+
+OPCAO 3: Buscar no Windows
+1. Pressione Windows + S
+2. Digite: RESOLVER_TUDO
+3. Clique no resultado
+
+========================================
+   SE AINDA NAO ENCONTRAR
+========================================
+
+Execute pelo PowerShell:
+
+cd C:\Users\Gabriel\clickcannabis-replica
+.\RESOLVER_TUDO.bat
+
+Ou use o EXECUTAR_FIXO.bat que ja existe:
+
+cd C:\Users\Gabriel\clickcannabis-replica
+.\EXECUTAR_FIXO.bat
