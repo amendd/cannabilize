@@ -2,16 +2,17 @@ import { InputHTMLAttributes, forwardRef, useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
+  helperText?: string;
   validateOnChange?: boolean;
   isValid?: boolean;
   showValidationIcon?: boolean;
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, className, validateOnChange, isValid, showValidationIcon, ...props }, ref) => {
+  ({ label, error, helperText, className, validateOnChange, isValid, showValidationIcon, ...props }, ref) => {
     const [touched, setTouched] = useState(false);
     const [hasValue, setHasValue] = useState(false);
 
@@ -48,7 +49,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           <input
             ref={ref}
             className={cn(
-              'w-full px-4 py-2 border rounded-lg transition-all duration-200',
+              'w-full px-4 py-2 border rounded-lg transition-all duration-200 text-gray-900',
               'focus:ring-2 focus:ring-primary focus:border-transparent',
               'disabled:bg-gray-100 disabled:cursor-not-allowed',
               showError 
@@ -79,6 +80,9 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             <AlertCircle className="h-4 w-4" />
             {error}
           </p>
+        )}
+        {helperText && !showError && (
+          <p className="text-gray-500 text-sm mt-1">{helperText}</p>
         )}
       </div>
     );

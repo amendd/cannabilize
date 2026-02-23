@@ -166,6 +166,14 @@ export async function approveAndGeneratePatientCard(
   }
 }
 
+/** Gera ou atualiza a solicitação de carteirinha (compatível com a API). */
+export async function generateOrUpdatePatientCard(
+  patientId: string,
+  prescriptionId: string
+): Promise<any> {
+  return createPatientCardRequest(patientId, prescriptionId);
+}
+
 /**
  * Busca a carteirinha do paciente
  */
@@ -183,6 +191,7 @@ export async function getPatientCard(patientId: string) {
             phone: true,
             birthDate: true,
             address: true,
+            image: true,
           },
         },
         activePrescription: {
