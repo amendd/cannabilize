@@ -9,6 +9,7 @@ import { Camera, Save, AlertCircle, Download, FileJson, ClipboardList } from 'lu
 import Breadcrumbs from '@/components/ui/Breadcrumbs';
 import { SkeletonPatientList } from '@/components/ui/Skeleton';
 import { getCurrentTreatmentPhase, TREATMENT_PHASES } from '@/lib/patient-treatment-status';
+import { formatDisplayName } from '@/lib/format-display-name';
 
 interface MeResponse {
   user: {
@@ -293,7 +294,7 @@ export default function PacientePerfilPage() {
           <div className="flex items-center gap-6">
             <Avatar
               src={previewImage || undefined}
-              name={me.name}
+              name={formatDisplayName(me.name)}
               size="xl"
               className="border-4 border-emerald-500 shadow-lg"
             />
@@ -335,7 +336,7 @@ export default function PacientePerfilPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
               <label className="block text-gray-500 mb-1">Nome</label>
-              <p className="font-medium text-gray-900 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">{me.name}</p>
+              <p className="font-medium text-gray-900 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">{formatDisplayName(me.name)}</p>
             </div>
             {me.cpf && (
               <div>

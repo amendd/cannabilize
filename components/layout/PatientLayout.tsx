@@ -26,6 +26,7 @@ import NotificationsDropdown from '@/components/notifications/NotificationsDropd
 import { useLogoUrl } from '@/lib/public-config-context';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { formatDisplayName } from '@/lib/format-display-name';
 
 interface PatientLayoutProps {
   children: React.ReactNode;
@@ -212,10 +213,10 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
                   className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-purple-50 transition-colors"
                 >
                   <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center text-white text-sm font-semibold">
-                    {session?.user?.name?.charAt(0).toUpperCase() || 'P'}
+                    {formatDisplayName(session?.user?.name).charAt(0) || 'P'}
                   </div>
                   <span className="hidden sm:block text-sm font-medium text-gray-700">
-                    {session?.user?.name?.split(' ')[0] || 'Paciente'}
+                    {formatDisplayName(session?.user?.name).split(' ')[0] || 'Paciente'}
                   </span>
                 </button>
 
@@ -230,7 +231,7 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
                     >
                       <div className="px-4 py-2 border-b border-gray-200">
                         <p className="text-sm font-medium text-gray-900">
-                          {session?.user?.name || 'Paciente'}
+                          {formatDisplayName(session?.user?.name) || 'Paciente'}
                         </p>
                         <p className="text-xs text-gray-500 truncate">
                           {session?.user?.email}

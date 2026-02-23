@@ -10,6 +10,7 @@ import {
   type ConsultationForPhase,
   type NextStepAction,
 } from '@/lib/patient-treatment-status';
+import { formatDisplayName } from '@/lib/format-display-name';
 
 interface TreatmentStatusHeroProps {
   consultations: ConsultationForPhase[];
@@ -29,6 +30,7 @@ export default function TreatmentStatusHero({
 }: TreatmentStatusHeroProps) {
   const currentPhase = getCurrentTreatmentPhase(consultations, nextConsultation);
   const steps = getTreatmentPhaseSteps(currentPhase);
+  const displayFirstName = formatDisplayName(patientName).split(' ')[0];
   const primaryNextStep = getPrimaryNextStep(
     consultations,
     nextConsultation,
@@ -52,7 +54,7 @@ export default function TreatmentStatusHero({
       <div className="relative px-6 py-8 sm:px-8 sm:py-10">
         <div className="relative z-10">
           <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">
-            {patientName ? `Olá, ${patientName.split(' ')[0]}` : 'Seu tratamento'}
+            {displayFirstName ? `Olá, ${displayFirstName}` : 'Seu tratamento'}
           </h2>
           <p className="text-purple-100 text-sm sm:text-base mb-6">
             Status do seu acompanhamento médico
