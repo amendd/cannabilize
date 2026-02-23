@@ -2,38 +2,41 @@
 
 import { SessionProvider } from 'next-auth/react';
 import RecaptchaProvider from '@/components/security/RecaptchaProvider';
+import { AgendarModalProvider } from '@/components/agendar/AgendarModalContext';
+import { PublicConfigProvider } from '@/lib/public-config-context';
 import { useEffect, useState } from 'react';
 
+const ENV_RECAPTCHA_KEY = typeof process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY === 'string'
+  ? process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY
+  : '';
+
 export function Providers({ children }: { children: React.ReactNode }) {
-  const [recaptchaSiteKey, setRecaptchaSiteKey] = useState<string>('');
+  // Usar env na hora para não atrasar hidratação; só buscar da API se env estiver vazio
+  const [recaptchaSiteKey, setRecaptchaSiteKey] = useState<string>(ENV_RECAPTCHA_KEY);
 
   useEffect(() => {
-    // Buscar site key do servidor (endpoint público; não exige login)
+    if (ENV_RECAPTCHA_KEY) return;
     fetch('/api/security/recaptcha')
       .then((res) => res.json())
       .then((data) => {
-        if (data.enabled && data.siteKey) {
-          setRecaptchaSiteKey(data.siteKey);
-        } else {
-          // Fallback para variável de ambiente
-          setRecaptchaSiteKey(process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '');
-        }
+        if (data.enabled && data.siteKey) setRecaptchaSiteKey(data.siteKey);
       })
-      .catch(() => {
-        // Fallback para variável de ambiente em caso de erro
-        setRecaptchaSiteKey(process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '');
-      });
+      .catch(() => {});
   }, []);
 
   return (
-    <SessionProvider>
-      {recaptchaSiteKey ? (
-        <RecaptchaProvider siteKey={recaptchaSiteKey}>
-          {children}
-        </RecaptchaProvider>
-      ) : (
-        children
-      )}
+    <SessionProvider refetchOnWindowFocus refetchInterval={0}>
+      <PublicConfigProvider>
+        <AgendarModalProvider>
+          {recaptchaSiteKey ? (
+          <RecaptchaProvider siteKey={recaptchaSiteKey}>
+            {children}
+          </RecaptchaProvider>
+        ) : (
+          children
+        )}
+        </AgendarModalProvider>
+      </PublicConfigProvider>
     </SessionProvider>
   );
 }
