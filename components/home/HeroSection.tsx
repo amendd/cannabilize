@@ -2,9 +2,41 @@
 
 import Link from 'next/link';
 import { ArrowRight, Play } from 'lucide-react';
+import AgendarTrigger from '@/components/agendar/AgendarTrigger';
 import OptimizedImage from '@/components/ui/OptimizedImage';
+import type { LandingConfigPublic } from '@/lib/landing-config';
 
-export default function HeroSection() {
+const DEFAULT_HERO = {
+  headline: 'Tratamento com Cannabis Medicinal de forma legal, acessível e acompanhada por médicos especialistas',
+  subheadline: 'Consulta online por apenas R$50 com suporte completo até a chegada do medicamento.',
+  imageUrl: '/images/hero/doctor-consultation.jpg',
+  ctaText: 'Ver se o tratamento é indicado para mim',
+};
+const DEFAULT_STATS = { rating: '4,9', patients: '+90 mil' };
+
+/** CTAs que indicam início definitivo — substituir por copy de avaliação (CRO). */
+const LEGACY_CTA_TEXTS = [
+  'Quero iniciar meu tratamento',
+  'Iniciar tratamento',
+  'Iniciar tratamento agora',
+  'Começar agora',
+  'Iniciar jornada',
+];
+const CTA_AVALIACAO = 'Ver se o tratamento é indicado para mim';
+
+interface HeroSectionProps {
+  config?: LandingConfigPublic | null;
+}
+
+export default function HeroSection({ config }: HeroSectionProps) {
+  const hero = config?.hero ?? DEFAULT_HERO;
+  const rawCta = hero.ctaText ?? DEFAULT_HERO.ctaText;
+  const ctaText = LEGACY_CTA_TEXTS.some((t) => rawCta.trim().toLowerCase() === t.toLowerCase())
+    ? CTA_AVALIACAO
+    : rawCta;
+  const rating = config?.stats?.rating ?? DEFAULT_STATS.rating;
+  const patients = config?.stats?.patients ?? DEFAULT_STATS.patients;
+
   return (
     <section className="relative bg-gradient-to-br from-green-50 via-white to-green-50 py-16 lg:py-24 overflow-hidden">
       {/* Background decorative elements */}
@@ -15,40 +47,65 @@ export default function HeroSection() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          {/* Text Content */}
-          <div className="text-center lg:text-left space-y-6">
-            <div className="inline-block px-4 py-2 bg-green-100 text-green-800 rounded-full text-sm font-semibold mb-4">
+          {/* Text Content — em mobile fica abaixo da imagem (order-2) para nunca sobrepor */}
+          <div className="order-2 lg:order-1 text-center lg:text-left space-y-6">
+            <div className="inline-block px-4 py-2 bg-green-100 text-green-800 rounded-full text-sm font-semibold mb-5">
               🌿 Cannabis Medicinal com Especialistas
             </div>
             
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
-              Médicos prescritores de{' '}
-              <span className="text-green-600">Cannabis Medicinal</span>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight tracking-tight">
+              {hero.headline}
             </h1>
             
-            <p className="text-xl md:text-2xl text-gray-600 leading-relaxed">
-              Consultas online com especialistas por apenas{' '}
-              <span className="font-bold text-green-600 text-3xl">R$50</span>
+            <p className="text-xl md:text-2xl text-gray-500 leading-relaxed">
+              {hero.subheadline}
+            </p>
+            <p className="text-base md:text-lg text-gray-600 leading-relaxed">
+              Indicado para pacientes com ansiedade, dor crônica, insônia e outras condições tratáveis com acompanhamento médico.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-4">
-              <Link
-                href="/agendamento"
-                className="group bg-green-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:bg-green-700 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-              >
-                Iniciar jornada
-                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <Link
-                href="#click-process"
-                className="border-2 border-green-600 text-green-600 px-8 py-4 rounded-xl text-lg font-semibold hover:bg-green-600 hover:text-white transition-all duration-300 shadow-md hover:shadow-lg"
-              >
-                Entenda como funciona
-              </Link>
+            {/* Micro bloco institucional — autoridade e segurança regulatória */}
+            <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-600">
+              <span className="flex items-center gap-1.5">
+                <span className="text-green-600 font-medium">✔</span> Médicos especialistas em cannabis medicinal
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="text-green-600 font-medium">✔</span> Atendimento em todo o Brasil
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="text-green-600 font-medium">✔</span> Processo dentro das normas da Anvisa
+              </span>
             </div>
 
-            {/* Trust indicators */}
+            <p className="text-sm text-green-700 font-medium">
+              Etapa 1 de 3 — Avaliação inicial
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start items-center sm:items-start pt-1">
+              <AgendarTrigger
+                className="group w-full sm:w-auto bg-green-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:bg-green-700 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+              >
+                {ctaText}
+                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+              </AgendarTrigger>
+              <Link
+                href="#click-process"
+                className="text-green-600 hover:text-green-700 font-medium underline underline-offset-2 transition"
+              >
+                Como funciona
+              </Link>
+            </div>
+            <div className="text-sm text-gray-500 space-y-1 pt-1">
+              <p className="flex items-center gap-2">✓ Conversa inicial sem compromisso</p>
+              <p className="flex items-center gap-2">✓ Atendimento humano especializado</p>
+              <p className="flex items-center gap-2">✓ Tire dúvidas antes de decidir</p>
+            </div>
+
+            {/* Mini prova social no topo */}
             <div className="flex flex-wrap items-center gap-6 justify-center lg:justify-start pt-6">
+              <div className="flex items-center gap-2">
+                <span className="text-yellow-500 text-lg">⭐</span>
+                <span className="text-sm text-gray-600 font-medium"><strong className="text-gray-900">{rating}</strong>/5 no Google</span>
+              </div>
               <div className="flex items-center gap-2">
                 <div className="flex -space-x-2">
                   <div className="w-10 h-10 rounded-full bg-green-200 border-2 border-white"></div>
@@ -58,17 +115,16 @@ export default function HeroSection() {
                     +
                   </div>
                 </div>
-                <span className="text-sm text-gray-600 font-medium">+90.000 pacientes atendidos</span>
+                <span className="text-sm text-gray-600 font-medium"><strong className="text-gray-900">{patients}</strong> pacientes</span>
               </div>
             </div>
           </div>
 
-          {/* Image Section */}
-          <div className="relative">
+          {/* Image Section — em mobile aparece primeiro (order-1); nunca texto sobre a imagem */}
+          <div className="relative order-1 lg:order-2">
             <div className="relative h-[400px] lg:h-[500px] rounded-2xl overflow-hidden shadow-2xl">
-              {/* Imagem real - se não existir, mostra gradiente como fallback */}
               <OptimizedImage
-                src="/images/hero/doctor-consultation.jpg"
+                src={hero.imageUrl || '/images/hero/doctor-consultation.jpg'}
                 alt="Médico especialista em cannabis medicinal realizando consulta online com paciente via videoconferência"
                 width={800}
                 height={600}
@@ -76,38 +132,35 @@ export default function HeroSection() {
                 fallback="/images/hero/placeholder.jpg"
                 className="object-cover w-full h-full"
               />
-              
-              {/* Overlay sutil para melhorar legibilidade se necessário */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent pointer-events-none"></div>
-              
-              {/* Content overlay com estatísticas */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center p-8 pointer-events-none">
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 shadow-2xl">
-                  <div className="text-center">
-                    <div className="text-6xl md:text-7xl font-bold mb-4 bg-gradient-to-r from-white to-green-100 bg-clip-text text-transparent">
-                      +90.000
-                    </div>
-                    <div className="text-2xl md:text-3xl font-semibold mb-2 text-white">Atendimentos</div>
-                    <div className="text-lg opacity-90 text-white">Realizados com sucesso</div>
-                  </div>
+
+              {/* Faixa inferior: estatística sem cobrir a imagem */}
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent pt-12 pb-4 px-4 pointer-events-none">
+                <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1 text-center">
+                  <span className="text-2xl md:text-3xl font-bold text-white drop-shadow-md">+90.000</span>
+                  <span className="text-white/95 text-sm md:text-base font-medium drop-shadow-md">Atendimentos realizados com sucesso</span>
                 </div>
               </div>
 
-              {/* Decorative elements */}
-              <div className="absolute top-4 right-4 w-16 h-16 bg-white/20 rounded-full backdrop-blur-sm pointer-events-none"></div>
-              <div className="absolute bottom-4 left-4 w-12 h-12 bg-white/20 rounded-full backdrop-blur-sm pointer-events-none"></div>
-            </div>
-
-            {/* Floating badge */}
-            <div className="absolute -bottom-6 -left-6 bg-white rounded-xl shadow-xl p-4 border-2 border-green-200 hidden lg:block">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                  <Play className="text-green-600" size={20} />
+              {/* Badge compacto no canto: Consulta Online — não cobre o centro da imagem */}
+              <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg px-3 py-2 border border-green-100 hidden sm:flex items-center gap-2 pointer-events-none">
+                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Play className="text-green-600" size={14} />
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-gray-900">Consulta Online</div>
-                  <div className="text-xs text-gray-600">24h por dia</div>
+                  <div className="text-xs font-semibold text-gray-900 leading-tight">Consulta Online</div>
+                  <div className="text-[10px] text-gray-600 leading-tight">24h por dia</div>
                 </div>
+              </div>
+            </div>
+
+            {/* Badge "Consulta Online" em mobile (abaixo da imagem, para não tapar) */}
+            <div className="sm:hidden mt-4 flex items-center justify-center gap-3 bg-white rounded-xl shadow-lg p-3 border border-green-100">
+              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                <Play className="text-green-600" size={18} />
+              </div>
+              <div>
+                <div className="text-sm font-semibold text-gray-900">Consulta Online</div>
+                <div className="text-xs text-gray-600">24h por dia</div>
               </div>
             </div>
           </div>

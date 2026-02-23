@@ -1,0 +1,19 @@
+---
+description: Fazer deploy após alterações no código
+alwaysApply: true
+---
+
+# Deploy após alterações
+
+Sempre que alterar código no projeto (páginas, componentes, API, config), ao finalizar as mudanças:
+
+1. **Commit e push** das alterações:
+   - `git add` nos arquivos modificados
+   - `git commit` com mensagem clara
+   - `git push` para o remoto (origin)
+
+2. **Efeito do push:**
+   - Se o projeto estiver conectado à **Vercel**, o push dispara o deploy automático.
+   - Se o deploy for em **VPS**, avisar o usuário para rodar na VPS: `git pull`, `npm run build` e reiniciar o app (ex.: `pm2 restart`).
+
+3. **Não pule o deploy:** não encerre a tarefa só com "alterações feitas"; inclua o passo de commit + push (e, se aplicável, o lembrete para a VPS).

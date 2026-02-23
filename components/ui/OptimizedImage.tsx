@@ -43,11 +43,14 @@ export default function OptimizedImage({
     );
   }
 
+  // Imagens locais (/images/...): sem otimização para evitar 400 quando extensão não bate com o conteúdo (ex.: PNG salvo como .jpg)
+  const isLocalPath = imgSrc.startsWith('/');
   const commonProps = {
     src: imgSrc,
     alt,
     priority,
     className,
+    unoptimized: isLocalPath,
     onError: () => {
       if (imgSrc !== fallback) {
         setImgSrc(fallback);
