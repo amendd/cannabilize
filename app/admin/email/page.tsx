@@ -573,6 +573,11 @@ export default function EmailConfigPage() {
                 </div>
 
                 <div className="space-y-4">
+                  {/* Dica: domínio próprio */}
+                  <div className="rounded-lg bg-primary/5 border border-primary/20 p-3 text-sm text-gray-700">
+                    <strong>Remetente com seu domínio:</strong> use <strong>Email Remetente</strong> como <code className="bg-white px-1 rounded">noreply@seudominio.com.br</code>. Com Resend, preencha também <strong>Domínio Verificado</strong> (domínio já verificado no Resend + DNS). Com SMTP, use um servidor que já envie por esse domínio (ex.: Google Workspace). Detalhes em <code className="bg-white px-1 rounded">ENVIO_EMAIL_DOMINIO_PROPRIO.md</code>.
+                  </div>
+
                   {/* Campos comuns */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Input
@@ -580,7 +585,7 @@ export default function EmailConfigPage() {
                       type="email"
                       value={config.fromEmail || ''}
                       onChange={(e) => updateConfig(config.provider, { fromEmail: e.target.value })}
-                      placeholder="noreply@exemplo.com"
+                      placeholder="noreply@seudominio.com.br"
                     />
                     <Input
                       label="Nome Remetente"
@@ -614,8 +619,9 @@ export default function EmailConfigPage() {
                         type="text"
                         value={config.domain || ''}
                         onChange={(e) => updateConfig(config.provider, { domain: e.target.value })}
-                        placeholder="exemplo.com"
+                        placeholder="cannabilize.com.br"
                       />
+                      <p className="text-xs text-gray-500 -mt-2">Obrigatório para enviar como @seudominio. Sem isso, o Resend usa domínio de teste.</p>
                     </>
                   )}
 
