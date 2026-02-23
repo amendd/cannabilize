@@ -2,6 +2,8 @@ import { prisma } from '@/lib/prisma';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { sendAccountSetupEmail } from '@/lib/email';
+import { sendWhatsAppMessage } from '@/lib/whatsapp';
+import { getAccountSetupMessage } from '@/lib/whatsapp-templates';
 
 /**
  * Gera um token seguro para conclusão de cadastro
@@ -11,13 +13,14 @@ export function generateSetupToken(): string {
 }
 
 /**
- * Cria um token de conclusão de cadastro e envia email
+ * Cria um token de conclusão de cadastro e envia email e WhatsApp (se tiver telefone)
  */
 export async function createAndSendSetupToken(
   userId: string,
   userEmail: string,
   userName: string,
-  origin: string
+  origin: string,
+  userPhone?: string
 ): Promise<void> {
   // Invalidar tokens anteriores não usados
   await prisma.accountSetupToken.updateMany({
@@ -51,6 +54,16 @@ export async function createAndSendSetupToken(
     patientName: userName,
     setupUrl,
   });
+
+  // Enviar WhatsApp de conclusão de cadastro (se tiver telefone)
+  if (userPhone) {
+    try {
+      const message = await getAccountSetupMessage({ patientName: userName, setupUrl });
+      await sendWhatsAppMessage({ to: userPhone, message });
+    } catch (error) {
+      console.error('Erro ao enviar WhatsApp de conclusão de cadastro:', error);
+    }
+  }
 }
 
 /**
@@ -84,31 +97,81 @@ export async function validateSetupToken(
 }
 
 /**
- * Define a senha do usuário usando o token
+ * Define a senha do usuário usando o token.
+ * Se email for informado, atualiza o email do usuário (desde que não esteja em uso por outra conta).
+ * Retorna email e userId em caso de sucesso para login automático e redirecionamento.
  */
 export async function setupPasswordWithToken(
   token: string,
-  password: string
-): Promise<{ success: boolean; error?: string }> {
+  password: string,
+  email?: string | null
+): Promise<{ success: boolean; email?: string; userId?: string; error?: string }> {
   const validation = await validateSetupToken(token);
 
   if (!validation.valid) {
     return { success: false, error: validation.error };
   }
 
+  const user = await prisma.user.findUnique({
+    where: { id: validation.userId! },
+    select: { email: true },
+  });
+  if (!user?.email) {
+    return { success: false, error: 'Usuário não encontrado' };
+  }
+
+  const emailTrimmed = email?.trim().toLowerCase();
+  if (emailTrimmed) {
+    const existing = await prisma.user.findFirst({
+      where: {
+        email: emailTrimmed,
+        id: { not: validation.userId! },
+      },
+    });
+    if (existing) {
+      return { success: false, error: 'Este e-mail já está em uso por outra conta.' };
+    }
+  }
+
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  // Atualizar senha do usuário e marcar token como usado
-  await prisma.$transaction([
-    prisma.user.update({
-      where: { id: validation.userId! },
-      data: { password: hashedPassword },
-    }),
-    prisma.accountSetupToken.update({
-      where: { token },
-      data: { used: true },
-    }),
-  ]);
+  const updateData: any = {
+    password: hashedPassword,
+    passwordChangedAt: new Date(),
+    ...(emailTrimmed && { email: emailTrimmed }),
+  };
 
-  return { success: true };
+  try {
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: validation.userId! },
+        data: updateData,
+      }),
+      prisma.accountSetupToken.update({
+        where: { token },
+        data: { used: true },
+      }),
+    ]);
+  } catch (error: any) {
+    if (error?.message?.includes('no such column') ||
+        error?.message?.includes('password_changed_at') ||
+        error?.code === 'P2021') {
+      delete updateData.passwordChangedAt;
+      await prisma.$transaction([
+        prisma.user.update({
+          where: { id: validation.userId! },
+          data: updateData,
+        }),
+        prisma.accountSetupToken.update({
+          where: { token },
+          data: { used: true },
+        }),
+      ]);
+    } else {
+      throw error;
+    }
+  }
+
+  const finalEmail = emailTrimmed || user.email;
+  return { success: true, email: finalEmail, userId: validation.userId! };
 }
