@@ -119,8 +119,6 @@ export default function AdminIdentidadeVisualPage() {
   const [uploadingHeroImage, setUploadingHeroImage] = useState(false);
   const [uploadingProcessStep, setUploadingProcessStep] = useState<number | null>(null);
   const [savingProcessStep, setSavingProcessStep] = useState<number | null>(null);
-  const [uploadingTeamMember, setUploadingTeamMember] = useState<number | null>(null);
-  const [savingTeamMember, setSavingTeamMember] = useState<number | null>(null);
   const [uploadingConsumptionImage, setUploadingConsumptionImage] = useState<number | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [formTestimonial, setFormTestimonial] = useState({
@@ -219,9 +217,6 @@ export default function AdminIdentidadeVisualPage() {
         landing_process_2_url: config.processImages[2] || '',
         landing_process_3_url: config.processImages[3] || '',
         landing_process_4_url: config.processImages[4] || '',
-        landing_team_1_url: config.teamPhotos[1] || '',
-        landing_team_2_url: config.teamPhotos[2] || '',
-        landing_team_3_url: config.teamPhotos[3] || '',
         landing_show_events_section: config.showEventsSection !== false ? 'true' : 'false',
         landing_show_blog_preview_section: config.showBlogPreviewSection !== false ? 'true' : 'false',
         landing_show_consumption_forms_section: config.showConsumptionFormsSection !== false ? 'true' : 'false',
@@ -470,47 +465,6 @@ export default function AdminIdentidadeVisualPage() {
     }
   };
 
-  const uploadTeamPhoto = async (member: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !config) return;
-    if (!file.type.startsWith('image/')) {
-      toast.error('Selecione uma imagem (JPEG, PNG ou WebP).');
-      e.target.value = '';
-      return;
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error('Arquivo muito grande. Máximo: 2MB.');
-      e.target.value = '';
-      return;
-    }
-    try {
-      setUploadingTeamMember(member);
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('type', `team_${member}`);
-      const res = await fetch('/api/admin/upload/landing-image', {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await parseUploadResponse(res);
-      if (res.ok && data.url) {
-        setConfig({
-          ...config,
-          teamPhotos: { ...(config.teamPhotos || {}), [member]: data.url },
-        });
-        toast.success(`Foto do membro ${member} enviada. Clique em "Salvar" para aplicar.`);
-      } else {
-        toast.error(data.error || 'Erro ao enviar imagem');
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error('Erro ao enviar imagem');
-    } finally {
-      setUploadingTeamMember(null);
-      e.target.value = '';
-    }
-  };
-
   const uploadConsumptionImage = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !config?.consumptionForms) return;
@@ -552,31 +506,6 @@ export default function AdminIdentidadeVisualPage() {
     } finally {
       setUploadingConsumptionImage(null);
       e.target.value = '';
-    }
-  };
-
-  const saveTeamPhoto = async (member: number) => {
-    if (!config) return;
-    const url = config.teamPhotos?.[member] ?? '';
-    try {
-      setSavingTeamMember(member);
-      const res = await fetch('/api/admin/landing-config', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ [`landing_team_${member}_url`]: url }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setConfig(data);
-        toast.success(`Foto do membro ${member} salva.`);
-      } else {
-        toast.error(data?.error || 'Erro ao salvar');
-      }
-    } catch (e) {
-      console.error(e);
-      toast.error('Erro ao salvar');
-    } finally {
-      setSavingTeamMember(null);
     }
   };
 
@@ -1173,86 +1102,6 @@ export default function AdminIdentidadeVisualPage() {
           <Button onClick={saveConfig} disabled={saving} variant="secondary" className="gap-2">
             <Save size={18} />
             Salvar todas as etapas de uma vez
-          </Button>
-        </div>
-      </section>
-
-      {/* Equipe (Sobre Nós) */}
-      <section className="mt-8 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900">
-          <User size={20} />
-          Equipe (Sobre Nós)
-        </h2>
-        <p className="mt-1 flex items-center gap-1 text-sm text-gray-500">
-          <Info size={14} />
-          Fotos exibidas na página Sobre Nós, seção &quot;Profissionais Especializados&quot; (3 cards: dois médicos e equipe de suporte).
-        </p>
-        <div className="mt-4 space-y-6">
-          {([1, 2, 3] as const).map((i) => (
-            <div key={i} className="rounded-lg border border-gray-100 bg-gray-50/50 p-4">
-              <label className="block text-sm font-medium text-gray-700">
-                Foto do membro {i} {i === 1 && '(ex.: médico)'} {i === 2 && '(ex.: médica)'} {i === 3 && '(ex.: equipe suporte)'}
-              </label>
-              <FieldHelp
-                ondeAparece={`Página Sobre Nós, card do membro ${i}`}
-                impacto="Transmite confiança e humaniza o atendimento"
-                formato="Quadrado ou que funcione em círculo. Mín. 128×128px, ideal 256×256px. JPEG, PNG ou WebP. Ou envie um arquivo abaixo."
-              />
-              <div className="mt-2 flex flex-wrap items-start gap-2">
-                <Input
-                  value={config.teamPhotos?.[i] ?? ''}
-                  onChange={(e) =>
-                    setConfig({
-                      ...config,
-                      teamPhotos: { ...(config.teamPhotos || {}), [i]: e.target.value },
-                    })
-                  }
-                  className="flex-1 min-w-[200px]"
-                  placeholder={i === 1 ? '/images/team/dr-joao-silva.jpg' : i === 2 ? '/images/team/dra-maria-santos.jpg' : '/images/team/equipe-suporte.jpg'}
-                />
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  className="hidden"
-                  id={`team-photo-upload-${i}`}
-                  onChange={(e) => uploadTeamPhoto(i, e)}
-                  disabled={uploadingTeamMember !== null}
-                />
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => document.getElementById(`team-photo-upload-${i}`)?.click()}
-                  disabled={uploadingTeamMember !== null}
-                  className="gap-2 shrink-0"
-                >
-                  <Upload size={18} />
-                  {uploadingTeamMember === i ? 'Enviando...' : 'Enviar imagem'}
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => saveTeamPhoto(i)}
-                  disabled={savingTeamMember !== null}
-                  className="gap-2 shrink-0"
-                >
-                  <Save size={18} />
-                  {savingTeamMember === i ? 'Salvando...' : 'Salvar'}
-                </Button>
-              </div>
-              {config.teamPhotos?.[i] && (
-                <div className="mt-2 flex items-center gap-3">
-                  <div className="h-20 w-20 overflow-hidden rounded-full border border-gray-200 bg-gray-100 shrink-0">
-                    <img src={config.teamPhotos[i]} alt={`Membro ${i}`} className="h-full w-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                  </div>
-                  <span className="text-xs text-gray-500">Preview (exibido em círculo na página Sobre Nós)</span>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-        <div className="mt-4">
-          <Button onClick={saveConfig} disabled={saving} className="gap-2">
-            <Save size={18} />
-            Salvar todas as fotos da equipe de uma vez
           </Button>
         </div>
       </section>
