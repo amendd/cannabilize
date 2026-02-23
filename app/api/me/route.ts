@@ -23,8 +23,8 @@ const updateMeSchema = z.object({
         val.startsWith('data:image/jpg;base64,'),
       { message: 'Formato de imagem inválido. Use JPG ou PNG.' }
     )
-    .refine((val) => val == null || val.length <= 1_200_000, {
-      message: 'Imagem muito grande. Envie uma foto menor.',
+    .refine((val) => val == null || val.length <= 14_000_000, {
+      message: 'Imagem muito grande. Tamanho máximo: 10MB.',
     }),
 });
 

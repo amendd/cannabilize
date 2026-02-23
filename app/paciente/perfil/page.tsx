@@ -110,8 +110,8 @@ export default function PacientePerfilPage() {
       return;
     }
 
-    if (file.size > 1.5 * 1024 * 1024) {
-      setError('Imagem muito grande. Tamanho máximo aproximado: 1.5MB.');
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Imagem muito grande. Tamanho máximo: 10MB.');
       return;
     }
 
@@ -266,7 +266,7 @@ export default function PacientePerfilPage() {
                 />
               </label>
               <p className="text-xs text-gray-500">
-                Formatos aceitos: JPG ou PNG. Tamanho máximo ~1,5MB.
+                Formatos aceitos: JPG ou PNG. Tamanho máximo: 10MB.
               </p>
             </div>
           </div>
