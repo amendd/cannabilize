@@ -66,6 +66,16 @@ export default function VideoCallWindow({
     }
   };
 
+  // Formatar tempo restante em horas e minutos (ex.: 1193 min → "19h 53min")
+  const formatTimeUntil = (minutes: number) => {
+    if (minutes < 60) return `${minutes} ${minutes === 1 ? 'minuto' : 'minutos'}`;
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    const parts = [`${h} ${h === 1 ? 'hora' : 'horas'}`];
+    if (m > 0) parts.push(`${m} ${m === 1 ? 'minuto' : 'minutos'}`);
+    return parts.join(' e ');
+  };
+
   // Renderizar conteúdo baseado no modo da janela
   const renderContent = () => {
     if (!meetingLink && !canStart) {
@@ -78,7 +88,7 @@ export default function VideoCallWindow({
             </h3>
             {minutesUntil !== undefined && minutesUntil > 0 && (
               <p className="text-sm text-gray-500">
-                Disponível em {minutesUntil} {minutesUntil === 1 ? 'minuto' : 'minutos'}
+                Disponível em {formatTimeUntil(minutesUntil)}
               </p>
             )}
           </div>

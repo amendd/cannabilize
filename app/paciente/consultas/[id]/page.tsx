@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import { Video, FileText, Upload, X, Calendar, Clock, User, ExternalLink, Download, CheckCircle2, ArrowRight, Hash, MapPin, CreditCard, RotateCcw } from 'lucide-react';
+import { Video, FileText, Upload, X, Calendar, Clock, User, ExternalLink, Download, CheckCircle2, ArrowRight, Hash, CreditCard, RotateCcw } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import Button from '@/components/ui/Button';
@@ -528,25 +528,15 @@ export default function PacienteConsultaPage() {
                 )}
 
                 <div className="flex items-center gap-3 text-gray-600">
-                  {consultation.meetingLink ? (
-                    <>
-                      <Video size={18} className="text-primary shrink-0" />
-                      <div>
-                        <span className="text-xs text-gray-500 uppercase tracking-wide">Modalidade</span>
-                        <p className="text-gray-800">
-                          Telemedicina {consultation.meetingPlatform === 'ZOOM' ? '(Zoom)' : consultation.meetingPlatform === 'GOOGLE_MEET' ? '(Google Meet)' : ''}
-                        </p>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <MapPin size={18} className="text-primary shrink-0" />
-                      <div>
-                        <span className="text-xs text-gray-500 uppercase tracking-wide">Modalidade</span>
-                        <p className="text-gray-800">Presencial</p>
-                      </div>
-                    </>
-                  )}
+                  <Video size={18} className="text-primary shrink-0" />
+                  <div>
+                    <span className="text-xs text-gray-500 uppercase tracking-wide">Modalidade</span>
+                    <p className="text-gray-800">
+                      {consultation.meetingLink
+                        ? `Telemedicina${consultation.meetingPlatform === 'ZOOM' ? ' (Zoom)' : consultation.meetingPlatform === 'GOOGLE_MEET' ? ' (Google Meet)' : ''}`
+                        : 'Telemedicina (link disponibilizado no horário da consulta)'}
+                    </p>
+                  </div>
                 </div>
 
                 {consultation.payment && (
@@ -572,7 +562,7 @@ export default function PacienteConsultaPage() {
                     <FileText size={18} className="shrink-0" />
                     <div>
                       <span className="text-xs text-gray-500 uppercase tracking-wide">Receita</span>
-                      <p className="text-gray-600">Aguardando emissão pelo médico</p>
+                      <p className="text-gray-600">Aguardando Consulta</p>
                     </div>
                   </div>
                 )}
