@@ -30,9 +30,14 @@ export default function PacientePerfilPage() {
   const [me, setMe] = useState<MeResponse['user'] | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [savingData, setSavingData] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  // Campos editáveis (exceto nome e CPF)
+  const [editEmail, setEditEmail] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editAddress, setEditAddress] = useState('');
   const [clinicalSummary, setClinicalSummary] = useState<{
     nextConsultation: { date: string; doctorName: string } | null;
     lastEvaluation: string | null;
@@ -96,6 +101,9 @@ export default function PacientePerfilPage() {
       const data: MeResponse = await res.json();
       setMe(data.user);
       setPreviewImage(data.user.image);
+      setEditEmail(data.user.email ?? '');
+      setEditPhone(data.user.phone ?? '');
+      setEditAddress(data.user.address ?? '');
     } catch (err: any) {
       setError(err.message || 'Erro ao carregar perfil');
     }
@@ -151,6 +159,42 @@ export default function PacientePerfilPage() {
       setError(err.message || 'Erro ao salvar perfil');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveData = async () => {
+    if (!me) return;
+    try {
+      setSavingData(true);
+      setError(null);
+      setSuccess(null);
+
+      const res = await fetch('/api/me', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: editEmail.trim() || undefined,
+          phone: editPhone.trim() || null,
+          address: editAddress.trim() || null,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Erro ao salvar dados');
+      }
+
+      setSuccess('Dados atualizados com sucesso.');
+      setMe(data.user);
+      setEditEmail(data.user.email ?? '');
+      setEditPhone(data.user.phone ?? '');
+      setEditAddress(data.user.address ?? '');
+    } catch (err: any) {
+      setError(err.message || 'Erro ao salvar dados');
+    } finally {
+      setSavingData(false);
     }
   };
 
@@ -285,27 +329,64 @@ export default function PacientePerfilPage() {
 
         <div className="bg-white rounded-2xl shadow-md p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Dados básicos</h2>
+          <p className="text-sm text-gray-600 mb-4">
+            Nome e CPF não podem ser alterados. Você pode editar email, telefone e endereço abaixo.
+          </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
-              <p className="text-gray-500 mb-1">Nome</p>
-              <p className="font-medium text-gray-900">{me.name}</p>
-            </div>
-            <div>
-              <p className="text-gray-500 mb-1">Email</p>
-              <p className="font-medium text-gray-900">{me.email}</p>
+              <label className="block text-gray-500 mb-1">Nome</label>
+              <p className="font-medium text-gray-900 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">{me.name}</p>
             </div>
             {me.cpf && (
               <div>
-                <p className="text-gray-500 mb-1">CPF</p>
-                <p className="font-medium text-gray-900">{me.cpf}</p>
+                <label className="block text-gray-500 mb-1">CPF</label>
+                <p className="font-medium text-gray-900 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">{me.cpf}</p>
               </div>
             )}
-            {me.phone && (
-              <div>
-                <p className="text-gray-500 mb-1">Telefone</p>
-                <p className="font-medium text-gray-900">{me.phone}</p>
-              </div>
-            )}
+            <div>
+              <label htmlFor="perfil-email" className="block text-gray-500 mb-1">Email</label>
+              <input
+                id="perfil-email"
+                type="email"
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                placeholder="seu@email.com"
+              />
+            </div>
+            <div>
+              <label htmlFor="perfil-phone" className="block text-gray-500 mb-1">Telefone</label>
+              <input
+                id="perfil-phone"
+                type="tel"
+                value={editPhone}
+                onChange={(e) => setEditPhone(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                placeholder="(00) 00000-0000"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label htmlFor="perfil-address" className="block text-gray-500 mb-1">Endereço</label>
+              <input
+                id="perfil-address"
+                type="text"
+                value={editAddress}
+                onChange={(e) => setEditAddress(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                placeholder="Rua, número, bairro, cidade"
+              />
+            </div>
+          </div>
+          <div className="mt-6 flex justify-end">
+            <button
+              type="button"
+              onClick={handleSaveData}
+              disabled={savingData}
+              className="inline-flex items-center gap-2 bg-emerald-600 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-emerald-700 transition disabled:opacity-60"
+            >
+              <Save size={18} />
+              {savingData ? 'Salvando...' : 'Salvar alterações'}
+            </button>
           </div>
         </div>
 

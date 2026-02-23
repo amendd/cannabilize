@@ -7,6 +7,7 @@ import { handleApiError, checkAuth } from '@/lib/error-handler';
 
 const updateMeSchema = z.object({
   name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres').optional(),
+  email: z.string().email('Email inválido').optional(),
   phone: z.string().optional().nullable(),
   cpf: z.string().optional().nullable(),
   birthDate: z.string().optional().nullable(),
@@ -79,7 +80,8 @@ export async function PATCH(request: NextRequest) {
     const data = updateMeSchema.parse(body);
 
     const updateData: any = {};
-    if (data.name) updateData.name = data.name;
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.email !== undefined) updateData.email = data.email;
     if (data.phone !== undefined) updateData.phone = data.phone;
     if (data.cpf !== undefined) updateData.cpf = data.cpf;
     if (data.address !== undefined) updateData.address = data.address;
@@ -91,24 +93,38 @@ export async function PATCH(request: NextRequest) {
       updateData.birthDate = null;
     }
 
-    const user = await prisma.user.update({
-      where: { id: session.user.id },
-      data: updateData,
-      select: {
-        id: true,
-        role: true,
-        name: true,
-        email: true,
-        phone: true,
-        cpf: true,
-        birthDate: true,
-        address: true,
-        image: true,
-        updatedAt: true,
-      },
-    });
+    // Paciente não pode alterar nome nem CPF
+    const role = (session.user as { role?: string })?.role;
+    if (role === 'PATIENT') {
+      delete updateData.name;
+      delete updateData.cpf;
+    }
 
-    return NextResponse.json({ user, message: 'Perfil atualizado com sucesso' });
+    try {
+      const user = await prisma.user.update({
+        where: { id: session.user.id },
+        data: updateData,
+        select: {
+          id: true,
+          role: true,
+          name: true,
+          email: true,
+          phone: true,
+          cpf: true,
+          birthDate: true,
+          address: true,
+          image: true,
+          updatedAt: true,
+        },
+      });
+
+      return NextResponse.json({ user, message: 'Perfil atualizado com sucesso' });
+    } catch (err: any) {
+      if (err?.code === 'P2002' && err?.meta?.target?.includes?.('email')) {
+        return NextResponse.json({ error: 'Este email já está em uso por outra conta.' }, { status: 400 });
+      }
+      throw err;
+    }
   } catch (error) {
     return handleApiError(error);
   }
