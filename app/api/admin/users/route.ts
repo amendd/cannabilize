@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { handleApiError, checkAuth } from '@/lib/error-handler';
 import { canManageUsers } from '@/lib/roles-permissions';
 import { createAuditLog, AuditAction, AuditEntity } from '@/lib/audit';
-import { ADMIN_MENU_GROUP_IDS, stringifyAdminMenuPermissions } from '@/lib/admin-menu';
+import { isValidAdminMenuGroupId, stringifyAdminMenuPermissions } from '@/lib/admin-menu';
 
 const ROLES = ['SUPER_ADMIN', 'ADMIN', 'SUBADMIN', 'OPERATOR', 'DOCTOR', 'PATIENT', 'AGRONOMIST'] as const;
 
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
       address: address || null,
     };
     if (role === 'SUBADMIN' && Array.isArray(adminMenuPermissions)) {
-      const valid = adminMenuPermissions.filter((id) => ADMIN_MENU_GROUP_IDS.includes(id));
+      const valid = adminMenuPermissions.filter((id) => isValidAdminMenuGroupId(id));
       createData.adminMenuPermissions = stringifyAdminMenuPermissions(valid);
     }
 
