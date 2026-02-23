@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 /** Indica se detail é só o resumo (não é o texto do paciente). */
 function isSummaryDetail(detail: string | null): boolean {
   return !!detail?.trim() && /^Processado:\s*\d+\/\d+\s*mensagens enviadas$/i.test(detail.trim());

@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Endpoint de debug para diagnosticar problemas no cálculo financeiro
  * Mostra detalhes de todas as consultas do médico para identificar problemas

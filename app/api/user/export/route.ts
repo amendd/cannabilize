@@ -5,6 +5,8 @@ import { prisma } from '@/lib/prisma';
 import { checkAuth } from '@/lib/error-handler';
 import { createAuditLog, AuditAction, AuditEntity } from '@/lib/audit';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Exporta todos os dados pessoais do usuário em formato JSON
  * Conforme LGPD - Direito à portabilidade de dados

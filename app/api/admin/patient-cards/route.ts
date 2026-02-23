@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET - Lista todas as carteirinhas (admin apenas)
  */
@@ -35,6 +37,8 @@ export async function GET(request: NextRequest) {
             email: true,
             cpf: true,
             phone: true,
+            birthDate: true,
+            image: true,
           },
         },
         activePrescription: {

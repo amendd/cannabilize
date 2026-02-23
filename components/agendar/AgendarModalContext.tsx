@@ -12,11 +12,16 @@ interface AgendarModalContextValue {
 
 const AgendarModalContext = createContext<AgendarModalContextValue | null>(null);
 
+const noop = () => {};
+const fallback: AgendarModalContextValue = {
+  openAgendarModal: noop,
+  closeAgendarModal: noop,
+};
+
 export function useAgendarModal() {
   const ctx = useContext(AgendarModalContext);
-  if (!ctx) {
-    throw new Error('useAgendarModal must be used within AgendarModalProvider');
-  }
+  // Durante SSG/prerender o provider pode não estar na árvore; retorna fallback para o build passar.
+  if (!ctx) return fallback;
   return ctx;
 }
 
