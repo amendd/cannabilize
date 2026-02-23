@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import AgendarTrigger from '@/components/agendar/AgendarTrigger';
 
 const events = [
   {
@@ -19,7 +20,7 @@ const events = [
   {
     title: 'Iron Man',
     date: '2024',
-    description: 'Atleta patrocinado pela CannaLize no Iron Man-RJ 2024',
+    description: 'Atleta patrocinado pela CannabiLize no Iron Man-RJ 2024',
     image: '/images/events/iron-man.webp',
     link: '/galeria/iron-man',
   },
@@ -59,6 +60,15 @@ export default function EventsSection() {
               </div>
             </Link>
           ))}
+        </div>
+
+        <div className="mt-10 mb-8 text-center">
+          <p className="text-gray-600 mb-3">Prefere falar com um médico agora?</p>
+          <AgendarTrigger
+            className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-700 transition"
+          >
+            Agendar consulta por R$50
+          </AgendarTrigger>
         </div>
 
         <div className="text-center mt-8">

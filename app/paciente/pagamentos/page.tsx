@@ -7,6 +7,9 @@ import Link from 'next/link';
 import { CreditCard, CheckCircle, XCircle, Clock, Calendar, ArrowRight } from 'lucide-react';
 import { useEffectivePatientId } from '@/components/impersonation/useEffectivePatientId';
 import { motion } from 'framer-motion';
+import Breadcrumbs from '@/components/ui/Breadcrumbs';
+import EmptyState from '@/components/patient/EmptyState';
+import { SkeletonPatientList } from '@/components/ui/Skeleton';
 
 const statusConfig = {
   PENDING: {
@@ -90,8 +93,9 @@ export default function PacientePagamentosPage() {
 
   if (status === 'loading' || loading || loadingPatientId) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-xl">Carregando...</div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <Breadcrumbs baseHref="/paciente" items={[{ label: 'Pagamentos' }]} />
+        <SkeletonPatientList count={5} />
       </div>
     );
   }
@@ -103,15 +107,10 @@ export default function PacientePagamentosPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <Link href="/paciente" className="text-primary hover:underline mb-4 inline-block">
-            ← Voltar
-          </Link>
-          <h1 className="text-3xl font-bold text-gray-900">Meus Pagamentos</h1>
-          <p className="text-gray-600 mt-2">Visualize e gerencie todos os seus pagamentos</p>
-        </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <Breadcrumbs baseHref="/paciente" items={[{ label: 'Meu Tratamento', href: '/paciente' }, { label: 'Pagamentos' }]} />
+      <h1 className="text-3xl font-bold text-gray-900 mb-2">Pagamentos do tratamento</h1>
+      <p className="text-gray-600 mb-8">Pagamentos das suas consultas e acompanhamento médico</p>
 
         {/* Estatísticas Rápidas */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -153,21 +152,21 @@ export default function PacientePagamentosPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Total Pago</p>
-                <p className="text-2xl font-bold text-primary">
+                <p className="text-2xl font-bold text-purple-600">
                   {formatCurrency(
                     completedPayments.reduce((sum, p) => sum + (p.amount || 0), 0)
                   )}
                 </p>
               </div>
-              <CreditCard className="w-8 h-8 text-primary" />
+              <CreditCard className="w-8 h-8 text-purple-600" />
             </div>
           </motion.div>
         </div>
 
-        {/* Pagamentos Pendentes */}
+        {/* Próximos passos — pagamentos */}
         {pendingPayments.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Pagamentos Pendentes</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Próximos passos</h2>
             <div className="space-y-4">
               {pendingPayments.map((payment) => {
                 const statusInfo = statusConfig[payment.status as keyof typeof statusConfig] || statusConfig.PENDING;
@@ -183,9 +182,11 @@ export default function PacientePagamentosPage() {
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-3">
-                          <CreditCard className="w-5 h-5 text-primary" />
+                          <CreditCard className="w-5 h-5 text-purple-600" />
                           <h3 className="text-lg font-semibold text-gray-900">
-                            Pagamento #{payment.id.slice(0, 8)}
+                            {payment.consultation?.doctor?.name
+                              ? `Consulta médica — Dr(a). ${payment.consultation.doctor.name}`
+                              : 'Consulta médica'}
                           </h3>
                           <span
                             className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${statusInfo.color}`}
@@ -196,33 +197,39 @@ export default function PacientePagamentosPage() {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4" />
-                            <span>Criado em: {formatDate(payment.createdAt)}</span>
-                          </div>
                           {payment.consultation && (
-                            <div>
-                              <span className="font-medium">Consulta:</span>{' '}
-                              {payment.consultation.scheduledAt
-                                ? new Date(payment.consultation.scheduledAt).toLocaleDateString('pt-BR', {
-                                    day: '2-digit',
-                                    month: '2-digit',
-                                    year: 'numeric',
-                                  })
-                                : payment.consultation.scheduledDate
-                                ? new Date(payment.consultation.scheduledDate).toLocaleDateString('pt-BR', {
-                                    day: '2-digit',
-                                    month: '2-digit',
-                                    year: 'numeric',
-                                  })
-                                : `#${payment.consultation.id.slice(0, 8)}`}
-                            </div>
+                            <>
+                              <div className="flex items-center gap-2">
+                                <Calendar className="w-4 h-4" />
+                                <span>
+                                  Data da consulta:{' '}
+                                  {payment.consultation.scheduledAt
+                                    ? new Date(payment.consultation.scheduledAt).toLocaleDateString('pt-BR', {
+                                        day: '2-digit',
+                                        month: 'long',
+                                        year: 'numeric',
+                                      })
+                                    : payment.consultation.scheduledDate
+                                    ? new Date(payment.consultation.scheduledDate).toLocaleDateString('pt-BR', {
+                                        day: '2-digit',
+                                        month: 'long',
+                                        year: 'numeric',
+                                      })
+                                    : '—'}
+                                </span>
+                              </div>
+                              {payment.consultation.doctor && (
+                                <div>
+                                  <span className="font-medium">Médico:</span> Dr(a). {payment.consultation.doctor.name}
+                                </div>
+                              )}
+                            </>
                           )}
                           {payment.paymentMethod && (
                             <div>
-                              <span className="font-medium">Método:</span>{' '}
+                              <span className="font-medium">Forma de pagamento:</span>{' '}
                               {payment.paymentMethod === 'credit_card'
-                                ? 'Cartão de Crédito'
+                                ? 'Cartão de crédito'
                                 : payment.paymentMethod === 'pix'
                                 ? 'PIX'
                                 : payment.paymentMethod}
@@ -231,7 +238,7 @@ export default function PacientePagamentosPage() {
                         </div>
 
                         <div className="mt-4">
-                          <p className="text-2xl font-bold text-primary">
+                          <p className="text-2xl font-bold text-purple-600">
                             {formatCurrency(payment.amount)}
                           </p>
                         </div>
@@ -240,7 +247,7 @@ export default function PacientePagamentosPage() {
                       <div className="ml-4">
                         <Link
                           href={`/paciente/pagamentos/${payment.id}`}
-                          className="inline-flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition"
+                          className="inline-flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
                         >
                           Ver Detalhes
                           <ArrowRight className="w-4 h-4" />
@@ -275,7 +282,9 @@ export default function PacientePagamentosPage() {
                         <div className="flex items-center gap-3 mb-3">
                           <CreditCard className="w-5 h-5 text-green-600" />
                           <h3 className="text-lg font-semibold text-gray-900">
-                            Pagamento #{payment.id.slice(0, 8)}
+                            {payment.consultation?.doctor?.name
+                              ? `Consulta médica — Dr(a). ${payment.consultation.doctor.name}`
+                              : 'Consulta médica'}
                           </h3>
                           <span
                             className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${statusInfo.color}`}
@@ -295,20 +304,25 @@ export default function PacientePagamentosPage() {
                           </div>
                           {payment.consultation && (
                             <div>
-                              <span className="font-medium">Consulta:</span>{' '}
+                              <span className="font-medium">Data da consulta:</span>{' '}
                               {payment.consultation.scheduledAt
                                 ? new Date(payment.consultation.scheduledAt).toLocaleDateString('pt-BR', {
                                     day: '2-digit',
-                                    month: '2-digit',
+                                    month: 'long',
                                     year: 'numeric',
                                   })
                                 : payment.consultation.scheduledDate
                                 ? new Date(payment.consultation.scheduledDate).toLocaleDateString('pt-BR', {
                                     day: '2-digit',
-                                    month: '2-digit',
+                                    month: 'long',
                                     year: 'numeric',
                                   })
-                                : `#${payment.consultation.id.slice(0, 8)}`}
+                                : '—'}
+                            </div>
+                          )}
+                          {payment.consultation?.doctor && (
+                            <div>
+                              <span className="font-medium">Médico:</span> Dr(a). {payment.consultation.doctor.name}
                             </div>
                           )}
                           {payment.paymentMethod && (
@@ -338,9 +352,9 @@ export default function PacientePagamentosPage() {
                       <div className="ml-4">
                         <Link
                           href={`/paciente/pagamentos/${payment.id}`}
-                          className="inline-flex items-center gap-2 text-primary hover:underline"
+                          className="inline-flex items-center gap-2 text-purple-600 hover:underline"
                         >
-                          Ver Detalhes
+                          Ver detalhes
                           <ArrowRight className="w-4 h-4" />
                         </Link>
                       </div>
@@ -373,7 +387,9 @@ export default function PacientePagamentosPage() {
                         <div className="flex items-center gap-3 mb-3">
                           <CreditCard className="w-5 h-5 text-gray-600" />
                           <h3 className="text-lg font-semibold text-gray-900">
-                            Pagamento #{payment.id.slice(0, 8)}
+                            {payment.consultation?.doctor?.name
+                              ? `Consulta médica — Dr(a). ${payment.consultation.doctor.name}`
+                              : 'Consulta médica'}
                           </h3>
                           <span
                             className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${statusInfo.color}`}
@@ -390,20 +406,20 @@ export default function PacientePagamentosPage() {
                           </div>
                           {payment.consultation && (
                             <div>
-                              <span className="font-medium">Consulta:</span>{' '}
+                              <span className="font-medium">Data da consulta:</span>{' '}
                               {payment.consultation.scheduledAt
                                 ? new Date(payment.consultation.scheduledAt).toLocaleDateString('pt-BR', {
                                     day: '2-digit',
-                                    month: '2-digit',
+                                    month: 'long',
                                     year: 'numeric',
                                   })
                                 : payment.consultation.scheduledDate
                                 ? new Date(payment.consultation.scheduledDate).toLocaleDateString('pt-BR', {
                                     day: '2-digit',
-                                    month: '2-digit',
+                                    month: 'long',
                                     year: 'numeric',
                                   })
-                                : `#${payment.consultation.id.slice(0, 8)}`}
+                                : '—'}
                             </div>
                           )}
                         </div>
@@ -418,9 +434,9 @@ export default function PacientePagamentosPage() {
                       <div className="ml-4">
                         <Link
                           href={`/paciente/pagamentos/${payment.id}`}
-                          className="inline-flex items-center gap-2 text-primary hover:underline"
+                          className="inline-flex items-center gap-2 text-purple-600 hover:underline"
                         >
-                          Ver Detalhes
+                          Ver detalhes
                           <ArrowRight className="w-4 h-4" />
                         </Link>
                       </div>
@@ -432,20 +448,16 @@ export default function PacientePagamentosPage() {
           </div>
         )}
 
-        {/* Estado Vazio */}
+        {/* Estado vazio */}
         {payments.length === 0 && (
-          <div className="bg-white rounded-lg shadow-md p-12 text-center">
-            <CreditCard size={48} className="text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 mb-4">Você ainda não possui pagamentos registrados.</p>
-            <Link
-              href="/agendamento"
-              className="inline-block bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary-dark transition"
-            >
-              Agendar Consulta
-            </Link>
-          </div>
+          <EmptyState
+            icon={CreditCard}
+            title="Tudo em dia"
+            description="Os pagamentos das suas consultas aparecerão aqui quando houver."
+            actionLabel="Começar meu tratamento"
+            actionHref="/agendar"
+          />
         )}
-      </div>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -113,7 +114,7 @@ export default function CadastroMedicoPage() {
             Cadastro de Médico Parceiro
           </h1>
           <p className="text-lg text-gray-600">
-            Preencha seus dados para se tornar um médico parceiro da CannaLize
+            Preencha seus dados para se tornar um médico parceiro da CannabiLizi
           </p>
         </div>
 
@@ -130,11 +131,13 @@ export default function CadastroMedicoPage() {
             </label>
             <div className="flex items-center gap-6">
               {photoPreview ? (
-                <div className="relative">
-                  <img
+                <div className="relative w-32 h-32">
+                  <Image
                     src={photoPreview}
                     alt="Preview"
-                    className="w-32 h-32 rounded-full object-cover border-4 border-green-200"
+                    fill
+                    className="rounded-full object-cover border-4 border-green-200"
+                    unoptimized
                   />
                   <button
                     type="button"

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { sendWhatsAppMessage } from '@/lib/whatsapp';
+import { getAnvisaApprovedMessage } from '@/lib/whatsapp-templates';
 
 export async function PATCH(
   request: NextRequest,
@@ -33,6 +35,25 @@ export async function PATCH(
       where: { id: params.id },
       data: updateData,
     });
+
+    if (status === 'APPROVED') {
+      const authWithPatient = await prisma.anvisaAuthorization.findUnique({
+        where: { id: params.id },
+        include: { patient: true },
+      });
+      if (authWithPatient?.patient?.phone) {
+        const message = getAnvisaApprovedMessage({
+          patientName: authWithPatient.patient.name,
+          anvisaNumber: authorization.anvisaNumber || 'N/A',
+          approvedDate: authorization.approvedAt || new Date(),
+          expiresAt: authorization.expiresAt || undefined,
+        });
+        sendWhatsAppMessage({
+          to: authWithPatient.patient.phone,
+          message,
+        }).catch((err) => console.error('Erro ao enviar WhatsApp ANVISA:', err));
+      }
+    }
 
     return NextResponse.json(authorization);
   } catch (error) {

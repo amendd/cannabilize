@@ -41,10 +41,16 @@ type EmailTemplateType =
   | 'CONSULTATION_CONFIRMED'
   | 'CONSULTATION_REMINDER_24H'
   | 'CONSULTATION_REMINDER_2H'
+  | 'CONSULTATION_REMINDER_1H'
+  | 'CONSULTATION_REMINDER_10MIN'
   | 'CONSULTATION_REMINDER_NOW'
   | 'CONSULTATION_FOLLOWUP'
   | 'PAYMENT_CONFIRMED'
-  | 'PRESCRIPTION_ISSUED';
+  | 'PRESCRIPTION_ISSUED'
+  | 'RESCHEDULE_INVITE'
+  | 'RESCHEDULE_INVITE_ACCEPTED'
+  | 'RESCHEDULE_INVITE_REJECTED'
+  | 'RESCHEDULE_INVITE_EXPIRED';
 
 interface EmailTemplateConfig {
   id: EmailTemplateType;
@@ -100,6 +106,9 @@ export default function EmailConfigPage() {
   const [templates, setTemplates] = useState<EmailTemplateConfig[]>([]);
   const [emailRedirect, setEmailRedirect] = useState({ enabled: false, email: '' });
   const [redirectSaving, setRedirectSaving] = useState(false);
+  const [templateTestEmail, setTemplateTestEmail] = useState('');
+  const [templateTestSending, setTemplateTestSending] = useState<EmailTemplateType | null>(null);
+  const [emailStatus, setEmailStatus] = useState<{ hasConfig: boolean; provider?: string; canSend: boolean; redirectTo: string | null; message: string } | null>(null);
   const [configs, setConfigs] = useState<EmailConfig[]>([
     {
       provider: 'RESEND',
@@ -175,6 +184,18 @@ export default function EmailConfigPage() {
     }
   };
 
+  const loadEmailStatus = async () => {
+    try {
+      const res = await fetch('/api/admin/email/status');
+      if (res.ok) {
+        const data = await res.json();
+        setEmailStatus(data);
+      }
+    } catch {
+      setEmailStatus(null);
+    }
+  };
+
   const loadConfigs = async () => {
     try {
       setLoading(true);
@@ -183,12 +204,17 @@ export default function EmailConfigPage() {
         const data = await response.json();
         const loadedConfigs = data.configs || [];
         
-        // Mesclar com defaults
+        // Mesclar com defaults; não preencher senha com valor mascarado (***) para evitar sobrescrever no banco
         setConfigs(prev => prev.map(defaultConfig => {
           const loaded = loadedConfigs.find((c: any) => c.provider === defaultConfig.provider);
-          return loaded ? { ...defaultConfig, ...loaded } : defaultConfig;
+          if (!loaded) return defaultConfig;
+          const merged = { ...defaultConfig, ...loaded };
+          const masked = merged.smtpPassword === '***' || (merged.smtpPassword && merged.smtpPassword.includes('...'));
+          if (masked) merged.smtpPassword = '';
+          return merged;
         }));
       }
+      await loadEmailStatus();
     } catch (error) {
       console.error('Erro ao carregar configurações:', error);
       toast.error('Erro ao carregar configurações');
@@ -219,10 +245,19 @@ export default function EmailConfigPage() {
       const config = configs.find(c => c.provider === provider);
       if (!config) return;
 
+      // Não enviar senha mascarada ou vazia, para não sobrescrever a senha real no banco
+      const isMasked = config.smtpPassword === '***' || (config.smtpPassword && config.smtpPassword.includes('...'));
+      const payload = { ...config };
+      if (payload.smtpPassword === '' || isMasked) delete payload.smtpPassword;
+      // Garantir smtpPort: só enviar se for número válido (evita "Dados inválidos")
+      const port = typeof payload.smtpPort === 'string' ? parseInt(payload.smtpPort, 10) : payload.smtpPort;
+      if (port == null || Number.isNaN(port) || port < 1 || port > 65535) delete payload.smtpPort;
+      else payload.smtpPort = port;
+
       const response = await fetch('/api/admin/email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(config),
+        body: JSON.stringify(payload),
       });
 
       if (response.ok) {
@@ -230,7 +265,8 @@ export default function EmailConfigPage() {
         loadConfigs();
       } else {
         const error = await response.json();
-        toast.error(error.error || 'Erro ao salvar configuração');
+        const msg = error.details?.length ? `Dados inválidos: ${error.details.map((d: { path?: string[] }) => d.path?.join('.')).join(', ')}` : (error.error || 'Erro ao salvar configuração');
+        toast.error(msg);
       }
     } catch (error) {
       console.error('Erro ao salvar configuração:', error);
@@ -334,215 +370,51 @@ export default function EmailConfigPage() {
     }
   };
 
-  const handleResetTemplate = (id: EmailTemplateType) => {
-    setTemplates(prev => {
-      const existing = prev.find(t => t.id === id);
-      if (!existing) return prev;
+  const handleSendTemplateTest = async (templateId: EmailTemplateType) => {
+    const email = templateTestEmail.trim() || configs.find(c => c.enabled)?.testEmail?.trim();
+    if (!email) {
+      toast.error('Informe um email para receber o teste (campo acima ou na configuração SMTP).');
+      return;
+    }
+    try {
+      setTemplateTestSending(templateId);
+      const response = await fetch('/api/admin/email/send-template-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ templateId, testEmail: email }),
+      });
+      if (response.ok) {
+        const result = await response.json();
+        toast.success(result.message || 'Email de teste enviado!');
+        if (result.redirected) {
+          toast(`Verifique a caixa de entrada de ${result.sentTo}`, { icon: '📬', duration: 6000 });
+        }
+      } else {
+        const err = await response.json();
+        toast.error(err.message || err.error || 'Erro ao enviar teste');
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error('Erro ao enviar email de teste');
+    } finally {
+      setTemplateTestSending(null);
+    }
+  };
 
-      // Valores padrão espelhando DEFAULT_EMAIL_TEMPLATES no backend
-      const defaults: Record<EmailTemplateType, EmailTemplateConfig> = {
-        ACCOUNT_WELCOME: {
-          id: 'ACCOUNT_WELCOME',
-          name: 'Boas-vindas',
-          description: 'Enviado ao paciente quando cria uma conta ou agenda a primeira consulta.',
-          subject: 'Bem-vindo(a) ao Click Cannabis!',
-          html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #00A859;">Bem-vindo(a) ao Click Cannabis!</h2>
-        <p>Olá {{patientName}},</p>
-        <p>Ficamos felizes em tê-lo(a) conosco!</p>
-        <p>No Click Cannabis, você terá acesso a:</p>
-        <ul style="line-height: 1.8;">
-          <li>Consultas médicas especializadas em cannabis medicinal</li>
-          <li>Receitas digitais seguras e rastreáveis</li>
-          <li>Acompanhamento completo do seu tratamento</li>
-          <li>Carteirinha digital para acesso facilitado</li>
-        </ul>
-        <p>Se precisar de ajuda, nossa equipe está sempre disponível para você.</p>
-        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe Click Cannabis</p>
-      </div>
-    `,
-        },
-        ACCOUNT_SETUP: {
-          id: 'ACCOUNT_SETUP',
-          name: 'Conclusão de Cadastro',
-          description: 'Enviado ao paciente para concluir o cadastro e definir uma senha de acesso.',
-          subject: 'Conclua seu cadastro - Click Cannabis',
-          html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #00A859;">Conclua seu cadastro</h2>
-        <p>Olá {{patientName}},</p>
-        <p>Para acessar sua conta no Click Cannabis e acompanhar suas consultas, receitas e histórico, você precisa definir uma senha de acesso.</p>
-        <p style="margin: 24px 0;">
-          <a href="{{setupUrl}}" style="background: #00A859; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
-            Definir Minha Senha
-          </a>
-        </p>
-        <p><strong>Este link expira em 7 dias.</strong></p>
-        <p>Se você não solicitou este email, pode ignorá-lo com segurança.</p>
-        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe Click Cannabis</p>
-      </div>
-    `,
-        },
-        CONSULTATION_CONFIRMED: {
-          id: 'CONSULTATION_CONFIRMED',
-          name: 'Confirmação de Consulta',
-          description:
-            'Enviado ao paciente imediatamente após o agendamento da consulta.',
-          subject: 'Consulta Agendada - Click Cannabis',
-          html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #00A859;">Consulta Agendada com Sucesso!</h2>
-        <p>Olá {{patientName}},</p>
-        <p>Sua consulta foi agendada para:</p>
-        <p><strong>{{consultationDateTime}}</strong></p>
-        {{#if meetingLink}}
-          <p>Esta consulta será realizada por telemedicina.</p>
-          <p>Link da consulta: <a href="{{meetingLink}}">{{meetingLink}}</a></p>
-        {{/if}}
-        <p>Se precisar reagendar ou cancelar, acesse sua área do paciente.</p>
-        <p>Em caso de dúvidas, entre em contato conosco.</p>
-        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe Click Cannabis</p>
-      </div>
-    `,
-        },
-        PAYMENT_CONFIRMED: {
-          id: 'PAYMENT_CONFIRMED',
-          name: 'Confirmação de Pagamento',
-          description: 'Enviado ao paciente quando o pagamento da consulta é confirmado.',
-          subject: 'Pagamento Confirmado - Click Cannabis',
-          html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #00A859;">Pagamento Confirmado!</h2>
-        <p>Olá {{patientName}},</p>
-        <p>Seu pagamento de <strong>{{amount}}</strong> foi confirmado com sucesso.</p>
-        {{#if consultationDateTime}}
-          <p>Sua consulta está agendada para: <strong>{{consultationDateTime}}</strong></p>
-        {{/if}}
-        <p>Você pode acessar os detalhes da consulta e os recibos diretamente na plataforma.</p>
-        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe Click Cannabis</p>
-      </div>
-    `,
-        },
-        CONSULTATION_REMINDER_24H: {
-          id: 'CONSULTATION_REMINDER_24H',
-          name: 'Lembrete de Consulta (24h antes)',
-          description: 'Enviado ao paciente 24 horas antes da consulta agendada.',
-          subject: 'Lembrete: Sua consulta é amanhã - Click Cannabis',
-          html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #00A859;">Lembrete de Consulta</h2>
-        <p>Olá {{patientName}},</p>
-        <p>Este é um lembrete de que sua consulta está agendada para:</p>
-        <p><strong>{{consultationDateTime}}</strong></p>
-        {{#if meetingLink}}
-          <p>Esta consulta será realizada por telemedicina.</p>
-          <p>Link da consulta: <a href="{{meetingLink}}">{{meetingLink}}</a></p>
-          <p><strong>Importante:</strong> Acesse o link alguns minutos antes do horário agendado.</p>
-        {{/if}}
-        <p>Se precisar reagendar ou cancelar, acesse sua área do paciente o quanto antes.</p>
-        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe Click Cannabis</p>
-      </div>
-    `,
-        },
-        CONSULTATION_REMINDER_2H: {
-          id: 'CONSULTATION_REMINDER_2H',
-          name: 'Lembrete de Consulta (2h antes)',
-          description: 'Enviado ao paciente 2 horas antes da consulta agendada.',
-          subject: 'Lembrete: Sua consulta é em breve - Click Cannabis',
-          html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #00A859;">Sua consulta é em breve!</h2>
-        <p>Olá {{patientName}},</p>
-        <p>Sua consulta está agendada para:</p>
-        <p><strong>{{consultationDateTime}}</strong></p>
-        {{#if meetingLink}}
-          <p>Esta consulta será realizada por telemedicina.</p>
-          <p>
-            <a href="{{meetingLink}}" style="background: #00A859; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
-              Acessar Consulta Agora
-            </a>
-          </p>
-          <p><strong>Dica:</strong> Acesse o link alguns minutos antes para garantir que tudo está funcionando.</p>
-        {{/if}}
-        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe Click Cannabis</p>
-      </div>
-    `,
-        },
-        CONSULTATION_REMINDER_NOW: {
-          id: 'CONSULTATION_REMINDER_NOW',
-          name: 'Lembrete de Consulta (na hora)',
-          description: 'Enviado ao paciente no horário agendado da consulta.',
-          subject: 'Sua consulta é agora! - Click Cannabis',
-          html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #00A859;">Sua consulta é agora!</h2>
-        <p>Olá {{patientName}},</p>
-        <p>Este é o horário da sua consulta agendada:</p>
-        <p><strong>{{consultationDateTime}}</strong></p>
-        {{#if meetingLink}}
-          <p>Esta consulta será realizada por telemedicina.</p>
-          <p style="margin: 24px 0;">
-            <a href="{{meetingLink}}" style="background: #00A859; color: white; padding: 14px 28px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; font-size: 16px;">
-              🚀 Entrar na Consulta
-            </a>
-          </p>
-          <p><strong>Importante:</strong> Clique no botão acima para acessar a sala de telemedicina.</p>
-        {{else}}
-          <p>Entre em contato com seu médico ou acesse sua área do paciente para mais informações.</p>
-        {{/if}}
-        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe Click Cannabis</p>
-      </div>
-    `,
-        },
-        CONSULTATION_FOLLOWUP: {
-          id: 'CONSULTATION_FOLLOWUP',
-          name: 'Follow-up Pós-Consulta',
-          description: 'Enviado ao paciente algumas horas após a consulta ser concluída.',
-          subject: 'Como foi sua consulta? - Click Cannabis',
-          html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #00A859;">Obrigado pela sua consulta!</h2>
-        <p>Olá {{patientName}},</p>
-        <p>Esperamos que sua consulta tenha sido proveitosa.</p>
-        {{#if prescriptionUrl}}
-          <p>Sua receita médica já está disponível:</p>
-          <p>
-            <a href="{{prescriptionUrl}}" style="background: #00A859; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">
-              Acessar Receita
-            </a>
-          </p>
-        {{/if}}
-        <p>Se tiver dúvidas sobre seu tratamento ou precisar de suporte, nossa equipe está à disposição.</p>
-        <p>Você pode acessar todas as informações da sua consulta, receitas e histórico na sua área do paciente.</p>
-        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe Click Cannabis</p>
-      </div>
-    `,
-        },
-        PRESCRIPTION_ISSUED: {
-          id: 'PRESCRIPTION_ISSUED',
-          name: 'Receita Emitida',
-          description: 'Enviado ao paciente quando uma nova receita é emitida.',
-          subject: 'Receita Médica Emitida - Click Cannabis',
-          html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #00A859;">Receita Médica Emitida</h2>
-        <p>Olá {{patientName}},</p>
-        <p>Sua receita médica foi emitida com sucesso e já está disponível na sua área do paciente.</p>
-        <p>
-          <a href="{{prescriptionUrl}}" style="background: #00A859; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">
-            Acessar Receita
-          </a>
-        </p>
-        <p>Caso tenha dúvidas sobre o uso do medicamento, entre em contato com seu médico.</p>
-        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe Click Cannabis</p>
-      </div>
-    `,
-        },
-      };
-
-      return prev.map(t => (t.id === id ? { ...t, ...defaults[id] } : t));
-    });
+  const handleResetTemplate = async (id: EmailTemplateType) => {
+    const existing = templates.find(t => t.id === id);
+    if (!existing) return;
+    try {
+      const res = await fetch('/api/admin/email/templates/defaults');
+      if (!res.ok) throw new Error('Falha ao carregar padrões');
+      const { defaults } = await res.json();
+      const defaultTemplate = defaults?.[id];
+      if (!defaultTemplate) return;
+      setTemplates(prev => prev.map(t => (t.id === id ? { ...t, ...defaultTemplate } : t)));
+      toast.success('Template restaurado para o padrão.');
+    } catch {
+      toast.error('Não foi possível restaurar o padrão.');
+    }
   };
 
   if (loading || templatesLoading) {
@@ -572,6 +444,26 @@ export default function EmailConfigPage() {
         </motion.div>
 
         <div className="space-y-10">
+          {/* Status do envio (diagnóstico) */}
+          {emailStatus && (
+            <section className="rounded-lg border p-4 bg-white shadow-sm">
+              <h2 className="text-sm font-semibold text-gray-700 mb-2">Status do envio</h2>
+              <div
+                className={`flex items-start gap-2 p-3 rounded-lg text-sm ${
+                  emailStatus.canSend ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-amber-50 border border-amber-200 text-amber-800'
+                }`}
+              >
+                {emailStatus.canSend ? <CheckCircle2 size={18} className="shrink-0 mt-0.5" /> : <AlertCircle size={18} className="shrink-0 mt-0.5" />}
+                <div>
+                  <p>{emailStatus.message}</p>
+                  {emailStatus.redirectTo && (
+                    <p className="mt-1 text-xs opacity-90">Redirecionamento ativo para: {emailStatus.redirectTo}</p>
+                  )}
+                </div>
+              </div>
+            </section>
+          )}
+
           {/* Redirecionamento Global de Emails */}
           <section className="space-y-6">
             <div className="flex items-center gap-2 mb-2">
@@ -695,7 +587,7 @@ export default function EmailConfigPage() {
                       type="text"
                       value={config.fromName || ''}
                       onChange={(e) => updateConfig(config.provider, { fromName: e.target.value })}
-                      placeholder="Click Cannabis"
+                      placeholder="CannabiLizi"
                     />
                   </div>
 
@@ -796,8 +688,11 @@ export default function EmailConfigPage() {
                           type="password"
                           value={config.smtpPassword || ''}
                           onChange={(e) => updateConfig(config.provider, { smtpPassword: e.target.value })}
-                          placeholder="******"
+                          placeholder="Senha de app do Gmail (16 caracteres)"
                         />
+                        <p className="text-xs text-gray-500 -mt-2 mb-1">
+                          Gmail: use uma <strong>senha de app</strong> (não a senha da conta). Pode colar com ou sem espaços.
+                        </p>
                       </div>
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input
@@ -817,8 +712,11 @@ export default function EmailConfigPage() {
                     type="email"
                     value={config.testEmail || ''}
                     onChange={(e) => updateConfig(config.provider, { testEmail: e.target.value })}
-                    placeholder="teste@exemplo.com"
+                    placeholder="seu-email@gmail.com"
                   />
+                  <p className="text-xs text-gray-500 -mt-2 mb-1">
+                    Use um email real seu para receber o teste (ex.: Gmail).
+                  </p>
 
                   {/* Informações de ajuda */}
                   {info.docs && (
@@ -927,23 +825,60 @@ export default function EmailConfigPage() {
                 para blocos condicionais.
               </p>
 
+              {emailRedirect.enabled && emailRedirect.email && (
+                <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+                  <AlertCircle size={18} className="shrink-0" />
+                  <span>
+                    <strong>Redirecionamento ativo:</strong> todos os emails de teste são enviados para{' '}
+                    <strong>{emailRedirect.email}</strong>. Verifique a caixa de entrada (e o spam) desse endereço.
+                  </span>
+                </div>
+              )}
+              <div className="flex flex-wrap items-end gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="flex-1 min-w-[200px]">
+                  <Input
+                    label="Email para receber testes dos modelos"
+                    type="email"
+                    value={templateTestEmail}
+                    onChange={e => setTemplateTestEmail(e.target.value)}
+                    placeholder="seu-email@gmail.com"
+                  />
+                </div>
+                <p className="text-xs text-gray-500">
+                  Preencha acima e use o botão &quot;Enviar teste&quot; em cada modelo abaixo.
+                </p>
+              </div>
+
               <div className="space-y-6">
                 {templates.map(template => (
                   <div key={template.id} className="bg-white rounded-lg shadow-md p-6">
-                    <div className="flex items-start justify-between gap-4 mb-4">
+                    <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900">
                           {template.name}
                         </h3>
                         <p className="text-sm text-gray-600">{template.description}</p>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleResetTemplate(template.id)}
-                      >
-                        Restaurar padrão
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleSendTemplateTest(template.id)}
+                          disabled={!!templateTestSending}
+                          loading={templateTestSending === template.id}
+                          className="flex items-center gap-1"
+                        >
+                          <Send size={16} />
+                          Enviar teste
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleResetTemplate(template.id)}
+                        >
+                          Restaurar padrão
+                        </Button>
+                      </div>
                     </div>
 
                     <div className="space-y-4">

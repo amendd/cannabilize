@@ -164,10 +164,10 @@ export async function validateFormSubmission(
     }
   }
 
-  // 5. Validar Honeypot
+  // 5. Validar Honeypot (campo pode vir como "honeypot" ou "website_url" conforme o formulário)
   let honeypotFilled = false;
   if (requireHoneypot) {
-    const honeypotValue = data.honeypot || sanitizedData.honeypot;
+    const honeypotValue = data.honeypot ?? data.website_url ?? sanitizedData.honeypot ?? sanitizedData.website_url;
     const honeypotResult = validateHoneypot(honeypotValue);
 
     if (!honeypotResult.isValid) {

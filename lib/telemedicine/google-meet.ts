@@ -120,7 +120,52 @@ export class GoogleMeetService {
   }
 
   /**
-   * Cria uma reunião no Google Meet
+   * Cria reunião via Meet REST API (spaces.create) com accessType OPEN:
+   * médico e paciente entram direto, sem "pedir para participar".
+   * Requer escopo: https://www.googleapis.com/auth/meetings.space.created
+   */
+  private async createMeetingViaMeetAPI(params: { startTime: Date; endTime: Date }): Promise<GoogleMeetMeeting | null> {
+    try {
+      const accessToken = await this.getAccessToken();
+      const res = await fetch('https://meet.googleapis.com/v2/spaces', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          config: {
+            accessType: 'OPEN', // Qualquer um com o link entra sem pedir
+          },
+        }),
+      });
+      if (!res.ok) {
+        if (res.status === 403 || res.status === 401) {
+          console.warn('[Google Meet] Meet API (spaces) indisponível — use escopo meetings.space.created para entrada aberta. Usando Calendar API.');
+          return null;
+        }
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as { error?: { message?: string } })?.error?.message || `Meet API ${res.status}`);
+      }
+      const space = await res.json() as { name?: string; meetingUri?: string; meetingCode?: string };
+      if (!space.meetingUri || !space.name) {
+        return null;
+      }
+      return {
+        meetingId: space.name,
+        meetingLink: space.meetingUri,
+        startTime: params.startTime.toISOString(),
+        endTime: params.endTime.toISOString(),
+      };
+    } catch (e) {
+      console.warn('[Google Meet] createMeetingViaMeetAPI falhou, usando Calendar:', e);
+      return null;
+    }
+  }
+
+  /**
+   * Cria uma reunião no Google Meet.
+   * Tenta primeiro a Meet API (entrada aberta); se não tiver escopo, usa Calendar API.
    */
   async createMeeting(params: {
     summary: string;
@@ -130,17 +175,22 @@ export class GoogleMeetService {
     attendees?: string[];
   }): Promise<GoogleMeetMeeting> {
     try {
-      const accessToken = await this.getAccessToken();
-
-      // Se a data de início for no passado, usar a data/hora atual para o evento
-      // (Google Calendar pode ter problemas com eventos no passado)
       const now = new Date();
       const actualStartTime = params.startTime < now ? now : params.startTime;
-      const actualEndTime = params.endTime < actualStartTime 
-        ? new Date(actualStartTime.getTime() + 30 * 60 * 1000) // 30 minutos se endTime for no passado
+      const actualEndTime = params.endTime < actualStartTime
+        ? new Date(actualStartTime.getTime() + 30 * 60 * 1000)
         : params.endTime;
 
-      // Criar evento no Google Calendar que gera automaticamente um link do Meet
+      const viaMeetAPI = await this.createMeetingViaMeetAPI({
+        startTime: actualStartTime,
+        endTime: actualEndTime,
+      });
+      if (viaMeetAPI) {
+        return viaMeetAPI;
+      }
+
+      // Fallback: criar evento no Google Calendar (pode exigir "Acesso rápido" na conta)
+      const accessToken = await this.getAccessToken();
       const event = {
         summary: params.summary,
         description: params.description || '',
@@ -233,7 +283,8 @@ export class GoogleMeetService {
   }
 
   /**
-   * Cancela uma reunião
+   * Cancela uma reunião (Calendar event ou Meet space).
+   * meetingId começa com "spaces/" quando criado via Meet API; senão é ID do evento no Calendar.
    */
   async cancelMeeting(meetingId: string): Promise<void> {
     try {
@@ -243,15 +294,25 @@ export class GoogleMeetService {
 
       const accessToken = await this.getAccessToken();
 
-      const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${meetingId}`, {
+      if (meetingId.startsWith('spaces/')) {
+        const path = `${meetingId}:endActiveConference`;
+        const response = await fetch(`https://meet.googleapis.com/v2/${path}`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${accessToken}` },
+        });
+        if (!response.ok && response.status !== 404) {
+          const err = await response.json().catch(() => ({}));
+          throw new Error((err as { error?: { message?: string } })?.error?.message || 'Falha ao encerrar conferência no Meet');
+        }
+        return;
+      }
+
+      const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${encodeURIComponent(meetingId)}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-        },
+        headers: { 'Authorization': `Bearer ${accessToken}` },
       });
 
       if (!response.ok && response.status !== 404) {
-        // 404 significa que o evento já foi deletado, o que é aceitável
         const errorText = await response.text();
         let errorMessage = 'Falha ao cancelar reunião no Google Calendar';
         try {

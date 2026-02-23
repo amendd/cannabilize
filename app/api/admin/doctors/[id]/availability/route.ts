@@ -46,7 +46,7 @@ export async function GET(
   }
 }
 
-// POST - Criar disponibilidade
+// POST - Criar disponibilidade (ADMIN ou o próprio médico)
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -54,11 +54,24 @@ export async function POST(
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session || session.user.role !== 'ADMIN') {
+    if (!session || (session.user.role !== 'ADMIN' && session.user.role !== 'DOCTOR')) {
       return NextResponse.json(
         { error: 'Não autorizado' },
         { status: 401 }
       );
+    }
+
+    if (session.user.role === 'DOCTOR') {
+      const doctor = await prisma.doctor.findUnique({
+        where: { userId: session.user.id },
+        select: { id: true },
+      });
+      if (!doctor || doctor.id !== params.id) {
+        return NextResponse.json(
+          { error: 'Você só pode editar sua própria disponibilidade.' },
+          { status: 403 }
+        );
+      }
     }
 
     const body = await request.json();
@@ -109,7 +122,7 @@ export async function POST(
   }
 }
 
-// DELETE - Remover disponibilidade
+// DELETE - Remover disponibilidade (ADMIN ou o próprio médico)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -117,11 +130,24 @@ export async function DELETE(
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session || session.user.role !== 'ADMIN') {
+    if (!session || (session.user.role !== 'ADMIN' && session.user.role !== 'DOCTOR')) {
       return NextResponse.json(
         { error: 'Não autorizado' },
         { status: 401 }
       );
+    }
+
+    if (session.user.role === 'DOCTOR') {
+      const doctor = await prisma.doctor.findUnique({
+        where: { userId: session.user.id },
+        select: { id: true },
+      });
+      if (!doctor || doctor.id !== params.id) {
+        return NextResponse.json(
+          { error: 'Você só pode remover sua própria disponibilidade.' },
+          { status: 403 }
+        );
+      }
     }
 
     const searchParams = request.nextUrl.searchParams;
@@ -131,6 +157,17 @@ export async function DELETE(
       return NextResponse.json(
         { error: 'ID da disponibilidade é obrigatório' },
         { status: 400 }
+      );
+    }
+
+    const availability = await prisma.doctorAvailability.findUnique({
+      where: { id: availabilityId },
+      select: { doctorId: true },
+    });
+    if (!availability || availability.doctorId !== params.id) {
+      return NextResponse.json(
+        { error: 'Disponibilidade não encontrada ou não pertence a este médico.' },
+        { status: 404 }
       );
     }
 

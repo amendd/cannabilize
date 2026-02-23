@@ -40,18 +40,21 @@ export default function ConsultationsChart({ data }: ConsultationsChartProps) {
   }
 
   const maxValue = Math.max(
-    ...chartData.map(d => Math.max(d.consultations, d.completed))
+    ...chartData.map(d => d.consultations),
+    1
   );
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-4 font-display">
-        Consultas por Mês
+        Consultas por mês
       </h3>
-      <div className="space-y-4" role="img" aria-label="Gráfico de consultas por mês">
+      <div className="space-y-4" role="img" aria-label="Gráfico de consultas por mês (barras empilhadas: total e concluídas)">
         {chartData.map((item, index) => {
-          const consultationPercentage = (item.consultations / maxValue) * 100;
-          const completedPercentage = (item.completed / maxValue) * 100;
+          const totalWidth = (item.consultations / maxValue) * 100;
+          const completedWidth = item.consultations > 0
+            ? (item.completed / item.consultations) * 100
+            : 0;
 
           return (
             <div key={index} className="space-y-2">
@@ -66,18 +69,17 @@ export default function ConsultationsChart({ data }: ConsultationsChartProps) {
                   </span>
                 </div>
               </div>
-              <div className="relative h-8 bg-gray-100 rounded-full overflow-hidden">
-                {/* Barra de total */}
+              <div className="relative h-8 bg-gray-100 rounded-lg overflow-hidden flex">
+                {/* Barra empilhada: concluídas (verde) à esquerda, restante (azul) à direita */}
                 <div
-                  className="absolute inset-0 bg-blue-500 rounded-full"
-                  style={{ width: `${consultationPercentage}%` }}
-                  aria-label={`${item.consultations} consultas em ${item.month}`}
-                />
-                {/* Barra de concluídas (sobreposta) */}
-                <div
-                  className="absolute inset-0 bg-green-500 rounded-full"
-                  style={{ width: `${completedPercentage}%` }}
+                  className="h-full bg-green-500 transition-all"
+                  style={{ width: `${totalWidth * (completedWidth / 100)}%` }}
                   aria-label={`${item.completed} consultas concluídas em ${item.month}`}
+                />
+                <div
+                  className="h-full bg-blue-400 transition-all"
+                  style={{ width: `${totalWidth * (1 - completedWidth / 100)}%` }}
+                  aria-label={`${item.consultations - item.completed} consultas não concluídas em ${item.month}`}
                 />
               </div>
             </div>
@@ -86,12 +88,12 @@ export default function ConsultationsChart({ data }: ConsultationsChartProps) {
       </div>
       <div className="mt-6 flex items-center gap-4 justify-center">
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-blue-500 rounded"></div>
-          <span className="text-sm text-gray-600">Total</span>
+          <div className="w-4 h-4 bg-green-500 rounded" />
+          <span className="text-sm text-gray-600">Concluídas</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-green-500 rounded"></div>
-          <span className="text-sm text-gray-600">Concluídas</span>
+          <div className="w-4 h-4 bg-blue-400 rounded" />
+          <span className="text-sm text-gray-600">Não concluídas</span>
         </div>
       </div>
     </div>

@@ -295,6 +295,15 @@ export default function TelemedicineConfigPage() {
           ]} />
           <h1 className="text-3xl font-bold text-gray-900 font-display mt-4">Configuração de Telemedicina</h1>
           <p className="text-gray-600 mt-2">Configure as integrações com Zoom e Google Meet</p>
+
+          <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-sm font-semibold text-green-900 mb-1">
+              Solução prática: use Zoom
+            </p>
+            <p className="text-sm text-green-800">
+              Com Zoom, médico e paciente <strong>entram direto</strong> na chamada — sem &quot;Aguarde um organizador&quot; e sem configurar nada por reunião. Preencha os dados do Zoom no bloco abaixo, ative e salve. Se preferir Google Meet, em cada consulta alguém precisa abrir o link e em <strong>Controles do organizador → Tipo de acesso → Abrir</strong>.
+            </p>
+          </div>
         </motion.div>
 
         {/* Configuração de Prioridade */}
@@ -320,8 +329,8 @@ export default function TelemedicineConfigPage() {
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             >
               <option value="">Automático (Zoom primeiro, depois Google Meet)</option>
-              <option value="ZOOM">Zoom (Prioritário)</option>
-              <option value="GOOGLE_MEET">Google Meet (Prioritário)</option>
+              <option value="ZOOM">Zoom — recomendado (entrada direta automática)</option>
+              <option value="GOOGLE_MEET">Google Meet (exige config manual por reunião)</option>
             </select>
             {preferredPlatform && (
               <span className="text-sm text-gray-500">
@@ -332,138 +341,20 @@ export default function TelemedicineConfigPage() {
         </motion.div>
 
         <div className="space-y-6">
-          {/* Google Meet */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-lg shadow-md p-6"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <Video className="text-blue-600" size={24} />
-                <h2 className="text-xl font-bold text-gray-900">Google Meet</h2>
-                {configs.find(c => c.platform === 'GOOGLE_MEET')?.enabled ? (
-                  <CheckCircle2 className="text-green-500" size={20} />
-                ) : (
-                  <XCircle className="text-gray-400" size={20} />
-                )}
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={configs.find(c => c.platform === 'GOOGLE_MEET')?.enabled || false}
-                  onChange={(e) => updateConfig('GOOGLE_MEET', { enabled: e.target.checked })}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-              </label>
-            </div>
-
-            <div className="space-y-4">
-              <Input
-                label="Client ID (Google OAuth)"
-                type="text"
-                value={configs.find(c => c.platform === 'GOOGLE_MEET')?.clientId || ''}
-                onChange={(e) => updateConfig('GOOGLE_MEET', { clientId: e.target.value })}
-                placeholder="xxxxx.apps.googleusercontent.com"
-              />
-
-              <Input
-                label="Client Secret (Google OAuth)"
-                type="password"
-                value={configs.find(c => c.platform === 'GOOGLE_MEET')?.clientSecret || ''}
-                onChange={(e) => updateConfig('GOOGLE_MEET', { clientSecret: e.target.value })}
-                placeholder="GOCSPX-xxxxx"
-              />
-
-              <Input
-                label="Refresh Token"
-                type="password"
-                value={configs.find(c => c.platform === 'GOOGLE_MEET')?.refreshToken || ''}
-                onChange={(e) => updateConfig('GOOGLE_MEET', { refreshToken: e.target.value })}
-                placeholder="1//xxxxx"
-              />
-
-              <div className="grid grid-cols-2 gap-4">
-                <Input
-                  label="Duração Padrão (minutos)"
-                  type="number"
-                  min="15"
-                  max="120"
-                  value={configs.find(c => c.platform === 'GOOGLE_MEET')?.defaultDuration || 30}
-                  onChange={(e) => updateConfig('GOOGLE_MEET', { defaultDuration: parseInt(e.target.value) || 30 })}
-                />
-              </div>
-
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p className="text-sm text-blue-800">
-                  <strong>Como obter as credenciais:</strong>
-                </p>
-                <ol className="list-decimal list-inside text-sm text-blue-700 mt-2 space-y-1">
-                  <li>Acesse o Google Cloud Console</li>
-                  <li>Crie um projeto ou selecione um existente</li>
-                  <li>Habilite a Google Calendar API</li>
-                  <li>Crie credenciais OAuth 2.0</li>
-                  <li>Configure o redirect URI</li>
-                  <li>Obtenha o refresh token usando o OAuth Playground</li>
-                </ol>
-                <div className="mt-3 pt-3 border-t border-blue-200">
-                  <a 
-                    href="/GUIA_CREDENCIAIS_GOOGLE_MEET.md" 
-                    target="_blank"
-                    className="text-sm text-blue-600 hover:text-blue-800 underline font-medium"
-                  >
-                    📖 Ver guia completo passo a passo
-                  </a>
-                </div>
-                <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded">
-                  <p className="text-xs text-yellow-800 font-semibold mb-2">
-                    ⚠️ ATENÇÃO: Não use credenciais do Zoom aqui!
-                  </p>
-                  <p className="text-xs text-yellow-700">
-                    <strong>Google Meet:</strong> Client ID termina com <code>.apps.googleusercontent.com</code> ou é uma string longa (25+ caracteres)
-                  </p>
-                  <p className="text-xs text-yellow-700 mt-1">
-                    <strong>Zoom:</strong> Client ID é mais curto (10-20 caracteres) e usa Account ID separado
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <Button
-                  onClick={() => handleTest('GOOGLE_MEET')}
-                  loading={testing === 'GOOGLE_MEET'}
-                  disabled={testing === 'GOOGLE_MEET' || saving}
-                  variant="secondary"
-                  className="w-full"
-                >
-                  <TestTube size={18} />
-                  Testar Credenciais
-                </Button>
-                <Button
-                  onClick={() => handleSave('GOOGLE_MEET')}
-                  loading={saving}
-                  disabled={testing === 'GOOGLE_MEET'}
-                  className="w-full"
-                >
-                  <Save size={20} />
-                  Salvar
-                </Button>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Zoom */}
+          {/* Zoom primeiro — solução prática (entrada direta automática) */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-white rounded-lg shadow-md p-6"
+            className="bg-white rounded-lg shadow-md p-6 border-2 border-green-200"
           >
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <Video className="text-blue-600" size={24} />
-                <h2 className="text-xl font-bold text-gray-900">Zoom</h2>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Zoom</h2>
+                  <p className="text-xs text-green-700 font-medium">Recomendado — paciente e médico entram direto, sem aprovação</p>
+                </div>
                 {configs.find(c => c.platform === 'ZOOM')?.enabled ? (
                   <CheckCircle2 className="text-green-500" size={20} />
                 ) : (
@@ -566,6 +457,131 @@ export default function TelemedicineConfigPage() {
                   onClick={() => handleSave('ZOOM')}
                   loading={saving}
                   disabled={testing === 'ZOOM'}
+                  className="w-full"
+                >
+                  <Save size={20} />
+                  Salvar
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Google Meet — alternativa (exige config manual por reunião) */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-lg shadow-md p-6"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <Video className="text-blue-600" size={24} />
+                <h2 className="text-xl font-bold text-gray-900">Google Meet</h2>
+                {configs.find(c => c.platform === 'GOOGLE_MEET')?.enabled ? (
+                  <CheckCircle2 className="text-green-500" size={20} />
+                ) : (
+                  <XCircle className="text-gray-400" size={20} />
+                )}
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={configs.find(c => c.platform === 'GOOGLE_MEET')?.enabled || false}
+                  onChange={(e) => updateConfig('GOOGLE_MEET', { enabled: e.target.checked })}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+              </label>
+            </div>
+
+            <div className="space-y-4">
+              <Input
+                label="Client ID (Google OAuth)"
+                type="text"
+                value={configs.find(c => c.platform === 'GOOGLE_MEET')?.clientId || ''}
+                onChange={(e) => updateConfig('GOOGLE_MEET', { clientId: e.target.value })}
+                placeholder="xxxxx.apps.googleusercontent.com"
+              />
+
+              <Input
+                label="Client Secret (Google OAuth)"
+                type="password"
+                value={configs.find(c => c.platform === 'GOOGLE_MEET')?.clientSecret || ''}
+                onChange={(e) => updateConfig('GOOGLE_MEET', { clientSecret: e.target.value })}
+                placeholder="GOCSPX-xxxxx"
+              />
+
+              <Input
+                label="Refresh Token"
+                type="password"
+                value={configs.find(c => c.platform === 'GOOGLE_MEET')?.refreshToken || ''}
+                onChange={(e) => updateConfig('GOOGLE_MEET', { refreshToken: e.target.value })}
+                placeholder="1//xxxxx"
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  label="Duração Padrão (minutos)"
+                  type="number"
+                  min="15"
+                  max="120"
+                  value={configs.find(c => c.platform === 'GOOGLE_MEET')?.defaultDuration || 30}
+                  onChange={(e) => updateConfig('GOOGLE_MEET', { defaultDuration: parseInt(e.target.value) || 30 })}
+                />
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-800">
+                  <strong>Como obter as credenciais:</strong>
+                </p>
+                <ol className="list-decimal list-inside text-sm text-blue-700 mt-2 space-y-1">
+                  <li>Acesse o Google Cloud Console</li>
+                  <li>Crie um projeto ou selecione um existente</li>
+                  <li>Habilite a Google Calendar API</li>
+                  <li>Crie credenciais OAuth 2.0</li>
+                  <li>Configure o redirect URI</li>
+                  <li>Obtenha o refresh token usando o OAuth Playground</li>
+                </ol>
+                <div className="mt-3 pt-3 border-t border-blue-200">
+                  <a 
+                    href="/GUIA_CREDENCIAIS_GOOGLE_MEET.md" 
+                    target="_blank"
+                    className="text-sm text-blue-600 hover:text-blue-800 underline font-medium"
+                  >
+                    📖 Ver guia completo passo a passo
+                  </a>
+                </div>
+                <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded">
+                  <p className="text-xs text-yellow-800 font-semibold mb-2">
+                    ⚠️ ATENÇÃO: Não use credenciais do Zoom aqui!
+                  </p>
+                  <p className="text-xs text-yellow-700">
+                    <strong>Google Meet:</strong> Client ID termina com <code>.apps.googleusercontent.com</code> ou é uma string longa (25+ caracteres)
+                  </p>
+                  <p className="text-xs text-yellow-700 mt-1">
+                    <strong>Zoom:</strong> Client ID é mais curto (10-20 caracteres) e usa Account ID separado
+                  </p>
+                </div>
+
+                <p className="mt-3 text-sm text-amber-800">
+                  Se usar só o Meet: em cada consulta o organizador deve abrir o link → <strong>Controles do organizador</strong> (canto inferior direito) → <strong>Tipo de acesso → Abrir</strong>. Para evitar esse passo, use Zoom acima.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  onClick={() => handleTest('GOOGLE_MEET')}
+                  loading={testing === 'GOOGLE_MEET'}
+                  disabled={testing === 'GOOGLE_MEET' || saving}
+                  variant="secondary"
+                  className="w-full"
+                >
+                  <TestTube size={18} />
+                  Testar Credenciais
+                </Button>
+                <Button
+                  onClick={() => handleSave('GOOGLE_MEET')}
+                  loading={saving}
+                  disabled={testing === 'GOOGLE_MEET'}
                   className="w-full"
                 >
                   <Save size={20} />

@@ -1,6 +1,6 @@
 'use client';
 
-import Image from 'next/image';
+import LogoImage from '@/components/ui/LogoImage';
 import { Download, User, Calendar, Pill, FileCheck, Stethoscope, Hash, Shield } from 'lucide-react';
 import { useState } from 'react';
 
@@ -22,6 +22,7 @@ export default function PrescriptionView({
   onDownload,
 }: PrescriptionViewProps) {
   const [isDownloading, setIsDownloading] = useState(false);
+  const logoUrl = useLogoUrl();
 
   if (!prescription) return null;
 
@@ -97,7 +98,7 @@ export default function PrescriptionView({
   const documentHash = prescription.id.slice(0, 16).toUpperCase();
 
   return (
-    <div className="bg-white rounded-lg shadow-lg overflow-hidden" style={{ fontFamily: 'var(--font-inter), var(--font-roboto), sans-serif' }}>
+    <div className="bg-white rounded-lg shadow-lg overflow-hidden" style={{ fontFamily: 'var(--font-inter), var(--font-poppins), sans-serif' }}>
       {/* 🔝 CABEÇALHO */}
       <div className="bg-white border-b-2" style={{ borderColor: '#EAEAEA' }}>
         <div className="px-8 py-6">
@@ -105,16 +106,10 @@ export default function PrescriptionView({
             {/* Logo e Título */}
             <div className="flex items-center gap-4">
               <div className="flex-shrink-0">
-                <Image
-                  src="/images/cannalize-logo.png"
-                  alt="CannaLize"
-                  width={140}
-                  height={50}
-                  className="h-12 w-auto"
-                />
+                <LogoImage width={140} height={50} className="h-12 w-auto" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold" style={{ color: '#1F5E3B', fontFamily: 'var(--font-inter), var(--font-montserrat), var(--font-lato), sans-serif' }}>
+                <h1 className="text-xl font-semibold" style={{ color: '#1F5E3B', fontFamily: 'var(--font-inter), var(--font-poppins), sans-serif' }}>
                   RECEITA MÉDICA – USO MEDICINAL DE CANNABIS
                 </h1>
                 <p className="text-sm mt-1" style={{ color: '#666666' }}>
@@ -155,7 +150,7 @@ export default function PrescriptionView({
                 style={{ 
                   backgroundColor: '#1F5E3B', 
                   color: '#FFFFFF',
-                  fontFamily: 'Inter, Montserrat, Lato, sans-serif'
+                  fontFamily: 'var(--font-inter), var(--font-poppins), sans-serif'
                 }}
               >
                 <Download size={16} />
@@ -170,7 +165,7 @@ export default function PrescriptionView({
       <div className="px-8 py-6 space-y-6">
         {/* 👤 DADOS DO PACIENTE */}
         <div className="rounded-lg p-5" style={{ backgroundColor: '#F5F5F5' }}>
-          <h2 className="text-base font-semibold mb-4" style={{ color: '#1F5E3B', fontFamily: 'Inter, Montserrat, Lato, sans-serif' }}>
+          <h2 className="text-base font-semibold mb-4" style={{ color: '#1F5E3B', fontFamily: 'var(--font-inter), var(--font-poppins), sans-serif' }}>
             DADOS DO PACIENTE
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -226,7 +221,7 @@ export default function PrescriptionView({
         {/* 🧠 DIAGNÓSTICO / INDICAÇÃO CLÍNICA */}
         {(prescriptionData?.diagnosis || prescriptionData?.cid10 || anamnesisData) && (
           <div>
-            <h2 className="text-base font-semibold mb-3" style={{ color: '#1F5E3B', fontFamily: 'Inter, Montserrat, Lato, sans-serif' }}>
+            <h2 className="text-base font-semibold mb-3" style={{ color: '#1F5E3B', fontFamily: 'var(--font-inter), var(--font-poppins), sans-serif' }}>
               DIAGNÓSTICO / INDICAÇÃO CLÍNICA
             </h2>
             {prescriptionData?.cid10 && (
@@ -249,7 +244,7 @@ export default function PrescriptionView({
         {/* 🌿 PRODUTO PRESCRITO - SEÇÃO MAIS IMPORTANTE */}
         {medications.length > 0 && (
           <div className="border-2 rounded-lg p-5" style={{ borderColor: '#1F5E3B' }}>
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: '#1F5E3B', fontFamily: 'Inter, Montserrat, Lato, sans-serif' }}>
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: '#1F5E3B', fontFamily: 'var(--font-inter), var(--font-poppins), sans-serif' }}>
               <Pill size={20} />
               PRODUTO PRESCRITO
             </h2>
@@ -316,7 +311,7 @@ export default function PrescriptionView({
         {/* 💊 POSOLOGIA */}
         {medications.length > 0 && (
           <div>
-            <h2 className="text-base font-semibold mb-4 flex items-center gap-2" style={{ color: '#1F5E3B', fontFamily: 'Inter, Montserrat, Lato, sans-serif' }}>
+            <h2 className="text-base font-semibold mb-4 flex items-center gap-2" style={{ color: '#1F5E3B', fontFamily: 'var(--font-inter), var(--font-poppins), sans-serif' }}>
               <Pill size={18} />
               POSOLOGIA
             </h2>
@@ -388,7 +383,7 @@ export default function PrescriptionView({
         {/* 📦 QUANTIDADE TOTAL PRESCRITA */}
         {medications.length > 0 && medications.some((med: any) => med.quantity) && (
           <div className="bg-white border-2 rounded-lg p-5" style={{ borderColor: '#1F5E3B' }}>
-            <h2 className="text-base font-semibold mb-3" style={{ color: '#1F5E3B', fontFamily: 'Inter, Montserrat, Lato, sans-serif' }}>
+            <h2 className="text-base font-semibold mb-3" style={{ color: '#1F5E3B', fontFamily: 'var(--font-inter), var(--font-poppins), sans-serif' }}>
               QUANTIDADE TOTAL PRESCRITA
             </h2>
             <div className="space-y-2">
@@ -409,7 +404,7 @@ export default function PrescriptionView({
         {/* ⚠️ ORIENTAÇÕES MÉDICAS */}
         {prescriptionData?.observations && (
           <div>
-            <h2 className="text-base font-semibold mb-3" style={{ color: '#1F5E3B', fontFamily: 'Inter, Montserrat, Lato, sans-serif' }}>
+            <h2 className="text-base font-semibold mb-3" style={{ color: '#1F5E3B', fontFamily: 'var(--font-inter), var(--font-poppins), sans-serif' }}>
               ORIENTAÇÕES MÉDICAS
             </h2>
             <div className="bg-white border rounded-lg p-4" style={{ borderColor: '#EAEAEA' }}>
@@ -422,7 +417,7 @@ export default function PrescriptionView({
 
         {/* 👨‍⚕️ MÉDICO PRESCRITOR */}
         <div className="border-t-2 pt-6" style={{ borderColor: '#EAEAEA' }}>
-          <h2 className="text-base font-semibold mb-4" style={{ color: '#1F5E3B', fontFamily: 'Inter, Montserrat, Lato, sans-serif' }}>
+          <h2 className="text-base font-semibold mb-4" style={{ color: '#1F5E3B', fontFamily: 'var(--font-inter), var(--font-poppins), sans-serif' }}>
             MÉDICO PRESCRITOR
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -451,7 +446,7 @@ export default function PrescriptionView({
             <p className="text-xs mb-2" style={{ color: '#666666' }}>Assinatura</p>
             <div className="h-16 border-b-2 border-dashed flex items-center" style={{ borderColor: '#EAEAEA' }}>
               <p className="text-xs italic" style={{ color: '#999999' }}>
-                Assinatura Digital - Receita emitida através da plataforma CannaLize
+                Assinatura Digital - Receita emitida através da plataforma CannabiLizi
               </p>
             </div>
           </div>
@@ -482,7 +477,7 @@ export default function PrescriptionView({
                 <Shield size={12} style={{ color: '#1F5E3B' }} />
                 <span>
                   <span className="font-medium">Sistema: </span>
-                  CannaLize
+                  CannabiLizi
                 </span>
               </div>
             </div>

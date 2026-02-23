@@ -23,25 +23,20 @@ export default function PaymentForm({ consultationId, amount, onSuccess }: Payme
       // Simular processamento de pagamento
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // Atualizar status do pagamento
-      const response = await fetch(`/api/payments/${consultationId}`, {
-        method: 'PATCH',
+      // Confirmar pagamento (endpoint público: permite pagar sem login, ex.: pagar por outra pessoa)
+      const method = paymentMethod === 'credit' ? 'CREDIT_CARD' : paymentMethod === 'pix' ? 'PIX' : 'BOLETO';
+      const response = await fetch(`/api/consultations/${consultationId}/payment/confirm`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          status: 'PAID',
-          paymentMethod: paymentMethod === 'credit' ? 'CREDIT_CARD' : 
-                        paymentMethod === 'pix' ? 'PIX' : 
-                        'BOLETO',
-        }),
+        body: JSON.stringify({ paymentMethod: method }),
       });
 
       if (!response.ok) {
-        throw new Error('Erro ao processar pagamento');
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Erro ao processar pagamento');
       }
 
-      // Redirecionar para página de confirmação com orientações
-      // A mensagem de sucesso será exibida na página de confirmação
-      router.push(`/consultas/${consultationId}/confirmacao`);
+      onSuccess();
     } catch (error: any) {
       toast.error(error.message || 'Erro ao processar pagamento');
     } finally {

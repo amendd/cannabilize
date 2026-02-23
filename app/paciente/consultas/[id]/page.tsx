@@ -1,15 +1,27 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
-import { Video, FileText, Upload, X, Calendar, Clock, User, ExternalLink, Download } from 'lucide-react';
+import Link from 'next/link';
+import { Video, FileText, Upload, X, Calendar, Clock, User, ExternalLink, Download, CheckCircle2, ArrowRight, Hash, MapPin, CreditCard, RotateCcw } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import Button from '@/components/ui/Button';
 import LoadingPage from '@/components/ui/Loading';
-import PrescriptionView from '@/components/admin/PrescriptionView';
-import VideoCallWindow from '@/components/medico/VideoCallWindow';
+import Breadcrumbs from '@/components/ui/Breadcrumbs';
+
+const PrescriptionView = dynamic(
+  () => import('@/components/admin/PrescriptionView'),
+  { ssr: false, loading: () => <div className="rounded-lg border p-6 animate-pulse bg-gray-50 min-h-[200px]" /> }
+);
+
+const VideoCallWindow = dynamic(
+  () => import('@/components/medico/VideoCallWindow'),
+  { ssr: false, loading: () => <div className="rounded-lg border bg-gray-900 aspect-video flex items-center justify-center text-white animate-pulse">Carregando vídeo...</div> }
+);
+import { getConsultationStatusLabel, getPaymentStatusLabel } from '@/lib/status-labels';
 
 export default function PacienteConsultaPage() {
   const { data: session, status } = useSession();
@@ -23,6 +35,22 @@ export default function PacienteConsultaPage() {
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [anamnesisForm, setAnamnesisForm] = useState<{ previousTreatments: string; currentMedications: string; allergies: string; additionalInfo: string }>({ previousTreatments: '', currentMedications: '', allergies: '', additionalInfo: '' });
+  const [savingAnamnesis, setSavingAnamnesis] = useState(false);
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState<boolean | null>(null);
+  const [feedbackRating, setFeedbackRating] = useState(0);
+  const [feedbackComment, setFeedbackComment] = useState('');
+  const [savingFeedback, setSavingFeedback] = useState(false);
+  const [documentType, setDocumentType] = useState<string>('EXAM'); // EXAM | PRESCRIPTION | REPORT | OTHER
+
+  const documentTypeLabel = (type: string) => {
+    switch (type) {
+      case 'EXAM': return 'Exame';
+      case 'PRESCRIPTION': return 'Receita';
+      case 'REPORT': return 'Laudo/Relatório';
+      default: return 'Outro';
+    }
+  };
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -39,6 +67,41 @@ export default function PacienteConsultaPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [consultationId, status, session?.user?.id]);
+
+  useEffect(() => {
+    if (consultation?.anamnesis) {
+      try {
+        const data = typeof consultation.anamnesis === 'string' ? JSON.parse(consultation.anamnesis) : consultation.anamnesis;
+        setAnamnesisForm({
+          previousTreatments: data.previousTreatments || '',
+          currentMedications: data.currentMedications || '',
+          allergies: data.allergies || '',
+          additionalInfo: data.additionalInfo || '',
+        });
+      } catch {
+        // ignore
+      }
+    }
+  }, [consultation?.anamnesis]);
+
+  useEffect(() => {
+    if (consultationId && consultation?.status === 'COMPLETED') {
+      fetch(`/api/consultations/${consultationId}/feedback`)
+        .then(res => res.json())
+        .then(data => { setFeedbackSubmitted(!!data.submitted); if (data.rating) setFeedbackRating(data.rating); })
+        .catch(() => setFeedbackSubmitted(false));
+    }
+  }, [consultationId, consultation?.status]);
+
+  // Atualizar automaticamente quando o médico finalizar a consulta (paciente ainda na tela)
+  useEffect(() => {
+    if (!consultationId || !consultation || consultation.status === 'COMPLETED') return;
+    const interval = setInterval(() => {
+      loadConsultation();
+    }, 20000); // a cada 20s
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [consultationId, consultation?.status]);
 
   const loadConsultation = async () => {
     try {
@@ -138,7 +201,7 @@ export default function PacienteConsultaPage() {
     setUploading(true);
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('fileType', 'EXAM'); // Pode ser EXAM, REPORT, PRESCRIPTION, OTHER
+    formData.append('fileType', documentType);
     formData.append('description', '');
 
     try {
@@ -193,6 +256,54 @@ export default function PacienteConsultaPage() {
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
+  const handleSaveAnamnesis = async () => {
+    setSavingAnamnesis(true);
+    try {
+      const res = await fetch(`/api/consultations/${consultationId}/anamnesis`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(anamnesisForm),
+      });
+      if (res.ok) {
+        toast.success('Anamnese salva com sucesso.');
+        loadConsultation();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || 'Erro ao salvar.');
+      }
+    } catch {
+      toast.error('Erro ao salvar anamnese.');
+    } finally {
+      setSavingAnamnesis(false);
+    }
+  };
+
+  const handleSubmitFeedback = async () => {
+    if (feedbackRating < 1 || feedbackRating > 5) {
+      toast.error('Selecione uma nota de 1 a 5.');
+      return;
+    }
+    setSavingFeedback(true);
+    try {
+      const res = await fetch(`/api/consultations/${consultationId}/feedback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating: feedbackRating, comment: feedbackComment || undefined }),
+      });
+      if (res.ok) {
+        toast.success('Obrigado pela sua avaliação!');
+        setFeedbackSubmitted(true);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || 'Erro ao enviar.');
+      }
+    } catch {
+      toast.error('Erro ao enviar avaliação.');
+    } finally {
+      setSavingFeedback(false);
+    }
+  };
+
   const handleStartMeeting = async () => {
     // Para pacientes, apenas recarregar a consulta se já existe link
     // Pacientes não criam reuniões, apenas entram nas criadas pelo médico
@@ -231,36 +342,124 @@ export default function PacienteConsultaPage() {
                   (consultation.status === 'SCHEDULED' || consultation.status === 'IN_PROGRESS' || consultation.status === 'COMPLETED') &&
                   !!consultation.meetingLink;
 
-  const minutesUntil = canStart ? 0 : Math.ceil((fiveMinutesBefore.getTime() - now.getTime()) / (60 * 1000));
+  // Countdown até o horário marcado da consulta (ex.: 19:00), não até "5 min antes"
+  const minutesUntil = canStart ? 0 : Math.max(0, Math.ceil((consultationDateTime.getTime() - now.getTime()) / (60 * 1000)));
+
+  // Chamada encerrada = não permitir mais upload de arquivos
+  const isConsultationFinalized = consultation.status === 'COMPLETED' || !!consultation.videoCallEndedAt;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <button
-          onClick={() => router.back()}
-          className="mb-4 text-primary hover:underline flex items-center gap-2"
-        >
-          ← Voltar
-        </button>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <Breadcrumbs baseHref="/paciente" items={[{ label: 'Minhas Consultas', href: '/paciente/consultas' }, { label: 'Detalhe da consulta' }]} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Coluna Principal - Telemedicina e Upload */}
+          {/* Coluna Principal - Telemedicina ou Pós-Consulta */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Janela de Vídeo Integrada */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.05 }}
-            >
-              <VideoCallWindow
-                meetingLink={consultation.meetingLink}
-                consultationId={consultationId}
-                onStartMeeting={handleStartMeeting}
-                canStart={canStart}
-                minutesUntil={minutesUntil}
-                platform={consultation.meetingPlatform as 'ZOOM' | 'GOOGLE_MEET' | 'OTHER'}
-              />
-            </motion.div>
+            {/* Consulta finalizada: sem vídeo, bloco pós-consulta */}
+            {consultation.status === 'COMPLETED' ? (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.05 }}
+                className="bg-white rounded-lg shadow-lg p-6 border-2 border-green-100"
+              >
+                <div className="flex flex-col items-center text-center py-6">
+                  <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
+                    <CheckCircle2 className="text-green-600" size={32} />
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-2">Consulta finalizada</h2>
+                  <p className="text-gray-600 mb-6 max-w-md">
+                    O médico encerrou a chamada de vídeo. Abaixo você encontra o resumo da consulta, sua receita (quando houver) e os próximos passos.
+                  </p>
+                  <div className="flex flex-wrap justify-center gap-3">
+                    {consultation.prescription ? (
+                      <a href="#receita">
+                        <Button variant="primary" size="sm">
+                          <FileText size={18} />
+                          VER MINHA RECEITA
+                          <ArrowRight size={16} />
+                        </Button>
+                      </a>
+                    ) : (
+                      <span
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-500 cursor-not-allowed"
+                        title="A receita será disponibilizada após o médico emitir"
+                      >
+                        <FileText size={18} />
+                        VER MINHA RECEITA
+                      </span>
+                    )}
+                    <Link
+                      href={`/paciente/proximos-passos?from=consultation&id=${consultationId}`}
+                      className="inline-flex"
+                    >
+                      <span className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200 hover:text-gray-600 transition">
+                        PRÓXIMOS PASSOS
+                      </span>
+                    </Link>
+                    <Link href="/paciente/carteirinha" className="inline-flex">
+                      <span className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200 hover:text-gray-600 transition">
+                        CARTEIRINHA
+                      </span>
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Avalie o atendimento - só após consulta finalizada */}
+                {feedbackSubmitted === true && (
+                  <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg text-center">
+                    <p className="text-green-800 font-medium">Obrigado pela sua avaliação!</p>
+                  </div>
+                )}
+                {feedbackSubmitted === false && (
+                  <div className="mt-6 p-6 bg-gray-50 rounded-lg border border-gray-200">
+                    <h3 className="text-lg font-bold text-gray-900 mb-3">Avalie o atendimento</h3>
+                    <p className="text-sm text-gray-600 mb-4">Sua opinião nos ajuda a melhorar.</p>
+                    <div className="flex gap-2 mb-4">
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <button
+                          key={n}
+                          type="button"
+                          onClick={() => setFeedbackRating(n)}
+                          className={`w-10 h-10 rounded-full font-semibold transition ${
+                            feedbackRating === n ? 'bg-primary text-white' : 'bg-white border border-gray-300 text-gray-600 hover:border-primary'
+                          }`}
+                        >
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+                    <label className="block text-sm text-gray-700 mb-1">Comentário (opcional)</label>
+                    <textarea
+                      value={feedbackComment}
+                      onChange={(e) => setFeedbackComment(e.target.value)}
+                      rows={2}
+                      className="w-full px-3 py-2 border rounded-lg mb-4"
+                      placeholder="Conte como foi sua experiência..."
+                    />
+                    <Button onClick={handleSubmitFeedback} disabled={savingFeedback} variant="primary" size="sm">
+                      {savingFeedback ? 'Enviando...' : 'Enviar avaliação'}
+                    </Button>
+                  </div>
+                )}
+              </motion.div>
+            ) : (
+              /* Janela de Vídeo Integrada (enquanto agendada ou em andamento) */
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.05 }}
+              >
+                <VideoCallWindow
+                  meetingLink={consultation.meetingLink}
+                  consultationId={consultationId}
+                  onStartMeeting={handleStartMeeting}
+                  canStart={canStart}
+                  minutesUntil={minutesUntil}
+                  platform={consultation.meetingPlatform as 'ZOOM' | 'GOOGLE_MEET' | 'OTHER'}
+                />
+              </motion.div>
+            )}
 
             {/* Informações da Consulta */}
             <motion.div
@@ -271,35 +470,133 @@ export default function PacienteConsultaPage() {
             >
               <h1 className="text-2xl font-bold text-gray-900 mb-4">Informações da Consulta</h1>
 
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Calendar size={18} />
-                  <span>{new Date(consultationDate).toLocaleDateString('pt-BR')}</span>
-                </div>
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Clock size={18} />
-                  <span>{consultationTime}</span>
-                </div>
-              </div>
-
-              {consultation.doctor && (
-                <div className="border-t pt-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <User size={18} className="text-primary" />
-                    <h3 className="font-semibold text-gray-900">Médico</h3>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 text-gray-600">
+                  <Hash size={18} className="text-gray-400 shrink-0" />
+                  <div>
+                    <span className="text-xs text-gray-500 uppercase tracking-wide">Identificador</span>
+                    <p className="font-mono text-sm text-gray-800">{consultation.id.substring(0, 8).toUpperCase()}</p>
                   </div>
-                  <p className="text-gray-700">{consultation.doctor.name}</p>
                 </div>
-              )}
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center gap-3 text-gray-600">
+                    <Calendar size={18} className="text-primary shrink-0" />
+                    <div>
+                      <span className="text-xs text-gray-500 uppercase tracking-wide">Data</span>
+                      <p className="text-gray-800">{new Date(consultationDate).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 text-gray-600">
+                    <Clock size={18} className="text-primary shrink-0" />
+                    <div>
+                      <span className="text-xs text-gray-500 uppercase tracking-wide">Horário</span>
+                      <p className="text-gray-800">{consultationTime}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <CheckCircle2 size={18} className="text-primary shrink-0" />
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500 uppercase tracking-wide">Status</span>
+                    <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                    consultation.status === 'SCHEDULED' ? 'bg-yellow-100 text-yellow-800' :
+                    consultation.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-800' :
+                    consultation.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
+                    consultation.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {getConsultationStatusLabel(consultation.status)}
+                  </span>
+                  </div>
+                </div>
+
+                {consultation.doctor && (
+                  <div className="border-t pt-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <User size={18} className="text-primary shrink-0" />
+                      <span className="text-xs text-gray-500 uppercase tracking-wide">Médico(a)</span>
+                    </div>
+                    <p className="font-semibold text-gray-900">{consultation.doctor.name}</p>
+                    {(consultation.doctor.crm || consultation.doctor.specialization) && (
+                      <p className="text-sm text-gray-600 mt-0.5">
+                        {[consultation.doctor.crm && `CRM ${consultation.doctor.crm}`, consultation.doctor.specialization].filter(Boolean).join(' • ')}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex items-center gap-3 text-gray-600">
+                  {consultation.meetingLink ? (
+                    <>
+                      <Video size={18} className="text-primary shrink-0" />
+                      <div>
+                        <span className="text-xs text-gray-500 uppercase tracking-wide">Modalidade</span>
+                        <p className="text-gray-800">
+                          Telemedicina {consultation.meetingPlatform === 'ZOOM' ? '(Zoom)' : consultation.meetingPlatform === 'GOOGLE_MEET' ? '(Google Meet)' : ''}
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <MapPin size={18} className="text-primary shrink-0" />
+                      <div>
+                        <span className="text-xs text-gray-500 uppercase tracking-wide">Modalidade</span>
+                        <p className="text-gray-800">Presencial</p>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {consultation.payment && (
+                  <div className="flex items-center gap-3 text-gray-600">
+                    <CreditCard size={18} className="text-primary shrink-0" />
+                    <div>
+                      <span className="text-xs text-gray-500 uppercase tracking-wide">Pagamento</span>
+                      <p className="text-gray-800">{getPaymentStatusLabel(consultation.payment.status)}</p>
+                    </div>
+                  </div>
+                )}
+
+                {consultation.prescription ? (
+                  <div className="flex items-center gap-3 text-gray-600">
+                    <FileText size={18} className="text-green-600 shrink-0" />
+                    <div>
+                      <span className="text-xs text-gray-500 uppercase tracking-wide">Receita</span>
+                      <p className="text-gray-800">Emitida em {new Date(consultation.prescription.issuedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 text-gray-500">
+                    <FileText size={18} className="shrink-0" />
+                    <div>
+                      <span className="text-xs text-gray-500 uppercase tracking-wide">Receita</span>
+                      <p className="text-gray-600">Aguardando emissão pelo médico</p>
+                    </div>
+                  </div>
+                )}
+
+                {consultation.nextReturnDate && (
+                  <div className="flex items-center gap-3 text-gray-600 border-t pt-4">
+                    <RotateCcw size={18} className="text-primary shrink-0" />
+                    <div>
+                      <span className="text-xs text-gray-500 uppercase tracking-wide">Próximo retorno</span>
+                      <p className="text-gray-800">{new Date(consultation.nextReturnDate).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </motion.div>
 
             {/* Receita Médica */}
             {consultation.prescription && (
               <motion.div
+                id="receita"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 }}
-                className="bg-white rounded-lg shadow-lg p-6"
+                className="bg-white rounded-lg shadow-lg p-6 scroll-mt-4"
               >
                 <PrescriptionView
                   prescription={consultation.prescription}
@@ -311,42 +608,124 @@ export default function PacienteConsultaPage() {
               </motion.div>
             )}
 
-            {/* Upload de Arquivos */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-white rounded-lg shadow-lg p-6"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                  <Upload size={20} />
-                  Enviar Arquivos
-                </h2>
-              </div>
-              <p className="text-sm text-gray-500 mb-4">
-                Envie exames, laudos, receitas ou outros documentos para análise do médico.
-                Formatos aceitos: PDF, JPG, PNG, DOC, DOCX (máximo 10MB por arquivo).
-              </p>
-              
-              <input
-                ref={fileInputRef}
-                type="file"
-                onChange={handleFileUpload}
-                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                className="hidden"
-              />
-              
-              <Button
-                onClick={handleFileSelect}
-                disabled={uploading}
-                variant="outline"
-                className="w-full"
+            {/* Pré-consulta (Anamnese) — após pagamento, antes da consulta */}
+            {!isConsultationFinalized && consultation?.payment?.status === 'PAID' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.08 }}
+                className="bg-white rounded-lg shadow-lg p-6"
               >
-                <Upload size={18} />
-                {uploading ? 'Enviando...' : 'Selecionar Arquivo'}
-              </Button>
-            </motion.div>
+                <h2 className="text-xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+                  <FileText size={20} />
+                  Pré-consulta (Anamnese)
+                </h2>
+                <p className="text-sm text-gray-500 mb-4">
+                  Preencha com antecedência para o médico conhecer melhor seu caso. Você também pode enviar laudos e receitas abaixo.
+                </p>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Tratamentos anteriores</label>
+                    <textarea
+                      value={anamnesisForm.previousTreatments}
+                      onChange={(e) => setAnamnesisForm((p) => ({ ...p, previousTreatments: e.target.value }))}
+                      rows={2}
+                      className="w-full px-3 py-2 border rounded-lg"
+                      placeholder="Tratamentos anteriores relacionados à sua condição..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Medicamentos em uso</label>
+                    <textarea
+                      value={anamnesisForm.currentMedications}
+                      onChange={(e) => setAnamnesisForm((p) => ({ ...p, currentMedications: e.target.value }))}
+                      rows={2}
+                      className="w-full px-3 py-2 border rounded-lg"
+                      placeholder="Medicamentos que você está tomando..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Alergias</label>
+                    <textarea
+                      value={anamnesisForm.allergies}
+                      onChange={(e) => setAnamnesisForm((p) => ({ ...p, allergies: e.target.value }))}
+                      rows={1}
+                      className="w-full px-3 py-2 border rounded-lg"
+                      placeholder="Alergias conhecidas..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Informações adicionais</label>
+                    <textarea
+                      value={anamnesisForm.additionalInfo}
+                      onChange={(e) => setAnamnesisForm((p) => ({ ...p, additionalInfo: e.target.value }))}
+                      rows={3}
+                      className="w-full px-3 py-2 border rounded-lg"
+                      placeholder="Outras informações relevantes..."
+                    />
+                  </div>
+                  <Button onClick={handleSaveAnamnesis} disabled={savingAnamnesis} variant="primary" size="sm">
+                    {savingAnamnesis ? 'Salvando...' : 'Salvar anamnese'}
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Upload de Arquivos — só antes da consulta ser finalizada */}
+            {!isConsultationFinalized && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="bg-white rounded-lg shadow-lg p-6"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <Upload size={20} />
+                    Exames, receitas e laudos
+                  </h2>
+                </div>
+                <p className="text-sm text-gray-700 mb-4">
+                  Envie exames, receitas e laudos anteriores. Eles ficam <strong>anexados diretamente à sua consulta</strong> e o médico terá acesso na hora do atendimento.
+                </p>
+                <div className="mb-4">
+                  <span className="block text-sm font-medium text-gray-700 mb-2">Tipo do documento</span>
+                  <div className="flex flex-wrap gap-2">
+                    {(['EXAM', 'PRESCRIPTION', 'REPORT', 'OTHER'] as const).map((type) => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => setDocumentType(type)}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                          documentType === type
+                            ? 'bg-primary text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {documentTypeLabel(type)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  onChange={handleFileUpload}
+                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                  className="hidden"
+                />
+                <Button
+                  onClick={handleFileSelect}
+                  disabled={uploading}
+                  variant="outline"
+                  className="w-full"
+                >
+                  <Upload size={18} />
+                  {uploading ? 'Enviando...' : 'Selecionar e enviar'}
+                </Button>
+                <p className="text-xs text-gray-500 mt-2">PDF, JPG, PNG, DOC, DOCX (máx. 10MB)</p>
+              </motion.div>
+            )}
 
             {/* Arquivos Enviados */}
             {files.length > 0 && (
@@ -371,7 +750,7 @@ export default function PacienteConsultaPage() {
                         <div className="flex-1">
                           <p className="font-medium text-gray-900">{file.fileName}</p>
                           <p className="text-sm text-gray-500">
-                            {file.fileType} • {formatFileSize(file.fileSize || 0)} • {new Date(file.uploadedAt).toLocaleDateString('pt-BR')}
+                            {documentTypeLabel(file.fileType || 'OTHER')} • {formatFileSize(file.fileSize || 0)} • {new Date(file.uploadedAt).toLocaleDateString('pt-BR')}
                           </p>
                           {file.description && (
                             <p className="text-sm text-gray-600 mt-1">{file.description}</p>
@@ -421,10 +800,7 @@ export default function PacienteConsultaPage() {
                     consultation.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
                     'bg-gray-100 text-gray-800'
                   }`}>
-                    {consultation.status === 'SCHEDULED' ? 'Agendada' :
-                     consultation.status === 'IN_PROGRESS' ? 'Em Andamento' :
-                     consultation.status === 'COMPLETED' ? 'Concluída' :
-                     consultation.status}
+                    {getConsultationStatusLabel(consultation.status)}
                   </span>
                 </div>
                 {consultation.payment && (
@@ -435,16 +811,14 @@ export default function PacienteConsultaPage() {
                       consultation.payment.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
                       'bg-gray-100 text-gray-800'
                     }`}>
-                      {consultation.payment.status === 'PAID' ? 'Pago' :
-                       consultation.payment.status === 'PENDING' ? 'Pendente' :
-                       consultation.payment.status}
+                      {getPaymentStatusLabel(consultation.payment.status)}
                     </span>
                   </div>
                 )}
               </div>
             </motion.div>
 
-            {/* Informações de Ajuda */}
+            {/* Informações de Ajuda — dicas de upload só antes de finalizar */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -452,16 +826,21 @@ export default function PacienteConsultaPage() {
               className="bg-blue-50 rounded-lg p-6"
             >
               <h3 className="text-lg font-bold text-gray-900 mb-2">💡 Dicas</h3>
-              <ul className="text-sm text-gray-700 space-y-2">
-                <li>• Envie seus exames e documentos antes da consulta</li>
-                <li>• O médico terá acesso a todos os arquivos enviados</li>
-                <li>• Você pode enviar múltiplos arquivos</li>
-                <li>• Formatos aceitos: PDF, JPG, PNG, DOC, DOCX</li>
-              </ul>
+              {isConsultationFinalized ? (
+                <p className="text-sm text-gray-700">
+                  Consulta finalizada. Os documentos que você enviou antes da consulta permanecem disponíveis para o médico.
+                </p>
+              ) : (
+                <ul className="text-sm text-gray-700 space-y-2">
+                  <li>• Envie seus exames e documentos antes da consulta</li>
+                  <li>• O médico terá acesso a todos os arquivos enviados</li>
+                  <li>• Você pode enviar múltiplos arquivos</li>
+                  <li>• Formatos aceitos: PDF, JPG, PNG, DOC, DOCX</li>
+                </ul>
+              )}
             </motion.div>
           </div>
         </div>
-      </div>
     </div>
   );
 }

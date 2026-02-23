@@ -2,32 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { expirePendingInvites } from '@/lib/reschedule-invites';
 import { sendRescheduleInviteExpiredEmail } from '@/lib/email';
 import { prisma } from '@/lib/prisma';
+import { requireCronAuth } from '@/lib/cron-auth';
 
 /**
  * Job para expirar convites pendentes que passaram de 5 minutos
  * Deve ser chamado periodicamente (ex: a cada minuto via cron)
- * 
- * Para usar com Vercel Cron:
- * vercel.json:
- * {
- *   "crons": [{
- *     "path": "/api/cron/expire-reschedule-invites",
- *     "schedule": "* * * * *"
- *   }]
- * }
+ * Em produção, CRON_SECRET é obrigatório (Authorization: Bearer CRON_SECRET).
+ *
+ * Vercel: vercel.json crons. VPS: crontab com curl -H "Authorization: Bearer $CRON_SECRET"
  */
 export async function POST(request: NextRequest) {
   try {
-    // Verificar se é uma chamada autorizada (opcional: adicionar secret)
-    const authHeader = request.headers.get('authorization');
-    const cronSecret = process.env.CRON_SECRET;
-
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      );
-    }
+    const authError = requireCronAuth(request);
+    if (authError) return authError;
 
     // Expirar convites pendentes
     const expiredCount = await expirePendingInvites();

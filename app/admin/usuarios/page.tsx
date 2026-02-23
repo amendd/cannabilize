@@ -6,10 +6,11 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { UserPlus, Search, Edit, Trash2, MoreVertical, Shield, Stethoscope, User } from 'lucide-react';
+import { UserPlus, Search, Edit, Trash2, MoreVertical, Shield, Stethoscope, User, UserCog, RefreshCw } from 'lucide-react';
 import Breadcrumbs from '@/components/ui/Breadcrumbs';
 import { SkeletonTable } from '@/components/ui/Skeleton';
 import LoadingPage from '@/components/ui/Loading';
+import { canManageUsers } from '@/lib/roles-permissions';
 
 interface UserListItem {
   id: string;
@@ -19,19 +20,28 @@ interface UserListItem {
   phone: string | null;
   cpf: string | null;
   createdAt: string;
+  deletedAt?: string | null;
   _count: { consultations: number; prescriptions: number };
 }
 
 const ROLE_LABELS: Record<string, string> = {
+  SUPER_ADMIN: 'Super Admin',
   ADMIN: 'Administrador',
+  SUBADMIN: 'Subadmin',
+  OPERATOR: 'Operador',
   DOCTOR: 'Médico',
   PATIENT: 'Paciente',
+  AGRONOMIST: 'Engenheiro Agrônomo',
 };
 
 const ROLE_COLORS: Record<string, string> = {
+  SUPER_ADMIN: 'bg-purple-100 text-purple-800',
   ADMIN: 'bg-amber-100 text-amber-800',
+  SUBADMIN: 'bg-slate-100 text-slate-800',
+  OPERATOR: 'bg-sky-100 text-sky-800',
   DOCTOR: 'bg-blue-100 text-blue-800',
   PATIENT: 'bg-gray-100 text-gray-800',
+  AGRONOMIST: 'bg-green-100 text-green-800',
 };
 
 export default function AdminUsersPage() {
@@ -43,6 +53,7 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState('');
   const [searchDebounced, setSearchDebounced] = useState('');
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 });
+  const [includeDeleted, setIncludeDeleted] = useState(false);
   const [openActionsId, setOpenActionsId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -50,7 +61,7 @@ export default function AdminUsersPage() {
       router.push('/login');
       return;
     }
-    if (status === 'authenticated' && session?.user.role !== 'ADMIN') {
+    if (status === 'authenticated' && !canManageUsers(session?.user?.role)) {
       router.push('/');
       return;
     }
@@ -63,14 +74,14 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     setPagination((p) => ({ ...p, page: 1 }));
-  }, [roleFilter, searchDebounced]);
+  }, [roleFilter, searchDebounced, includeDeleted]);
 
   useEffect(() => {
-    if (session?.user.role === 'ADMIN') {
+    if (canManageUsers(session?.user?.role)) {
       fetchUsers();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.user?.role, roleFilter, searchDebounced, pagination.page]);
+  }, [session?.user?.role, roleFilter, searchDebounced, pagination.page, includeDeleted]);
 
   const fetchUsers = async () => {
     try {
@@ -80,6 +91,7 @@ export default function AdminUsersPage() {
       params.set('limit', String(pagination.limit));
       if (roleFilter) params.set('role', roleFilter);
       if (searchDebounced) params.set('search', searchDebounced);
+      if (includeDeleted) params.set('deleted', '1');
       const res = await fetch(`/api/admin/users?${params.toString()}`, { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
@@ -108,21 +120,42 @@ export default function AdminUsersPage() {
 
   const handleDelete = async (user: UserListItem) => {
     if (user.id === session?.user?.id) {
-      toast.error('Você não pode excluir sua própria conta.');
+      toast.error('Você não pode desativar sua própria conta.');
       return;
     }
-    if (!confirm(`Excluir o usuário "${user.name}"? Esta ação não pode ser desfeita.`)) return;
+    if (!confirm(`Desativar o usuário "${user.name}"? O usuário não poderá mais acessar o sistema. (Soft delete - dados mantidos para auditoria.)`)) return;
     try {
       const res = await fetch(`/api/admin/users/${user.id}`, { method: 'DELETE', credentials: 'include' });
       const data = await res.json();
       if (res.ok) {
-        toast.success('Usuário excluído.');
+        toast.success('Usuário desativado.');
         fetchUsers();
       } else {
-        toast.error(data.error || 'Erro ao excluir');
+        toast.error(data.error || 'Erro ao desativar');
       }
     } catch {
-      toast.error('Erro ao excluir usuário');
+      toast.error('Erro ao desativar usuário');
+    }
+    setOpenActionsId(null);
+  };
+
+  const handleRestore = async (user: UserListItem) => {
+    try {
+      const res = await fetch(`/api/admin/users/${user.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ restore: true }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success('Usuário reativado.');
+        fetchUsers();
+      } else {
+        toast.error(data.error || 'Erro ao reativar');
+      }
+    } catch {
+      toast.error('Erro ao reativar usuário');
     }
     setOpenActionsId(null);
   };
@@ -131,7 +164,7 @@ export default function AdminUsersPage() {
     new Date(dateStr).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
   if (status === 'loading') return <LoadingPage />;
-  if (!session || session.user.role !== 'ADMIN') return null;
+  if (!session || !canManageUsers(session.user?.role)) return null;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -173,10 +206,23 @@ export default function AdminUsersPage() {
               className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary min-w-[160px]"
             >
               <option value="">Todos os perfis</option>
+              <option value="SUPER_ADMIN">Super Admin</option>
               <option value="ADMIN">Administrador</option>
+              <option value="SUBADMIN">Subadmin</option>
+              <option value="OPERATOR">Operador</option>
               <option value="DOCTOR">Médico</option>
               <option value="PATIENT">Paciente</option>
+              <option value="AGRONOMIST">Engenheiro Agrônomo</option>
             </select>
+            <label className="flex items-center gap-2 text-sm text-gray-600 whitespace-nowrap cursor-pointer">
+              <input
+                type="checkbox"
+                checked={includeDeleted}
+                onChange={(e) => setIncludeDeleted(e.target.checked)}
+                className="rounded border-gray-300 text-primary focus:ring-primary"
+              />
+              Incluir desativados
+            </label>
           </div>
 
           <div className="overflow-x-auto">
@@ -216,6 +262,9 @@ export default function AdminUsersPage() {
                           >
                             {ROLE_LABELS[user.role] || user.role}
                           </span>
+                          {user.deletedAt && (
+                            <span className="ml-1 px-2 py-0.5 text-xs rounded bg-red-100 text-red-700">Desativado</span>
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{user.phone || '—'}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{formatDate(user.createdAt)}</td>
@@ -250,23 +299,46 @@ export default function AdminUsersPage() {
                                 >
                                   Editar e acessos
                                 </Link>
-                                <button
-                                  type="button"
-                                  onClick={() => handleDelete(user)}
-                                  className="w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-red-50"
-                                >
-                                  Excluir
-                                </button>
+                                {user.deletedAt ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRestore(user)}
+                                    className="w-full text-left px-4 py-2 text-sm text-emerald-700 hover:bg-emerald-50 flex items-center gap-2"
+                                  >
+                                    <RefreshCw size={14} />
+                                    Reativar
+                                  </button>
+                                ) : (
+                                  user.id !== session?.user?.id && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDelete(user)}
+                                      className="w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-red-50"
+                                    >
+                                      Desativar
+                                    </button>
+                                  )
+                                )}
                               </div>
                             )}
-                            {user.id !== session?.user?.id && (
+                            {!user.deletedAt && user.id !== session?.user?.id && (
                               <button
                                 type="button"
                                 onClick={() => handleDelete(user)}
                                 className="hidden xl:inline-flex items-center gap-1 px-3 py-1.5 rounded text-xs font-medium bg-red-100 text-red-800 hover:bg-red-200"
                               >
                                 <Trash2 size={14} />
-                                Excluir
+                                Desativar
+                              </button>
+                            )}
+                            {user.deletedAt && (
+                              <button
+                                type="button"
+                                onClick={() => handleRestore(user)}
+                                className="hidden xl:inline-flex items-center gap-1 px-3 py-1.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800 hover:bg-emerald-200"
+                              >
+                                <RefreshCw size={14} />
+                                Reativar
                               </button>
                             )}
                           </div>

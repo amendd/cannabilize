@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -8,8 +9,14 @@ import { motion } from 'framer-motion';
 import { Calendar, Clock, FileText, Video, User, ExternalLink, Search, Filter, ArrowUp } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Button from '@/components/ui/Button';
+import AgendarTrigger from '@/components/agendar/AgendarTrigger';
 import LoadingPage from '@/components/ui/Loading';
-import RescheduleInviteModal from '@/components/medico/RescheduleInviteModal';
+import NextAppointmentCountdown from '@/components/medico/NextAppointmentCountdown';
+
+const RescheduleInviteModal = dynamic(
+  () => import('@/components/medico/RescheduleInviteModal'),
+  { ssr: false }
+);
 
 interface Consultation {
   id: string;
@@ -18,6 +25,7 @@ interface Consultation {
   scheduledDate?: string;
   status: string;
   meetingLink?: string;
+  meetingStartUrl?: string | null;
   meetingPlatform?: string;
   anamnesis?: string | {
     previousTreatments?: string;
@@ -43,6 +51,7 @@ interface Consultation {
     id: string;
     status: string;
   };
+  rescheduleInvites?: { id: string; status: string; expiresAt: string }[];
 }
 
 export default function MedicoConsultasPage() {
@@ -54,6 +63,8 @@ export default function MedicoConsultasPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [rescheduleModalOpen, setRescheduleModalOpen] = useState(false);
   const [selectedConsultation, setSelectedConsultation] = useState<Consultation | null>(null);
+  const [rescheduleInvitesEnabled, setRescheduleInvitesEnabled] = useState(true);
+  const [recreatingMeetingId, setRecreatingMeetingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -70,6 +81,14 @@ export default function MedicoConsultasPage() {
   useEffect(() => {
     if (session?.user.role === 'DOCTOR' || session?.user.role === 'ADMIN') {
       loadConsultations();
+      fetch('/api/config/booking-features')
+        .then((res) => (res.ok ? res.json() : {}))
+        .then((data) => {
+          if (typeof data?.rescheduleInvitesEnabled === 'boolean') {
+            setRescheduleInvitesEnabled(data.rescheduleInvitesEnabled);
+          }
+        })
+        .catch(() => {});
     }
   }, [session, statusFilter]);
 
@@ -82,16 +101,18 @@ export default function MedicoConsultasPage() {
       }
       params.append('limit', '100');
 
-      const response = await fetch(`/api/admin/consultations?${params.toString()}`);
+      const isAdmin = session?.user.role === 'ADMIN';
+      const url = isAdmin
+        ? `/api/admin/consultations?${params.toString()}`
+        : `/api/doctors/me/consultations?${params.toString()}&full=true`;
+
+      const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
-        
-        // Filtrar consultas do médico (se for médico) ou todas (se for admin)
         const doctorId = session?.user.doctorId;
-        const filtered = doctorId
+        const filtered = isAdmin && doctorId
           ? data.filter((c: any) => c.doctorId === doctorId)
           : data;
-
         setConsultations(filtered);
       } else {
         toast.error('Erro ao carregar consultas');
@@ -109,21 +130,23 @@ export default function MedicoConsultasPage() {
       const consultation = consultations.find(c => c.id === consultationId);
       
       if (consultation?.meetingLink) {
-        window.open(consultation.meetingLink, '_blank');
+        // Zoom: médico deve abrir meetingStartUrl (host) para a reunião começar; senão o paciente fica "aguardando host"
+        window.open(consultation.meetingStartUrl || consultation.meetingLink, '_blank');
       } else {
         toast.loading('Criando reunião...');
         const response = await fetch(`/api/consultations/${consultationId}/meeting`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ platform: 'GOOGLE_MEET' }),
+          body: JSON.stringify({}),
         });
 
         if (response.ok) {
           const data = await response.json();
           toast.dismiss();
           toast.success('Reunião criada!');
+          // Médico abre link de host (Zoom start_url) para iniciar; paciente usa meetingLink — sem sala de espera/aprovação
           if (data.meeting?.meetingLink) {
-            window.open(data.meeting.meetingLink, '_blank');
+            window.open(data.meeting.meetingStartUrl || data.meeting.meetingLink, '_blank');
           }
           loadConsultations();
         } else {
@@ -136,6 +159,41 @@ export default function MedicoConsultasPage() {
       toast.dismiss();
       console.error('Erro ao iniciar reunião:', error);
       toast.error('Erro ao iniciar reunião');
+    }
+  };
+
+  /** Recriar reunião: cancela a atual e cria uma nova (ex.: trocar Zoom por Google Meet). */
+  const handleRecreateMeeting = async (consultationId: string) => {
+    try {
+      setRecreatingMeetingId(consultationId);
+      toast.loading('Recriando reunião (novo link)...');
+      const delRes = await fetch(`/api/consultations/${consultationId}/meeting`, { method: 'DELETE' });
+      if (!delRes.ok) {
+        const err = await delRes.json().catch(() => ({}));
+        toast.dismiss();
+        toast.error(err.error || 'Erro ao cancelar reunião anterior');
+        return;
+      }
+      const postRes = await fetch(`/api/consultations/${consultationId}/meeting`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      if (!postRes.ok) {
+        const err = await postRes.json().catch(() => ({}));
+        toast.dismiss();
+        toast.error(err.error || err.details || 'Erro ao criar nova reunião');
+        return;
+      }
+      toast.dismiss();
+      toast.success('Reunião recriada. Novo link disponível.');
+      await loadConsultations();
+    } catch (error) {
+      toast.dismiss();
+      console.error('Erro ao recriar reunião:', error);
+      toast.error(error instanceof Error ? error.message : 'Erro ao recriar reunião');
+    } finally {
+      setRecreatingMeetingId(null);
     }
   };
 
@@ -186,6 +244,16 @@ export default function MedicoConsultasPage() {
       >
         <h1 className="text-3xl font-bold text-gray-900">Minhas Consultas</h1>
         <p className="text-gray-600 mt-2">Visualize e gerencie todas as suas consultas</p>
+      </motion.div>
+
+      {/* Contador para o próximo atendimento */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+        className="mb-6"
+      >
+        <NextAppointmentCountdown consultations={consultations} showLink />
       </motion.div>
 
       {/* Filtros */}
@@ -242,11 +310,9 @@ export default function MedicoConsultasPage() {
                 : 'Você ainda não possui consultas agendadas'}
             </p>
             {!searchTerm && !statusFilter && (
-              <Link href="/agendamento">
-                <Button variant="primary" className="mt-4">
-                  Agendar Consulta
-                </Button>
-              </Link>
+              <AgendarTrigger className="mt-4 inline-flex items-center justify-center px-6 py-3 rounded-lg font-semibold bg-green-600 text-white hover:bg-green-700 transition">
+                Agendar Consulta
+              </AgendarTrigger>
             )}
           </div>
         ) : (
@@ -318,7 +384,24 @@ export default function MedicoConsultasPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {getStatusBadge(consultation.status)}
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {consultation.status === 'SCHEDULED' &&
+                          consultation.rescheduleInvites?.some((i) => i.status === 'ACCEPTED') ? (
+                            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-violet-100 text-violet-800">
+                              Reagendado
+                            </span>
+                          ) : (
+                            getStatusBadge(consultation.status)
+                          )}
+                          {consultation.status === 'SCHEDULED' &&
+                            consultation.rescheduleInvites?.some(
+                              (i) => i.status === 'PENDING' && new Date(i.expiresAt) > new Date()
+                            ) && (
+                              <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                                Convite enviado
+                              </span>
+                            )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {consultation.prescription ? (
@@ -351,16 +434,28 @@ export default function MedicoConsultasPage() {
                             const canStart = now >= fiveMinutesBefore && (consultation.status === 'SCHEDULED' || consultation.status === 'IN_PROGRESS');
                             
                             if (consultation.meetingLink) {
+                              const urlToOpen = consultation.meetingStartUrl || consultation.meetingLink;
                               return (
-                                <Button
-                                  onClick={() => window.open(consultation.meetingLink, '_blank')}
-                                  variant="primary"
-                                  size="sm"
-                                >
-                                  <Video size={16} />
-                                  Entrar
-                                  <ExternalLink size={14} />
-                                </Button>
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <Button
+                                    onClick={() => window.open(urlToOpen, '_blank')}
+                                    variant="primary"
+                                    size="sm"
+                                  >
+                                    <Video size={16} />
+                                    Entrar
+                                    <ExternalLink size={14} />
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleRecreateMeeting(consultation.id)}
+                                    disabled={recreatingMeetingId === consultation.id}
+                                    title="Gerar novo link (ex.: trocar Zoom por Google Meet)"
+                                  >
+                                    {recreatingMeetingId === consultation.id ? '...' : 'Recriar link'}
+                                  </Button>
+                                </div>
                               );
                             } else if (canStart) {
                               return (
@@ -374,7 +469,7 @@ export default function MedicoConsultasPage() {
                                 </Button>
                               );
                             } else if (now < fiveMinutesBefore && consultation.status === 'SCHEDULED') {
-                              const minutesUntil = Math.ceil((fiveMinutesBefore.getTime() - now.getTime()) / (60 * 1000));
+                              const minutesUntil = Math.max(0, Math.ceil((consultationDateTime.getTime() - now.getTime()) / (60 * 1000)));
                               return (
                                 <span className="text-xs text-gray-500">
                                   Em {minutesUntil} min
@@ -389,7 +484,7 @@ export default function MedicoConsultasPage() {
                             const consultationDateTime = new Date(`${consultationDate}T${consultationTime}`);
                             const now = new Date();
                             
-                            return consultation.status === 'SCHEDULED' && consultationDateTime > now ? (
+                            return rescheduleInvitesEnabled && consultation.status === 'SCHEDULED' && consultationDateTime > now ? (
                               <Button
                                 variant="outline"
                                 size="sm"

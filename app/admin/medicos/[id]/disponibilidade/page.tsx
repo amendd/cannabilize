@@ -163,6 +163,9 @@ export default function DoctorAvailabilityPage() {
             Disponibilidade - {doctor?.name}
           </h1>
           <p className="text-gray-600 mt-2">Configure os horários disponíveis para agendamento</p>
+          <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+            <strong>Como funciona:</strong> a disponibilidade é por <strong>dia da semana</strong> (ex.: Segunda, Sábado). Para uma data aparecer com horários na página de agendamento, o médico precisa ter esse dia cadastrado aqui (ex.: para pacientes agendarem em um sábado, adicione uma faixa com dia &quot;Sábado&quot;).
+          </div>
         </motion.div>
 
         {/* Formulário de adicionar */}

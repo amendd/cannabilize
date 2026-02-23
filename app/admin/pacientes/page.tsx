@@ -9,7 +9,8 @@ import toast from 'react-hot-toast';
 import Breadcrumbs from '@/components/ui/Breadcrumbs';
 import { SkeletonTable } from '@/components/ui/Skeleton';
 import LoadingPage from '@/components/ui/Loading';
-import { Search, Edit, Eye, LogIn, RefreshCw } from 'lucide-react';
+import { Search, Edit, Eye, LogIn, RefreshCw, UserPlus, Download, ChevronUp, ChevronDown, Trash2 } from 'lucide-react';
+import { canAccessAdmin } from '@/lib/roles-permissions';
 
 interface Patient {
   id: string;
@@ -51,13 +52,17 @@ export default function PatientsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [refreshNonce, setRefreshNonce] = useState(0);
+  const [sortBy, setSortBy] = useState<'name' | 'email' | 'createdAt' | 'consultations'>('name');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [deleteConfirmPatient, setDeleteConfirmPatient] = useState<Patient | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login');
       return;
     }
-    if (status === 'authenticated' && session?.user.role !== 'ADMIN') {
+    if (status === 'authenticated' && !canAccessAdmin(session?.user?.role)) {
       router.push('/');
       return;
     }
@@ -69,7 +74,7 @@ export default function PatientsPage() {
     return () => clearTimeout(t);
   }, [searchTerm]);
 
-  const isAdmin = status === 'authenticated' && session?.user?.role === 'ADMIN';
+  const isAdmin = status === 'authenticated' && canAccessAdmin(session?.user?.role);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -121,6 +126,59 @@ export default function PatientsPage() {
     return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
   };
 
+  const sortedPatients = [...patients].sort((a, b) => {
+    let cmp = 0;
+    if (sortBy === 'name') cmp = (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' });
+    else if (sortBy === 'email') cmp = (a.email || '').localeCompare(b.email || '', undefined, { sensitivity: 'base' });
+    else if (sortBy === 'createdAt') cmp = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    else cmp = (a.consultations?.length || 0) - (b.consultations?.length || 0);
+    return sortDir === 'asc' ? cmp : -cmp;
+  });
+
+  const toggleSort = (key: typeof sortBy) => {
+    if (sortBy === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    else {
+      setSortBy(key);
+      setSortDir(key === 'createdAt' || key === 'consultations' ? 'desc' : 'asc');
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirmPatient) return;
+    const id = deleteConfirmPatient.id;
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/admin/patients/${id}`, { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        toast.success('Cadastro do paciente excluído com sucesso.');
+        setDeleteConfirmPatient(null);
+        setRefreshNonce((n) => n + 1);
+      } else {
+        toast.error(data.error || 'Não foi possível excluir o paciente.');
+      }
+    } catch (err) {
+      console.error('Erro ao excluir paciente:', err);
+      toast.error('Erro ao excluir paciente.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const SortTh = ({ colKey, label }: { colKey: typeof sortBy; label: string }) => (
+    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+      <button
+        type="button"
+        onClick={() => toggleSort(colKey)}
+        className="inline-flex items-center gap-1 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/30 rounded"
+        aria-label={`Ordenar por ${label}`}
+      >
+        {label}
+        {sortBy === colKey ? (sortDir === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />) : null}
+      </button>
+    </th>
+  );
+
   if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen bg-gray-50 py-8">
@@ -131,7 +189,7 @@ export default function PatientsPage() {
     );
   }
 
-  if (!session || session.user.role !== 'ADMIN') {
+  if (!session || !canAccessAdmin(session.user?.role)) {
     return null;
   }
 
@@ -152,7 +210,23 @@ export default function PatientsPage() {
               <h1 className="text-3xl font-bold text-gray-900 font-display">Gerenciar Pacientes</h1>
               <p className="text-gray-600 mt-2">Visualize e gerencie todos os pacientes cadastrados</p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
+              <a
+                href="/api/admin/patients?format=csv"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-gray-200 shadow-sm hover:bg-gray-50 text-sm font-medium text-gray-700 min-h-[44px]"
+                download="pacientes.csv"
+              >
+                <Download size={16} />
+                Exportar CSV
+              </a>
+              <Link
+                href="/admin/pacientes/novo"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white shadow-sm hover:bg-primary/90 text-sm font-medium min-h-[44px]"
+                aria-label="Novo paciente (cadastro assistido)"
+              >
+                <UserPlus size={16} />
+                Novo paciente
+              </Link>
               <button
                 type="button"
                 onClick={() => setRefreshNonce((n) => n + 1)}
@@ -200,41 +274,33 @@ export default function PatientsPage() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Nome
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Email
-                  </th>
+                  <SortTh colKey="name" label="Nome" />
+                  <SortTh colKey="email" label="Email" />
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Telefone
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     CPF
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Consultas
-                  </th>
+                  <SortTh colKey="consultations" label="Consultas" />
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Receitas
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Cadastrado em
-                  </th>
+                  <SortTh colKey="createdAt" label="Cadastrado em" />
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Ações
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {patients.length === 0 ? (
+                {sortedPatients.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
                       {searchTerm ? 'Nenhum paciente encontrado' : 'Nenhum paciente cadastrado'}
                     </td>
                   </tr>
                 ) : (
-                  patients.map((patient) => (
+                  sortedPatients.map((patient) => (
                     <tr key={patient.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">{patient.name}</div>
@@ -302,6 +368,16 @@ export default function PatientsPage() {
                             <LogIn size={14} />
                             Acessar como
                           </a>
+                          <button
+                            type="button"
+                            onClick={() => setDeleteConfirmPatient(patient)}
+                            className="px-3 py-1 rounded text-xs font-medium bg-red-100 text-red-800 hover:bg-red-200 min-h-[32px] min-w-[80px] flex items-center justify-center gap-1"
+                            aria-label={`Excluir cadastro de ${patient.name}`}
+                            title="Excluir cadastro do paciente"
+                          >
+                            <Trash2 size={14} />
+                            Excluir
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -337,6 +413,54 @@ export default function PatientsPage() {
               </p>
             </div>
           </motion.div>
+        )}
+
+        {/* Modal de confirmação de exclusão */}
+        {deleteConfirmPatient && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="confirm-delete-title"
+          >
+            <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+              <h2 id="confirm-delete-title" className="text-lg font-semibold text-gray-900 mb-2">
+                Confirmar exclusão
+              </h2>
+              <p className="text-gray-600 mb-6">
+                Tem certeza que deseja excluir o cadastro de <strong>{deleteConfirmPatient.name}</strong>?
+                Esta ação não pode ser desfeita.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setDeleteConfirmPatient(null)}
+                  disabled={!!deletingId}
+                  className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 font-medium disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDelete}
+                  disabled={!!deletingId}
+                  className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 font-medium disabled:opacity-50 flex items-center gap-2"
+                >
+                  {deletingId ? (
+                    <>
+                      <RefreshCw size={16} className="animate-spin" />
+                      Excluindo...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 size={16} />
+                      Excluir
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

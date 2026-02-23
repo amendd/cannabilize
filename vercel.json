@@ -1,16 +1,11 @@
 {
   "crons": [
-    {
-      "path": "/api/admin/email/reminders?type=24H",
-      "schedule": "0 */6 * * *"
-    },
-    {
-      "path": "/api/admin/email/reminders?type=2H",
-      "schedule": "*/30 * * * *"
-    },
-    {
-      "path": "/api/admin/email/reminders?type=NOW",
-      "schedule": "*/15 * * * *"
-    }
+    {"path": "/api/admin/email/reminders?type=24H", "schedule": "0 */6 * * *"},
+    {"path": "/api/admin/email/reminders?type=2H", "schedule": "*/30 * * * *"},
+    {"path": "/api/admin/email/reminders?type=1H", "schedule": "*/20 * * * *"},
+    {"path": "/api/admin/email/reminders?type=10MIN", "schedule": "*/5 * * * *"},
+    {"path": "/api/admin/email/reminders?type=NOW", "schedule": "*/15 * * * *"},
+    {"path": "/api/cron/send-payment-reminders?window=24H", "schedule": "0 9 * * *"},
+    {"path": "/api/cron/whatsapp-follow-up", "schedule": "* * * * *"}
   ]
 }

@@ -114,12 +114,13 @@ export async function POST(
     }
 
     if (action === 'ACCEPT') {
-      // Verificar se horário ainda está disponível
+      // Verificar se horário ainda está disponível (sem exigir antecedência: o médico já escolheu o horário)
       const availabilityCheck = await isTimeSlotAvailable(
         invite.newScheduledDate,
         invite.newScheduledTime,
         invite.doctorId,
-        invite.consultationId
+        invite.consultationId,
+        { skipAdvanceBookingCheck: true }
       );
 
       if (!availabilityCheck.available) {

@@ -16,6 +16,8 @@ interface CreateMeetingParams {
   startTime: Date;
   duration: number; // em minutos
   platform?: TelemedicinePlatform;
+  /** Se true (e plataforma Zoom), grava a reunião na nuvem para transcrição e laudo. */
+  recordMeeting?: boolean;
 }
 
 interface MeetingResult {
@@ -113,10 +115,20 @@ export class TelemedicineService {
     let platform: TelemedicinePlatform;
     
     if (params.platform) {
-      // Se a plataforma foi especificada, usar ela
-      platform = params.platform;
+      try {
+        await this.getConfig(params.platform);
+        platform = params.platform;
+      } catch {
+        // Plataforma solicitada não configurada/habilitada: usar qualquer uma disponível
+        const fallback = await this.detectAvailablePlatform();
+        if (fallback) {
+          console.warn(`[Telemedicina] ${params.platform} não disponível, usando ${fallback}`);
+          platform = fallback;
+        } else {
+          throw new Error(`Plataforma ${params.platform} não configurada ou desabilitada. Configure no painel de administração (Telemedicina).`);
+        }
+      }
     } else {
-      // Caso contrário, detectar automaticamente qual está configurada
       const detectedPlatform = await this.detectAvailablePlatform();
       if (!detectedPlatform) {
         throw new Error('Nenhuma plataforma de telemedicina configurada e habilitada. Configure Zoom ou Google Meet no painel de administração.');
@@ -124,7 +136,7 @@ export class TelemedicineService {
       platform = detectedPlatform;
     }
 
-    // Verificar se a plataforma está configurada
+    // Verificar se a plataforma está configurada (obter config para credenciais)
     const config = await this.getConfig(platform);
 
     const endTime = new Date(params.startTime);
@@ -177,13 +189,14 @@ export class TelemedicineService {
       });
 
       // SEMPRE gerar senha para Zoom por segurança
-      // A senha será gerada automaticamente pelo ZoomService se não for fornecida
+      // Sala de espera desativada: médico e paciente entram direto, sem aprovação do host
       const meeting = await zoom.createMeeting({
         topic: `Consulta: ${params.patientName} com ${params.doctorName} - ID: ${params.consultationId.substring(0, 8)}`,
         startTime: params.startTime,
         duration: params.duration,
         password: undefined, // Deixar o ZoomService gerar senha única
-        waitingRoom: config.waitingRoom,
+        waitingRoom: false, // Nunca exigir aprovação do host; entrada direta com o link
+        recordMeeting: params.recordMeeting === true, // Gravação em nuvem para transcrição/laudo
       });
 
       meetingResult = {
@@ -245,7 +258,8 @@ export class TelemedicineService {
   }
 
   /**
-   * Cancela uma reunião
+   * Cancela uma reunião (remove link da consulta e, se a plataforma ainda estiver configurada, cancela o evento na API externa).
+   * Se Zoom/Meet foi desabilitado, apenas limpa os dados da consulta para permitir "Recriar link".
    */
   async cancelMeeting(consultationId: string): Promise<void> {
     const consultation = await prisma.consultation.findUnique({
@@ -256,27 +270,42 @@ export class TelemedicineService {
       throw new Error('Reunião não encontrada ou não configurada');
     }
 
-    const config = await this.getConfig(consultation.meetingPlatform as TelemedicinePlatform);
-
-    if (consultation.meetingPlatform === 'GOOGLE_MEET') {
-      const googleMeet = new GoogleMeetService({
-        clientId: config.clientId || '',
-        clientSecret: config.clientSecret || '',
-        refreshToken: config.refreshToken || '',
-      });
-
-      await googleMeet.cancelMeeting(consultation.meetingId);
-    } else if (consultation.meetingPlatform === 'ZOOM') {
-      const zoom = new ZoomService({
-        accountId: config.accountId || '',
-        clientId: config.clientId || '',
-        clientSecret: config.clientSecret || '',
-      });
-
-      await zoom.cancelMeeting(consultation.meetingId);
+    const platform = consultation.meetingPlatform as TelemedicinePlatform;
+    let config: Awaited<ReturnType<typeof this.getConfig>> | null = null;
+    try {
+      config = await this.getConfig(platform);
+    } catch {
+      // Plataforma desabilitada ou sem credenciais (ex.: trocou de Zoom para Meet) — só limpar a consulta
+      console.warn(`[Telemedicina] Plataforma ${platform} não disponível ao cancelar; limpando link da consulta ${consultationId}`);
     }
 
-    // Atualizar consulta
+    if (config) {
+      if (platform === 'GOOGLE_MEET') {
+        const googleMeet = new GoogleMeetService({
+          clientId: config.clientId || '',
+          clientSecret: config.clientSecret || '',
+          refreshToken: config.refreshToken || '',
+        });
+        try {
+          await googleMeet.cancelMeeting(consultation.meetingId);
+        } catch (err) {
+          console.warn('[Telemedicina] Erro ao cancelar evento no Google; limpando link da consulta:', err);
+        }
+      } else if (platform === 'ZOOM') {
+        const zoom = new ZoomService({
+          accountId: config.accountId || '',
+          clientId: config.clientId || '',
+          clientSecret: config.clientSecret || '',
+        });
+        try {
+          await zoom.cancelMeeting(consultation.meetingId);
+        } catch (err) {
+          console.warn('[Telemedicina] Erro ao cancelar reunião no Zoom; limpando link da consulta:', err);
+        }
+      }
+    }
+
+    // Sempre limpar os dados da reunião na consulta (permite "Recriar link" mesmo se a API externa falhou)
     await prisma.consultation.update({
       where: { id: consultationId },
       data: {

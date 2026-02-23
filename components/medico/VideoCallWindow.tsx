@@ -120,11 +120,16 @@ export default function VideoCallWindow({
               <h3 className="text-lg font-semibold text-gray-700 mb-2">
                 {isZoom ? 'Reunião Zoom' : 'Reunião Google Meet'}
               </h3>
-              <p className="text-sm text-gray-600 mb-6">
+              <p className="text-sm text-gray-600 mb-4">
                 {isZoom 
                   ? 'Para melhor experiência, abra a reunião em uma nova janela. Você pode minimizar esta janela e continuar usando a plataforma.'
                   : 'A reunião será aberta em uma nova janela para melhor experiência.'}
               </p>
+              {isGoogleMeet && (
+                <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2 mb-4">
+                  <strong>Se o paciente ver &quot;Aguarde um organizador&quot;:</strong> o organizador deve abrir este link primeiro, ir em <strong>Controles do organizador</strong> (canto inferior direito) → <strong>Tipo de acesso à reunião</strong> → selecionar <strong>&quot;Abrir&quot;</strong>. A API do Google não permite definir isso automaticamente; é preciso mudar em cada reunião.
+                </p>
+              )}
               <div className="flex flex-col gap-3">
                 <Button
                   onClick={handleOpenExternal}

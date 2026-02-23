@@ -1,15 +1,26 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
-import { Video, FileText, User, Calendar, Clock, FileUp, Save, ExternalLink, Download, Eye, FileCheck, Receipt, Stethoscope, X, RotateCcw, Info, AlertCircle, Settings } from 'lucide-react';
+import Link from 'next/link';
+import { Video, FileText, User, Calendar, Clock, FileUp, Save, ExternalLink, Download, Eye, FileCheck, Receipt, Stethoscope, X, RotateCcw, Info, AlertCircle, Settings, PhoneOff, CheckCircle2, RefreshCw, Sparkles, Mic } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import Button from '@/components/ui/Button';
 import LoadingPage from '@/components/ui/Loading';
-import PrescriptionBuilder from '@/components/medico/PrescriptionBuilder';
-import VideoCallWindow from '@/components/medico/VideoCallWindow';
+import NextAppointmentCountdown from '@/components/medico/NextAppointmentCountdown';
+
+const PrescriptionBuilder = dynamic(
+  () => import('@/components/medico/PrescriptionBuilder'),
+  { ssr: false, loading: () => <div className="rounded-lg border p-6 animate-pulse bg-gray-50 h-64" /> }
+);
+
+const VideoCallWindow = dynamic(
+  () => import('@/components/medico/VideoCallWindow'),
+  { ssr: false, loading: () => <div className="rounded-lg border bg-gray-900 aspect-video flex items-center justify-center text-white animate-pulse">Carregando vídeo...</div> }
+);
 
 export default function MedicoConsultaPage() {
   const { data: session, status } = useSession();
@@ -30,6 +41,11 @@ export default function MedicoConsultaPage() {
   const [savingReturnDate, setSavingReturnDate] = useState(false);
   const [telemedicineConfigured, setTelemedicineConfigured] = useState<boolean | null>(null);
   const [recreatingMeeting, setRecreatingMeeting] = useState(false);
+  const [endingVideoCall, setEndingVideoCall] = useState(false);
+  const [consultationsForCountdown, setConsultationsForCountdown] = useState<any[]>([]);
+  const [recordMeeting, setRecordMeeting] = useState(true); // Gravar Zoom para transcrição e laudo por IA
+  const [syncingRecording, setSyncingRecording] = useState(false);
+  const [generatingLaudo, setGeneratingLaudo] = useState(false);
 
   const checkTelemedicineStatus = async () => {
     try {
@@ -66,6 +82,7 @@ export default function MedicoConsultaPage() {
       loadPrescription();
       loadReturnDate();
       checkTelemedicineStatus();
+      loadConsultationsForCountdown();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [consultationId, status, session?.user?.role]);
@@ -228,6 +245,25 @@ export default function MedicoConsultaPage() {
     }
   };
 
+  const loadConsultationsForCountdown = async () => {
+    try {
+      const isAdmin = session?.user?.role === 'ADMIN';
+      const isImpersonating = isAdmin && typeof window !== 'undefined' && !!sessionStorage.getItem('admin_impersonated_doctor_id');
+      const doctorId = (session?.user as { doctorId?: string })?.doctorId;
+      const url = isAdmin && !isImpersonating
+        ? '/api/admin/consultations?limit=50'
+        : `/api/doctors/me/consultations?limit=50${doctorId && isImpersonating ? `&doctorId=${doctorId}` : ''}`;
+      const res = await fetch(url);
+      if (!res.ok) return;
+      const data = await res.json();
+      const list = Array.isArray(data) ? data : [];
+      const filtered = isAdmin && !isImpersonating && doctorId ? list.filter((c: any) => c.doctorId === doctorId) : list;
+      setConsultationsForCountdown(filtered);
+    } catch {
+      // silenciar
+    }
+  };
+
   const handlePrescriptionSaved = () => {
     loadPrescription();
     loadConsultation();
@@ -332,15 +368,17 @@ export default function MedicoConsultaPage() {
       const response = await fetch(`/api/consultations/${consultationId}/meeting`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // Não especificar plataforma - o sistema detectará automaticamente qual está configurada
-        body: JSON.stringify({}),
+        body: JSON.stringify({ recordMeeting }), // Zoom: gravação em nuvem para transcrição e laudo por IA
       });
 
       if (response.ok) {
         const data = await response.json();
         toast.dismiss();
         toast.success('Reunião criada com sucesso!');
-        // Recarregar consulta para obter o meetingLink
+        // Médico abre link de host para entrar; link de convidado fica disponível para o paciente — sem sala de espera
+        if (data.meeting?.meetingLink) {
+          window.open(data.meeting.meetingStartUrl || data.meeting.meetingLink, '_blank');
+        }
         await loadConsultation();
       } else {
         toast.dismiss();
@@ -360,7 +398,7 @@ export default function MedicoConsultaPage() {
     }
   };
 
-  /** Recriar reunião: cancela a atual e cria uma nova instantânea. Apenas para ADMIN. */
+  /** Recriar reunião: cancela a atual e cria uma nova (ex.: trocar Zoom por Google Meet). */
   const handleRecreateMeeting = async () => {
     if (!consultation?.meetingLink) return;
     try {
@@ -376,7 +414,7 @@ export default function MedicoConsultaPage() {
       const postRes = await fetch(`/api/consultations/${consultationId}/meeting`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ recordMeeting }),
       });
       if (!postRes.ok) {
         const err = await postRes.json().catch(() => ({}));
@@ -393,6 +431,70 @@ export default function MedicoConsultaPage() {
       toast.error(error instanceof Error ? error.message : 'Erro ao recriar reunião');
     } finally {
       setRecreatingMeeting(false);
+    }
+  };
+
+  /** Marcar que a chamada por vídeo foi encerrada (libera o botão de emitir receita). */
+  const handleEndVideoCall = async () => {
+    try {
+      setEndingVideoCall(true);
+      const res = await fetch(`/api/consultations/${consultationId}/end-video-call`, { method: 'POST' });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.error || 'Erro ao marcar chamada como encerrada');
+        return;
+      }
+      toast.success('Chamada marcada como encerrada. Você já pode emitir a receita.');
+      await loadConsultation();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erro ao marcar chamada');
+    } finally {
+      setEndingVideoCall(false);
+    }
+  };
+
+  /** Sincronizar gravação e transcrição do Zoom com a consulta. */
+  const handleSyncRecording = async () => {
+    try {
+      setSyncingRecording(true);
+      toast.loading('Sincronizando gravação...');
+      const res = await fetch(`/api/consultations/${consultationId}/recording/sync`, { method: 'POST' });
+      toast.dismiss();
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.error || 'Erro ao sincronizar gravação');
+        return;
+      }
+      const data = await res.json();
+      toast.success(data.message || 'Gravação sincronizada.');
+      await loadConsultation();
+    } catch (error) {
+      toast.dismiss();
+      toast.error(error instanceof Error ? error.message : 'Erro ao sincronizar');
+    } finally {
+      setSyncingRecording(false);
+    }
+  };
+
+  /** Gerar rascunho de laudo por IA a partir da transcrição. */
+  const handleGenerateLaudo = async () => {
+    try {
+      setGeneratingLaudo(true);
+      toast.loading('Gerando laudo...');
+      const res = await fetch(`/api/consultations/${consultationId}/laudo/generate`, { method: 'POST' });
+      toast.dismiss();
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.error || 'Erro ao gerar laudo');
+        return;
+      }
+      toast.success('Rascunho do laudo gerado. Revise abaixo.');
+      await loadConsultation();
+    } catch (error) {
+      toast.dismiss();
+      toast.error(error instanceof Error ? error.message : 'Erro ao gerar laudo');
+    } finally {
+      setGeneratingLaudo(false);
     }
   };
 
@@ -420,7 +522,8 @@ export default function MedicoConsultaPage() {
   const canStart = (now >= fiveMinutesBefore || now > consultationDateTime) && 
                   (consultation.status === 'SCHEDULED' || consultation.status === 'COMPLETED');
 
-  const minutesUntil = canStart ? 0 : Math.ceil((fiveMinutesBefore.getTime() - now.getTime()) / (60 * 1000));
+  // Countdown até o horário marcado da consulta (19:00), não até "5 min antes" (18:55)
+  const minutesUntil = canStart ? 0 : Math.max(0, Math.ceil((consultationDateTime.getTime() - now.getTime()) / (60 * 1000)));
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8">
@@ -478,25 +581,150 @@ export default function MedicoConsultaPage() {
           </div>
         </motion.div>
 
+        {/* Contador para o próximo atendimento */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="mb-6"
+        >
+          <NextAppointmentCountdown consultations={consultationsForCountdown} showLink />
+        </motion.div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Coluna Principal - Vídeo e Ferramentas */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Janela de Vídeo Integrada */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.05 }}
-            >
-              <VideoCallWindow
-                meetingLink={consultation.meetingLink}
-                meetingStartUrl={consultation.meetingStartUrl}
-                consultationId={consultationId}
-                onStartMeeting={handleStartMeeting}
-                canStart={canStart}
-                minutesUntil={minutesUntil}
-                platform={consultation.meetingPlatform as 'ZOOM' | 'GOOGLE_MEET' | 'OTHER'}
-              />
-            </motion.div>
+            {/* Janela de Vídeo Integrada — oculta quando consulta concluída ou médico encerrou a chamada */}
+            {consultation.status !== 'COMPLETED' && !consultation.videoCallEndedAt && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.05 }}
+              >
+                {/* Opção de gravar consulta (Zoom: transcrição e laudo por IA) — só antes de criar o link */}
+                {!consultation.meetingLink && canStart && telemedicineConfigured && (
+                  <div className="mb-4 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={recordMeeting}
+                        onChange={(e) => setRecordMeeting(e.target.checked)}
+                        className="rounded border-gray-300 text-primary focus:ring-primary"
+                      />
+                      <span className="text-sm text-gray-700">
+                        <Mic size={16} className="inline mr-1" />
+                        Gravar consulta (Zoom: transcrição e laudo por IA)
+                      </span>
+                    </label>
+                    <p className="text-xs text-gray-500 mt-2 ml-7">
+                      Se a reunião for Zoom, a gravação em nuvem será ativada. Após a chamada, sincronize e gere o laudo abaixo.
+                    </p>
+                  </div>
+                )}
+                <VideoCallWindow
+                  meetingLink={consultation.meetingLink}
+                  meetingStartUrl={consultation.meetingStartUrl}
+                  consultationId={consultationId}
+                  onStartMeeting={handleStartMeeting}
+                  canStart={canStart}
+                  minutesUntil={minutesUntil}
+                  platform={consultation.meetingPlatform as 'ZOOM' | 'GOOGLE_MEET' | 'OTHER'}
+                />
+                {/* Encerrar chamada por vídeo: libera o botão de emitir receita */}
+                {consultation.meetingLink && (
+                  <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+                    <div className="flex items-center justify-between gap-4 flex-wrap">
+                      <p className="text-sm text-gray-700">
+                        Após encerrar a chamada com o paciente, confirme aqui para poder emitir a receita.
+                      </p>
+                      <Button
+                        type="button"
+                        variant="primary"
+                        size="sm"
+                        onClick={handleEndVideoCall}
+                        loading={endingVideoCall}
+                        className="shrink-0"
+                      >
+                        <PhoneOff size={18} />
+                        Encerrei a chamada por vídeo
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {/* Gravação, transcrição e laudo (Zoom) — visível sempre que for reunião Zoom (antes ou após encerrar chamada) */}
+            {consultation.meetingLink && consultation.meetingPlatform === 'ZOOM' && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.08 }}
+                className="bg-white rounded-lg border border-gray-200 shadow-sm p-4"
+              >
+                <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2 mb-3">
+                  <Mic size={18} />
+                  Gravação e Laudo (Zoom + IA)
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Após encerrar a chamada, sincronize a gravação do Zoom. Com a transcrição, você pode gerar um rascunho de laudo por IA para revisar.
+                </p>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSyncRecording}
+                    loading={syncingRecording}
+                  >
+                    <RefreshCw size={16} />
+                    Sincronizar gravação
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleGenerateLaudo}
+                    loading={generatingLaudo}
+                    disabled={!consultation.transcriptText?.trim()}
+                    title={!consultation.transcriptText?.trim() ? 'Sincronize a gravação primeiro para obter a transcrição.' : 'Gerar rascunho de laudo por IA'}
+                  >
+                    <Sparkles size={16} />
+                    Gerar laudo por IA
+                  </Button>
+                </div>
+                {consultation.recordingUrl && (
+                  <div className="mb-3">
+                    <a
+                      href={consultation.recordingUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-primary hover:underline flex items-center gap-1"
+                    >
+                      <ExternalLink size={14} />
+                      Ver gravação no Zoom
+                    </a>
+                  </div>
+                )}
+                {consultation.transcriptText && (
+                  <details className="mb-3">
+                    <summary className="text-sm font-medium text-gray-700 cursor-pointer">Ver transcrição</summary>
+                    <pre className="mt-2 p-3 bg-gray-50 rounded text-xs text-gray-800 whitespace-pre-wrap max-h-48 overflow-y-auto border border-gray-200">
+                      {consultation.transcriptText}
+                    </pre>
+                  </details>
+                )}
+                {consultation.laudoDraft && (
+                  <details className="mb-2" open>
+                    <summary className="text-sm font-medium text-gray-700 cursor-pointer">Rascunho do laudo (revisar e assinar)</summary>
+                    <div className="mt-2 p-3 bg-amber-50 rounded border border-amber-200 text-sm text-gray-800 whitespace-pre-wrap max-h-64 overflow-y-auto">
+                      {consultation.laudoDraft}
+                    </div>
+                    <p className="text-xs text-amber-700 mt-2">Rascunho gerado por IA. Revise e edite nas anotações ou no prontuário antes de usar.</p>
+                  </details>
+                )}
+              </motion.div>
+            )}
 
             {/* Informações Rápidas da Consulta */}
             <motion.div
@@ -528,9 +756,21 @@ export default function MedicoConsultaPage() {
               </div>
 
               <div className="border-t pt-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <User size={18} className="text-primary" />
-                  <h3 className="font-semibold text-gray-900">Paciente</h3>
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-2">
+                    <User size={18} className="text-primary" />
+                    <h3 className="font-semibold text-gray-900">Paciente</h3>
+                  </div>
+                  {(consultation.patientId || consultation.patient?.id) && (
+                    <Link
+                      href={`/medico/pacientes/${consultation.patientId || consultation.patient?.id}/prontuario`}
+                      className="text-sm text-green-700 hover:text-green-800 font-medium inline-flex items-center gap-1"
+                    >
+                      <FileText size={14} />
+                      Abrir prontuário
+                      <ExternalLink size={12} />
+                    </Link>
+                  )}
                 </div>
                 <div className="pl-6 space-y-1">
                   <p className="text-lg font-medium text-gray-900">{consultation.patient?.name || consultation.name}</p>
@@ -706,6 +946,7 @@ export default function MedicoConsultaPage() {
                 consultationStatus={consultation?.status || 'SCHEDULED'}
                 existingPrescription={prescription}
                 onPrescriptionSaved={handlePrescriptionSaved}
+                allowEmitPrescription={!consultation?.meetingLink || !!consultation?.videoCallEndedAt}
               />
             </motion.div>
 

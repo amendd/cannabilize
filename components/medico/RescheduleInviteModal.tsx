@@ -109,9 +109,10 @@ export default function RescheduleInviteModal({
         return false;
       }
 
-      // Verificar se não é no passado (com margem de 5 minutos)
+      // Verificar se não é no passado (com margem de 5 minutos); comparar ao início do minuto para aceitar ex.: 20:20 quando são 20:15
       const now = new Date();
-      const fiveMinutesFromNow = new Date(now.getTime() + 5 * 60 * 1000);
+      const fiveMinutesFromNowMs = now.getTime() + 5 * 60 * 1000;
+      const fiveMinutesFromNow = new Date(Math.floor(fiveMinutesFromNowMs / 60000) * 60000);
       if (newDateTime < fiveMinutesFromNow) {
         setTimeValidationError('O horário deve ser pelo menos 5 minutos no futuro');
         setValidatingTime(false);
@@ -192,7 +193,8 @@ export default function RescheduleInviteModal({
       }
 
       const now = new Date();
-      const fiveMinutesFromNow = new Date(now.getTime() + 5 * 60 * 1000);
+      const fiveMinutesFromNowMs = now.getTime() + 5 * 60 * 1000;
+      const fiveMinutesFromNow = new Date(Math.floor(fiveMinutesFromNowMs / 60000) * 60000);
       if (newDateTime < fiveMinutesFromNow) {
         toast.error('O horário deve ser pelo menos 5 minutos no futuro');
         return;

@@ -8,6 +8,7 @@ import {
   sendPrescriptionIssuedEmail,
   sendConsultationFollowupEmail,
 } from '@/lib/email';
+import { createAuditLog, AuditAction, AuditEntity } from '@/lib/audit';
 
 // PrescriptionStatus: "DRAFT", "ISSUED", "USED", "EXPIRED", "CANCELLED"
 
@@ -171,6 +172,13 @@ export async function POST(request: NextRequest) {
             status: 'ISSUED',
           },
         });
+        createAuditLog({
+          userId: session.user.id,
+          action: AuditAction.PRESCRIPTION_ISSUED,
+          entity: AuditEntity.PRESCRIPTION,
+          entityId: prescription.id,
+          metadata: { consultationId },
+        }).catch(() => {});
       }
     }
 
@@ -310,8 +318,28 @@ export async function POST(request: NextRequest) {
           console.error('Erro ao enviar email de follow-up pós-consulta:', error);
         });
       }
+
+      // Enviar WhatsApp de receita emitida para o paciente
+      if (consultation.patient.phone) {
+        const { notifyPatientByWhatsApp } = await import('@/lib/notifications');
+        const prescriptionData = JSON.parse(prescription.prescriptionData);
+        
+        notifyPatientByWhatsApp({
+          patientName: consultation.patient.name,
+          patientPhone: consultation.patient.phone,
+          type: 'PRESCRIPTION_ISSUED',
+          prescriptionData: {
+            patientName: consultation.patient.name,
+            doctorName: doctor?.name || 'Não designado',
+            date: prescription.issuedAt,
+            medications: prescriptionData.medications?.map((m: any) => m.medicationName) || [],
+          },
+        }).catch(error => {
+          console.error('Erro ao enviar WhatsApp de receita:', error);
+        });
+      }
     } catch (emailError) {
-      console.error('Erro ao enviar email de follow-up (não crítico):', emailError);
+      console.error('Erro ao enviar notificações (não crítico):', emailError);
     }
 
     return NextResponse.json({

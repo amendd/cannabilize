@@ -1,0 +1,610 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  name          String
+  phone         String?
+  cpf           String?   @unique
+  password      String?
+  role          String    @default("PATIENT")
+  birthDate     DateTime? @map("birth_date")
+  address       String?
+  image         String?
+  emailVerified DateTime? @map("email_verified")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  consultations        Consultation[]
+  prescriptions        Prescription[]
+  anvisaAuthorizations AnvisaAuthorization[]
+  imports              Import[]
+  payments             Payment[]
+  testimonials         Testimonial[]
+  patientPathologies   PatientPathology[]
+  doctors              Doctor[]
+  patientCard          PatientCard?
+  consultationFiles    ConsultationFile[]
+  medicationsCreated   Medication[] @relation("MedicationCreatedBy")
+  medicationsUpdated   Medication[] @relation("MedicationUpdatedBy")
+  accountSetupTokens   AccountSetupToken[]
+  rescheduleInvites    ConsultationRescheduleInvite[]
+
+  @@map("users")
+}
+
+// UserRole: Use "PATIENT", "DOCTOR", "ADMIN"
+
+model Doctor {
+  id             String    @id @default(uuid())
+  name           String
+  crm            String    @unique
+  email          String    @unique
+  phone          String?
+  specialization String?
+  availability   String?
+  active         Boolean   @default(true)
+  lastActiveAt   DateTime? @map("last_active_at") // Rastreia última atividade do médico
+  userId         String?   @unique
+  user           User?     @relation(fields: [userId], references: [id])
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  consultations  Consultation[]
+  prescriptions  Prescription[]
+  availabilities DoctorAvailability[]
+  payoutAccount  DoctorPayoutAccount?
+  payouts        DoctorPayout[]
+  rescheduleInvites ConsultationRescheduleInvite[]
+
+  @@map("doctors")
+}
+
+model Pathology {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  patientPathologies PatientPathology[]
+
+  @@map("pathologies")
+}
+
+model PatientPathology {
+  patientId   String
+  pathologyId String
+  patient     User      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  pathology   Pathology @relation(fields: [pathologyId], references: [id], onDelete: Cascade)
+
+  @@id([patientId, pathologyId])
+  @@map("patient_pathologies")
+}
+
+model Consultation {
+  id              String   @id @default(uuid())
+  patientId       String   @map("patient_id")
+  doctorId        String?  @map("doctor_id")
+  scheduledAt     DateTime @map("scheduled_at")
+  scheduledDate   String?  @map("scheduled_date")
+  scheduledTime   String?  @map("scheduled_time")
+  status          String   @default("SCHEDULED")
+  meetingLink      String?  @map("meeting_link") // Link para participantes entrarem (join_url)
+  meetingStartUrl  String?  @map("meeting_start_url") // Link para o host INICIAR a reunião (Zoom start_url)
+  meetingPlatform  String?  @map("meeting_platform") // "ZOOM", "GOOGLE_MEET", "OTHER"
+  meetingId        String?  @map("meeting_id") // ID da reunião na plataforma
+  meetingPassword  String?  @map("meeting_password") // Senha da reunião (se necessário)
+  meetingData      String?  @map("meeting_data") // Dados adicionais em JSON
+  anamnesis       String?
+  notes           String?
+  nextReturnDate  DateTime? @map("next_return_date") // Data do próximo retorno do paciente
+  name            String? // Nome do paciente (se não tiver user)
+  email           String? // Email do paciente (se não tiver user)
+  phone           String? // Telefone do paciente (se não tiver user)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  patient      User          @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctor       Doctor?       @relation(fields: [doctorId], references: [id])
+  prescription Prescription?
+  payment      Payment?
+  testimonials Testimonial[]
+  files        ConsultationFile[]
+  rescheduleInvites ConsultationRescheduleInvite[]
+
+  @@map("consultations")
+}
+
+// ConsultationStatus: Use "SCHEDULED", "IN_PROGRESS", "COMPLETED", "CANCELLED", "NO_SHOW"
+
+model Prescription {
+  id               String    @id @default(uuid())
+  consultationId   String    @unique @map("consultation_id")
+  patientId        String    @map("patient_id")
+  doctorId         String    @map("doctor_id")
+  prescriptionData String    @map("prescription_data")
+  pdfUrl           String?   @map("pdf_url")
+  issuedAt         DateTime  @map("issued_at")
+  expiresAt        DateTime? @map("expires_at")
+  status           String    @default("ISSUED")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  consultation        Consultation             @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  patient             User                     @relation(fields: [patientId], references: [id])
+  doctor              Doctor                   @relation(fields: [doctorId], references: [id])
+  anvisaAuthorization AnvisaAuthorization?
+  medications         PrescriptionMedication[]
+  patientCards        PatientCard[]            @relation("ActivePrescription")
+
+  @@map("prescriptions")
+}
+
+// PrescriptionStatus: Use "ISSUED", "USED", "EXPIRED", "CANCELLED"
+
+model AnvisaAuthorization {
+  id              String    @id @default(uuid())
+  prescriptionId  String    @unique @map("prescription_id")
+  patientId       String    @map("patient_id")
+  anvisaNumber    String?   @unique @map("anvisa_number")
+  status          String    @default("PENDING")
+  documents       String?
+  submittedAt     DateTime? @map("submitted_at")
+  approvedAt      DateTime? @map("approved_at")
+  expiresAt       DateTime? @map("expires_at")
+  rejectionReason String?   @map("rejection_reason")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  prescription Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  patient      User         @relation(fields: [patientId], references: [id])
+  import       Import?
+
+  @@map("anvisa_authorizations")
+}
+
+// AnvisaStatus: Use "PENDING", "SUBMITTED", "UNDER_REVIEW", "APPROVED", "REJECTED", "EXPIRED"
+
+model Import {
+  id                    String    @id @default(uuid())
+  anvisaAuthorizationId String    @unique @map("anvisa_authorization_id")
+  patientId             String    @map("patient_id")
+  productData           String    @map("product_data")
+  trackingNumber        String?   @map("tracking_number")
+  status                String    @default("PENDING")
+  estimatedDelivery     DateTime? @map("estimated_delivery")
+  deliveredAt           DateTime? @map("delivered_at")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  anvisaAuthorization AnvisaAuthorization @relation(fields: [anvisaAuthorizationId], references: [id], onDelete: Cascade)
+  patient             User                @relation(fields: [patientId], references: [id])
+
+  @@map("imports")
+}
+
+// ImportStatus: Use "PENDING", "PROCESSING", "IN_TRANSIT", "IN_CUSTOMS", "DELIVERED", "CANCELLED"
+
+model Payment {
+  id              String    @id @default(uuid())
+  patientId       String    @map("patient_id")
+  consultationId  String?   @unique @map("consultation_id")
+  amount          Float
+  currency        String    @default("BRL")
+  paymentMethod   String?   @map("payment_method")
+  status          String    @default("PENDING")
+  transactionId   String?   @unique @map("transaction_id")
+  stripePaymentId String?   @map("stripe_payment_id")
+  paidAt          DateTime? @map("paid_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  patient      User          @relation(fields: [patientId], references: [id])
+  consultation Consultation? @relation(fields: [consultationId], references: [id])
+
+  @@map("payments")
+}
+
+// PaymentStatus: Use "PENDING", "PROCESSING", "PAID", "FAILED", "REFUNDED", "CANCELLED"
+
+model PaymentMethod {
+  id            String   @id @default(uuid())
+  name          String // Ex: "Cartão de Crédito", "PIX", "Boleto", "Stripe", "Mercado Pago"
+  type          String // "CREDIT_CARD", "PIX", "BOLETO", "STRIPE", "MERCADO_PAGO", etc.
+  enabled       Boolean  @default(false)
+  isIntegrated  Boolean  @default(false) // Se está integrado com gateway externo
+  gateway       String? // "stripe", "mercadopago", "pagseguro", etc.
+  apiKey        String? // Chave pública (criptografada)
+  apiSecret     String? // Chave secreta (criptografada)
+  webhookUrl    String? // URL do webhook
+  webhookSecret String? // Secret do webhook
+  config        String? // Configurações adicionais em JSON
+  minAmount     Float? // Valor mínimo
+  maxAmount     Float? // Valor máximo
+  fee           Float? // Taxa (em %)
+  feeType       String? // "PERCENTAGE" ou "FIXED"
+  description   String? // Descrição do método
+  instructions  String? // Instruções para o usuário
+  icon          String? // Ícone/emoji
+  order         Int      @default(0) // Ordem de exibição
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("payment_methods")
+}
+
+model Testimonial {
+  id             String   @id @default(uuid())
+  patientId      String   @map("patient_id")
+  consultationId String?  @map("consultation_id")
+  rating         Int      @default(5)
+  comment        String?
+  videoUrl       String?  @map("video_url")
+  source         String   @default("internal")
+  approved       Boolean  @default(false)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  patient      User          @relation(fields: [patientId], references: [id])
+  consultation Consultation? @relation(fields: [consultationId], references: [id])
+
+  @@map("testimonials")
+}
+
+model BlogPost {
+  id          String    @id @default(uuid())
+  title       String
+  slug        String    @unique
+  excerpt     String?
+  content     String
+  coverImage  String?   @map("cover_image")
+  category    String?
+  tags        String?
+  published   Boolean   @default(false)
+  publishedAt DateTime? @map("published_at")
+  authorId    String?   @map("author_id")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("blog_posts")
+}
+
+model Event {
+  id          String    @id @default(uuid())
+  title       String
+  slug        String    @unique
+  description String?
+  coverImage  String?   @map("cover_image")
+  eventDate   DateTime? @map("event_date")
+  location    String?
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  images EventImage[]
+
+  @@map("events")
+}
+
+model EventImage {
+  id        String   @id @default(uuid())
+  eventId   String   @map("event_id")
+  imageUrl  String   @map("image_url")
+  order     Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@map("event_images")
+}
+
+// Disponibilidade de médicos (horários e dias)
+model DoctorAvailability {
+  id        String   @id @default(uuid())
+  doctorId  String   @map("doctor_id")
+  dayOfWeek Int      @map("day_of_week") // 0 = Domingo, 1 = Segunda, ..., 6 = Sábado
+  startTime String   @map("start_time") // Formato: "HH:MM"
+  endTime   String   @map("end_time") // Formato: "HH:MM"
+  duration  Int      @default(30) // Duração da consulta em minutos
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@map("doctor_availabilities")
+}
+
+// Medicamentos do sistema (gerenciado pelo admin)
+model Medication {
+  id   String @id @default(uuid())
+
+  // 🟦 BLOCO 1 — IDENTIFICAÇÃO DO MEDICAMENTO
+  name              String // Nome “comercial interno”
+  productType       String @map("product_type") // "OIL", "GUMMIES", "CAPSULES", "EXTRACT", "FLOWER", "OTHER"
+  pharmaceuticalForm String @map("pharmaceutical_form") // Ex: "Óleo oral", "Cápsula gelatinosa"
+  activePrinciples  String @map("active_principles") // JSON string: ["CBD", "THC", "CBG", "CBN"]
+
+  // 🟩 BLOCO 2 — COMPOSIÇÃO CANABINOIDE (CRÍTICO)
+  cbdConcentrationValue Float  @map("cbd_concentration_value") // número
+  cbdConcentrationUnit  String @map("cbd_concentration_unit") // "MG_PER_ML" | "MG_PER_UNIT"
+  thcConcentrationValue Float  @default(0) @map("thc_concentration_value") // pode ser 0
+  thcConcentrationUnit  String @default("MG_PER_ML") @map("thc_concentration_unit")
+  otherCannabinoids     String?  @map("other_cannabinoids") // JSON string: [{ name, value, unit }]
+  spectrum              String @map("spectrum") // "FULL_SPECTRUM" | "BROAD_SPECTRUM" | "ISOLATE"
+
+  // 🟨 BLOCO 3 — USO CLÍNICO E DISPENSAÇÃO
+  administrationRoute String  @map("administration_route") // "SUBLINGUAL" | "ORAL" | "TOPICAL" | "INHALATION"
+  dispensingUnit      String  @map("dispensing_unit") // Ex: "Frasco 30 mL", "Caixa com 30 cápsulas"
+  allowsThc           Boolean @default(false) @map("allows_thc") // automático via THC > 0
+
+  // 🟥 BLOCO 4 — CONTROLE E REGULAÇÃO
+  regulatoryClassification String? @map("regulatory_classification") // "CBD_ONLY" | "CBD_THC" | "CONTROLLED"
+  supplier               String?   @map("supplier") // Associação / Fornecedor
+  active                 Boolean   @default(true) // Status Ativo/Inativo
+  order                  Int       @default(0) // Ordem de exibição
+
+  // 🟪 BLOCO 5 — DESCRIÇÃO TÉCNICA
+  description String?
+
+  // 🔐 BLOCO 6 — METADADOS (BACKEND)
+  createdById String? @map("created_by_id")
+  updatedById String? @map("updated_by_id")
+  recordHash  String? @map("record_hash")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  prescriptionMedications PrescriptionMedication[]
+  createdBy               User? @relation("MedicationCreatedBy", fields: [createdById], references: [id])
+  updatedBy               User? @relation("MedicationUpdatedBy", fields: [updatedById], references: [id])
+
+  @@map("medications")
+  @@unique([name])
+}
+
+// Relação entre receitas e medicamentos
+model PrescriptionMedication {
+  id             String   @id @default(uuid())
+  prescriptionId String   @map("prescription_id")
+  medicationId   String   @map("medication_id")
+  quantity       String? // Ex: "30 comprimidos", "1 frasco"
+  dosage         String? // Ex: "1 comprimido 2x ao dia"
+  instructions   String? // Instruções adicionais
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  prescription Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  medication   Medication   @relation(fields: [medicationId], references: [id])
+
+  @@unique([prescriptionId, medicationId])
+  @@map("prescription_medications")
+}
+
+// Configurações de telemedicina (Zoom, Google Meet)
+model TelemedicineConfig {
+  id              String    @id @default(uuid())
+  platform        String // "ZOOM", "GOOGLE_MEET"
+  enabled         Boolean   @default(false)
+  apiKey          String?   @map("api_key") // Chave da API (criptografada)
+  apiSecret       String?   @map("api_secret") // Secret da API (criptografada)
+  accountId       String?   @map("account_id") // ID da conta (Zoom)
+  clientId        String?   @map("client_id") // Client ID (Google OAuth)
+  clientSecret    String?   @map("client_secret") // Client Secret (Google OAuth)
+  refreshToken    String?   @map("refresh_token") // Refresh Token (Google OAuth)
+  accessToken     String?   @map("access_token") // Access Token (temporário)
+  tokenExpiresAt  DateTime? @map("token_expires_at") // Expiração do token
+  webhookUrl      String?   @map("webhook_url") // URL do webhook
+  webhookSecret   String?   @map("webhook_secret") // Secret do webhook
+  config          String? // Configurações adicionais em JSON
+  defaultDuration Int       @default(30) // Duração padrão em minutos
+  requirePassword Boolean   @default(false) @map("require_password") // Exigir senha
+  waitingRoom     Boolean   @default(true) @map("waiting_room") // Sala de espera
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@unique([platform])
+  @@map("telemedicine_configs")
+}
+
+// Configurações de integração de email
+model EmailConfig {
+  id             String    @id @default(uuid())
+  provider       String // "RESEND", "SENDGRID", "AWS_SES", "SMTP"
+  enabled        Boolean   @default(false)
+  apiKey         String?   @map("api_key") // Chave da API (criptografada)
+  apiSecret      String?   @map("api_secret") // Secret da API (criptografada)
+  fromEmail      String?   @map("from_email") // Email remetente padrão
+  fromName       String?   @map("from_name") // Nome remetente padrão
+  replyTo        String?   @map("reply_to") // Email para resposta
+  smtpHost       String?   @map("smtp_host") // Host SMTP (para SMTP customizado)
+  smtpPort       Int?      @map("smtp_port") // Porta SMTP
+  smtpUser       String?   @map("smtp_user") // Usuário SMTP
+  smtpPassword   String?   @map("smtp_password") // Senha SMTP
+  smtpSecure     Boolean   @default(true) @map("smtp_secure") // TLS/SSL
+  domain         String? // Domínio verificado (para alguns provedores)
+  region         String? // Região (para AWS SES)
+  config         String? // Configurações adicionais em JSON
+  testEmail      String?   @map("test_email") // Email para testes
+  lastTestAt     DateTime? @map("last_test_at") // Último teste realizado
+  lastTestResult String?   @map("last_test_result") // Resultado do último teste
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  @@unique([provider])
+  @@map("email_configs")
+}
+
+// Carteirinha Digital do Paciente
+model PatientCard {
+  id                   String    @id @default(uuid())
+  patientId            String    @unique @map("patient_id")
+  cardNumber           String?   @unique @map("card_number") // Número único da carteirinha (gerado após aprovação)
+  qrCodeUrl            String?   @map("qr_code_url") // URL do QR code (pode ser base64 ou URL)
+  qrCodeData           String?   @map("qr_code_data") // Dados do QR code (URL para receita)
+  activePrescriptionId String?   @map("active_prescription_id") // Receita ativa vinculada
+  approvalStatus       String    @default("PENDING") @map("approval_status") // PENDING, APPROVED, REJECTED
+  approvedBy           String?   @map("approved_by") // ID do admin que aprovou
+  approvedAt           DateTime? @map("approved_at") // Data de aprovação
+  rejectionReason      String?   @map("rejection_reason") // Motivo da rejeição (se houver)
+  issuedAt             DateTime? @map("issued_at") // Data de emissão (após aprovação)
+  expiresAt            DateTime? @map("expires_at") // Validade da carteirinha
+  status               String    @default("PENDING") // PENDING, ACTIVE, EXPIRED, SUSPENDED, REJECTED
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  patient            User          @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  activePrescription Prescription? @relation("ActivePrescription", fields: [activePrescriptionId], references: [id])
+
+  @@map("patient_cards")
+}
+
+// Arquivos enviados pelo paciente para a consulta
+model ConsultationFile {
+  id            String   @id @default(uuid())
+  consultationId String   @map("consultation_id")
+  patientId     String   @map("patient_id")
+  fileName      String   @map("file_name")
+  fileUrl       String   @map("file_url")
+  fileType      String   @map("file_type") // "EXAM", "REPORT", "PRESCRIPTION", "OTHER"
+  fileSize      Int?     @map("file_size") // Tamanho em bytes
+  description   String?  // Descrição opcional do arquivo
+  uploadedAt    DateTime @default(now()) @map("uploaded_at")
+
+  consultation Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  patient      User         @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@map("consultation_files")
+}
+
+// Dados para repasse/pagamento ao médico
+model DoctorPayoutAccount {
+  id            String   @id @default(uuid())
+  doctorId      String   @unique @map("doctor_id")
+  type          String   @default("PIX") // "PIX" | "BANK"
+
+  // PIX
+  pixKey        String?  @map("pix_key")
+  pixKeyType    String?  @map("pix_key_type") // "CPF" | "CNPJ" | "EMAIL" | "PHONE" | "RANDOM"
+
+  // Conta bancária
+  bankName      String?  @map("bank_name")
+  bankCode      String?  @map("bank_code")
+  agency        String?  @map("agency")
+  accountNumber String?  @map("account_number")
+  accountType   String?  @map("account_type") // "CHECKING" | "SAVINGS" | etc
+
+  // Titular
+  holderName    String?  @map("holder_name")
+  document      String?  @map("document") // CPF/CNPJ do titular
+
+  notes         String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@map("doctor_payout_accounts")
+}
+
+// Histórico de repasses/pagamentos ao médico
+model DoctorPayout {
+  id          String   @id @default(uuid())
+  doctorId    String   @map("doctor_id")
+  amount      Float
+  currency    String   @default("BRL")
+  status      String   @default("REQUESTED") // "REQUESTED" | "PROCESSING" | "PAID" | "REJECTED" | "CANCELLED"
+
+  periodStart DateTime? @map("period_start")
+  periodEnd   DateTime? @map("period_end")
+
+  requestedAt DateTime  @default(now()) @map("requested_at")
+  processedAt DateTime? @map("processed_at")
+  paidAt      DateTime? @map("paid_at")
+
+  reference   String?   @map("reference") // ID/NSU/Referência do repasse
+  notes       String?
+
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@index([doctorId, status, requestedAt])
+  @@map("doctor_payouts")
+}
+
+// Configurações globais do sistema
+model SystemConfig {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("system_configs")
+}
+
+// Tokens para conclusão de cadastro (definir senha)
+model AccountSetupToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime  @map("expires_at")
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@map("account_setup_tokens")
+}
+
+// Convites para adiantar consultas
+model ConsultationRescheduleInvite {
+  id                String   @id @default(uuid())
+  consultationId    String   @map("consultation_id")
+  patientId         String   @map("patient_id")
+  doctorId          String   @map("doctor_id")
+  
+  // Horário atual da consulta
+  currentScheduledAt DateTime @map("current_scheduled_at")
+  
+  // Novo horário proposto
+  newScheduledAt     DateTime @map("new_scheduled_at")
+  newScheduledDate   String   @map("new_scheduled_date") // YYYY-MM-DD
+  newScheduledTime   String   @map("new_scheduled_time") // HH:MM
+  
+  // Status do convite
+  status            String   @default("PENDING") // PENDING, ACCEPTED, REJECTED, EXPIRED, CANCELLED
+  
+  // Mensagem opcional do médico
+  message           String?  // Mensagem personalizada do médico
+  
+  // Metadados
+  expiresAt         DateTime @map("expires_at") // Expira em 24h por padrão
+  respondedAt       DateTime? @map("responded_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  
+  // Relações
+  consultation      Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  patient           User          @relation(fields: [patientId], references: [id])
+  doctor            Doctor        @relation(fields: [doctorId], references: [id])
+  
+  @@index([consultationId])
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("consultation_reschedule_invites")
+}

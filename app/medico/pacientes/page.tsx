@@ -99,6 +99,17 @@ export default function MedicoPacientesPage() {
     return age;
   };
 
+  /** Status da jornada clínica (estrutura preparada para inteligência futura) */
+  const getClinicalJourneyLabel = (patient: Patient): string => {
+    if (!patient.lastConsultation) return 'Tratamento iniciado';
+    const last = new Date(patient.lastConsultation);
+    const daysSince = Math.floor((Date.now() - last.getTime()) / (24 * 60 * 60 * 1000));
+    if (daysSince > 90) return 'Retorno recomendado';
+    if (daysSince > 30) return 'Ajuste necessário';
+    if (patient.totalConsultations >= 2) return 'Em acompanhamento';
+    return 'Tratamento iniciado';
+  };
+
   if (status === 'loading' || loading) {
     return <LoadingPage />;
   }
@@ -208,6 +219,7 @@ export default function MedicoPacientesPage() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Paciente</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Jornada</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contato</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Consultas</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Última Consulta</th>
@@ -241,6 +253,11 @@ export default function MedicoPacientesPage() {
                               )}
                             </div>
                           </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
+                            {getClinicalJourneyLabel(patient)}
+                          </span>
                         </td>
                         <td className="px-6 py-4">
                           <div className="space-y-1">
@@ -284,13 +301,22 @@ export default function MedicoPacientesPage() {
                           )}
                         </td>
                         <td className="px-6 py-4">
-                          <Link
-                            href={`/medico/consultas`}
-                            className="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition text-sm"
-                          >
-                            <Eye size={16} />
-                            Ver Consultas
-                          </Link>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Link
+                              href={`/medico/pacientes/${patient.id}/prontuario`}
+                              className="inline-flex items-center gap-2 bg-green-700 text-white px-4 py-2 rounded-lg hover:bg-green-800 transition text-sm"
+                            >
+                              <FileText size={16} />
+                              Prontuário
+                            </Link>
+                            <Link
+                              href={`/medico/consultas`}
+                              className="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition text-sm"
+                            >
+                              <Eye size={16} />
+                              Consultas
+                            </Link>
+                          </div>
                         </td>
                       </motion.tr>
                     );

@@ -54,14 +54,28 @@ export class ZoomService {
         method: 'POST',
         headers: {
           'Authorization': `Basic ${token}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
       });
 
+      const data = await response.json().catch(() => ({}));
+
       if (!response.ok) {
-        throw new Error('Falha ao obter token do Zoom');
+        const zoomError = (data as { error?: string; error_description?: string; reason?: string }).error;
+        const zoomDesc = (data as { error_description?: string }).error_description;
+        const zoomReason = (data as { reason?: string }).reason;
+        const detail = zoomDesc || zoomReason || (typeof data === 'object' && data !== null ? JSON.stringify(data) : '');
+        const hint = zoomError === 'invalid_client'
+          ? ' Verifique Client ID e Client Secret em Admin → Telemedicina.'
+          : zoomError === 'invalid_grant' || String(zoomReason || '').toLowerCase().includes('account')
+          ? ' Verifique o Account ID em Admin → Telemedicina (deve ser o ID da conta Zoom, não o e-mail).'
+          : ' Confira as credenciais em Admin → Telemedicina e use um app Zoom do tipo "Server-to-Server OAuth".';
+        throw new Error(`Falha ao obter token do Zoom${detail ? `: ${detail}` : ''}.${hint}`);
       }
 
-      const data = await response.json();
+      if (!data.access_token) {
+        throw new Error('Zoom não retornou token. Verifique as credenciais em Admin → Telemedicina.');
+      }
       this.config.accessToken = data.access_token;
       // Token expira em 1 hora
       this.config.tokenExpiresAt = new Date(Date.now() + 3600 * 1000);
@@ -82,6 +96,8 @@ export class ZoomService {
     password?: string;
     waitingRoom?: boolean;
     hostEmail?: string;
+    /** Se true, grava a reunião na nuvem do Zoom (requer plano com cloud recording). */
+    recordMeeting?: boolean;
   }): Promise<ZoomMeeting> {
     try {
       const accessToken = await this.getAccessToken();
@@ -101,14 +117,15 @@ export class ZoomService {
       
       const meetingPassword = params.password || generatePassword();
 
-      // Para reuniões instantâneas (agora), desabilitar sala de espera para permitir conexão imediata
-      // Para reuniões agendadas, usar a configuração do usuário
-      const shouldUseWaitingRoom = isPastOrNow ? false : (params.waitingRoom !== false);
+      // Telemedicina: sem sala de espera e sem aprovação de host — entrada direta e dinâmica.
+      // Só ativa sala de espera se explicitamente params.waitingRoom === true.
+      const shouldUseWaitingRoom = params.waitingRoom === true;
 
       console.log('🔧 Configuração da reunião Zoom:', {
         isPastOrNow,
         meetingType: meetingType === 1 ? 'Instantânea' : 'Agendada',
         waitingRoom: shouldUseWaitingRoom,
+        joinBeforeHost: true,
         startTime: params.startTime.toISOString(),
         now: new Date().toISOString(),
       });
@@ -120,13 +137,13 @@ export class ZoomService {
         timezone: 'America/Sao_Paulo',
         password: meetingPassword, // SEMPRE gerar senha para segurança
         settings: {
-          waiting_room: shouldUseWaitingRoom, // Desabilitar para reuniões instantâneas
-          join_before_host: true, // Permitir entrar antes do host
+          waiting_room: shouldUseWaitingRoom, // false = sem sala de espera; paciente entra direto
+          join_before_host: true, // Paciente pode entrar antes do médico; sem "aguardando host"
           host_video: true,
           participant_video: true,
           mute_upon_entry: false,
           approval_type: 0, // Automaticamente aprovar (só funciona se waiting_room estiver desabilitada)
-          auto_recording: 'none', // Não gravar automaticamente
+          auto_recording: params.recordMeeting === true ? 'cloud' : 'none', // Gravação em nuvem (opcional)
           meeting_authentication: false, // Não exigir autenticação Zoom (usamos nossa própria validação)
           cn_meeting: false, // Não é reunião China
           in_meeting: false, // Não é reunião Índia
@@ -356,5 +373,91 @@ export class ZoomService {
       console.error('Erro ao obter reunião do Zoom:', error);
       throw error;
     }
+  }
+
+  /**
+   * Lista gravações em nuvem de uma reunião (disponíveis após o fim da reunião).
+   * GET /v2/meetings/{meetingId}/recordings
+   */
+  async getMeetingRecordings(meetingId: string): Promise<{
+    recordingUrl?: string;
+    transcriptUrl?: string;
+    transcriptFileId?: string;
+    recordingFiles: Array<{ id: string; type: string; downloadUrl: string; fileType?: string }>;
+  }> {
+    try {
+      const accessToken = await this.getAccessToken();
+      const response = await fetch(
+        `https://api.zoom.us/v2/meetings/${meetingId}/recordings`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+
+      if (response.status === 404 || response.status === 400) {
+        return { recordingFiles: [] };
+      }
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(errText || 'Falha ao listar gravações');
+      }
+
+      const data = (await response.json()) as {
+        recording_files?: Array<{
+          id?: string;
+          meeting_id?: string;
+          recording_start?: string;
+          recording_end?: string;
+          file_type?: string;
+          file_extension?: string;
+          file_size?: number;
+          play_url?: string;
+          download_url?: string;
+          status?: string;
+        }>;
+        share_url?: string;
+      };
+
+      const recordingFiles: Array<{ id: string; type: string; downloadUrl: string; fileType?: string }> = [];
+      let recordingUrl: string | undefined = data.share_url;
+      let transcriptUrl: string | undefined;
+      let transcriptFileId: string | undefined;
+
+      for (const f of data.recording_files ?? []) {
+        const type = (f.file_type ?? '').toUpperCase();
+        const downloadUrl = f.download_url ?? f.play_url ?? '';
+        if (!downloadUrl) continue;
+        recordingFiles.push({
+          id: f.id ?? '',
+          type,
+          downloadUrl,
+          fileType: f.file_type,
+        });
+        if (type === 'TRANSCRIPT' || type === 'VTT' || (f.file_extension && ['VTT', 'TXT'].includes(f.file_extension.toUpperCase()))) {
+          transcriptUrl = downloadUrl;
+          transcriptFileId = f.id;
+        }
+      }
+
+      return { recordingUrl, transcriptUrl, transcriptFileId, recordingFiles };
+    } catch (error) {
+      console.error('Erro ao obter gravações do Zoom:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Baixa o conteúdo da transcrição a partir da URL retornada por getMeetingRecordings.
+   * A URL do Zoom exige token de download; use download_url com o mesmo access token.
+   */
+  async downloadTranscriptFile(downloadUrl: string): Promise<string> {
+    const accessToken = await this.getAccessToken();
+    const response = await fetch(downloadUrl, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!response.ok) {
+      throw new Error(`Falha ao baixar transcrição: ${response.status}`);
+    }
+    return response.text();
   }
 }

@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { IdCard, CheckCircle, XCircle, Clock, Search, Eye, Download } from 'lucide-react';
+import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import CarteirinhaCard from '@/components/carteirinha/CarteirinhaCard';
 
 interface PatientCardData {
   id: string;
@@ -23,6 +25,7 @@ interface PatientCardData {
     email: string;
     cpf: string | null;
     phone: string | null;
+    birthDate?: string | null;
     image?: string | null;
   };
   activePrescription: {
@@ -45,6 +48,9 @@ export default function AdminCarteirinhasPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [processing, setProcessing] = useState<string | null>(null);
   const [selectedCard, setSelectedCard] = useState<PatientCardData | null>(null);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+  const modalCardRef = useRef<HTMLDivElement>(null);
+  const triggerPdfAfterOpen = useRef(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -132,137 +138,70 @@ export default function AdminCarteirinhasPage() {
     }
   };
 
-  const downloadQrPng = (card: PatientCardData) => {
-    if (!card.qrCodeUrl) return;
-
-    const safeCardNumber = card.cardNumber || card.id;
-    const link = document.createElement('a');
-    link.href = card.qrCodeUrl;
-    link.download = `carteirinha-qr-${safeCardNumber}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const downloadCardPdf = (card: PatientCardData) => {
-    // Criar PDF em formato de cartão (paisagem)
-    const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: [320, 200] });
-
-    const width = 320;
-    const height = 200;
-
-    // Fundo geral
-    doc.setFillColor(230, 244, 239);
-    doc.roundedRect(8, 8, width - 16, height - 16, 10, 10, 'F');
-
-    // Faixa superior azul
-    doc.setFillColor(11, 40, 85);
-    doc.roundedRect(16, 18, width - 32, 32, 8, 8, 'F');
-
-    doc.setTextColor(255, 255, 255);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
-    doc.text(
-      'PACIENTE REGISTRADO DE CANNABIS MEDICINAL',
-      24,
-      38
-    );
-
-    doc.setFontSize(10);
-    const title = 'CANNA ID';
-    const titleWidth = doc.getTextWidth(title);
-    doc.text(title, width - 24 - titleWidth, 38);
-
-    // Faixa lateral com número
-    doc.setFillColor(186, 230, 201);
-    doc.roundedRect(24, 58, 40, height - 66, 8, 8, 'F');
-    doc.setTextColor(12, 63, 39);
-    doc.setFontSize(7);
-    doc.text('Nº DE REGISTRO', 28, 72);
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'bold');
-    const cardNumber = card.cardNumber || '—';
-    const lines = doc.splitTextToSize(cardNumber, 32);
-    doc.text(lines as string[], 28, 90);
-
-    // Foto
-    const photoX = 74;
-    const photoY = 70;
-    const photoW = 80;
-    const photoH = 96;
-    doc.setDrawColor(180, 215, 190);
-    doc.setLineWidth(1);
-    doc.roundedRect(photoX, photoY, photoW, photoH, 6, 6, 'S');
-
-    // Não temos a foto diretamente aqui; o QR é a única imagem confiável
-    // então deixamos o quadro em branco para impressão física
-
-    // Dados textuais à direita
-    const baseX = photoX + photoW + 16;
-    let y = 80;
-    doc.setTextColor(66, 82, 110);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7);
-
-    const label = (text: string, value: string) => {
-      doc.setTextColor(100, 116, 139);
-      doc.setFont('helvetica', 'bold');
-      doc.text(text.toUpperCase(), baseX, y);
-      y += 10;
-      doc.setTextColor(30, 41, 59);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(9);
-      doc.text(value || '—', baseX, y);
-      y += 12;
-      doc.setFontSize(7);
-    };
-
-    label('Nome', card.patient.name);
-    label('CPF', card.patient.cpf || '—');
-    label(
-      'Data de nascimento',
-      card.issuedAt
-        ? (card as any).patient?.birthDate
-          ? new Date((card as any).patient.birthDate as any).toLocaleDateString('pt-BR')
-          : '—'
-        : '—'
-    );
-    label('Nacionalidade', 'BRASILEIRO(A)');
-    label('Tipo', 'PACIENTE');
-
-    // Validade e datas no rodapé
-    doc.setFontSize(7);
-    doc.setTextColor(100, 116, 139);
-    const bottomY = height - 30;
-    doc.text(
-      `Emitida em: ${
-        card.issuedAt ? new Date(card.issuedAt).toLocaleDateString('pt-BR') : '—'
-      }`,
-      32,
-      bottomY
-    );
-    doc.text(
-      `Validade: ${
-        card.expiresAt ? new Date(card.expiresAt).toLocaleDateString('pt-BR') : '—'
-      }`,
-      32,
-      bottomY + 11
-    );
-
-    // QR code no canto direito
-    if (card.qrCodeUrl) {
-      const qrSize = 56;
-      const qrX = width - qrSize - 32;
-      const qrY = height - qrSize - 40;
-      doc.addImage(card.qrCodeUrl, 'PNG', qrX, qrY, qrSize, qrSize);
-      doc.setFontSize(6.5);
-      doc.setTextColor(100, 116, 139);
-      doc.text('Escaneie para validar', qrX, qrY - 4);
+  const downloadCardPdfFromRef = async () => {
+    if (!modalCardRef.current || !selectedCard) return;
+    setGeneratingPdf(true);
+    try {
+      const canvas = await html2canvas(modalCardRef.current, {
+        backgroundColor: null,
+        scale: 2,
+        logging: false,
+        useCORS: true,
+      });
+      const imgData = canvas.toDataURL('image/png');
+      const doc = new jsPDF({
+        orientation: 'landscape',
+        unit: 'px',
+        format: [canvas.width, canvas.height],
+      });
+      doc.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+      const safe = (selectedCard.cardNumber || selectedCard.id).replace(/[/\\?%*:|"<>]/g, '-');
+      doc.save(`carteirinha-${safe}.pdf`);
+    } catch (e) {
+      console.error('Erro ao gerar PDF da carteirinha:', e);
+    } finally {
+      setGeneratingPdf(false);
     }
-
-    const safeCardNumber = card.cardNumber || card.id;
-    doc.save(`carteirinha-${safeCardNumber}.pdf`);
   };
+
+  const openModalAndDownloadPdf = (card: PatientCardData) => {
+    setSelectedCard(card);
+    triggerPdfAfterOpen.current = true;
+  };
+
+  useEffect(() => {
+    if (!selectedCard || !triggerPdfAfterOpen.current) return;
+    const timer = setTimeout(() => {
+      if (modalCardRef.current) {
+        triggerPdfAfterOpen.current = false;
+        void (async () => {
+          setGeneratingPdf(true);
+          try {
+            const canvas = await html2canvas(modalCardRef.current!, {
+              backgroundColor: null,
+              scale: 2,
+              logging: false,
+              useCORS: true,
+            });
+            const imgData = canvas.toDataURL('image/png');
+            const doc = new jsPDF({
+              orientation: 'landscape',
+              unit: 'px',
+              format: [canvas.width, canvas.height],
+            });
+            doc.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+            const safe = (selectedCard.cardNumber || selectedCard.id).replace(/[/\\?%*:|"<>]/g, '-');
+            doc.save(`carteirinha-${safe}.pdf`);
+          } catch (e) {
+            console.error('Erro ao gerar PDF:', e);
+          } finally {
+            setGeneratingPdf(false);
+          }
+        })();
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [selectedCard]);
 
   const filteredCards = cards.filter(card => {
     if (!searchTerm) return true;
@@ -524,15 +463,7 @@ export default function AdminCarteirinhasPage() {
                               Ver
                             </button>
                             <button
-                              onClick={() => downloadQrPng(card)}
-                              disabled={!card.qrCodeUrl}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition disabled:opacity-50"
-                            >
-                              <Download size={16} />
-                              QR
-                            </button>
-                            <button
-                              onClick={() => downloadCardPdf(card)}
+                              onClick={() => openModalAndDownloadPdf(card)}
                               className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
                             >
                               <Download size={16} />
@@ -583,7 +514,7 @@ export default function AdminCarteirinhasPage() {
           <div className="w-full max-w-3xl bg-white rounded-2xl shadow-xl overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b">
               <div>
-                <h2 id="modal-title" className="text-lg font-bold text-gray-900">Carteirinha Gerada</h2>
+                <h2 id="modal-title" className="text-lg font-bold text-gray-900">Carteirinha</h2>
                 <p className="text-sm text-gray-600">{selectedCard.patient.name}</p>
               </div>
               <button
@@ -596,90 +527,27 @@ export default function AdminCarteirinhasPage() {
             </div>
 
             <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-xs text-gray-500">Número da Carteirinha</p>
-                    <p className="font-mono font-semibold text-gray-900">{selectedCard.cardNumber || '—'}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Email</p>
-                    <p className="text-gray-900">{selectedCard.patient.email}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">CPF</p>
-                    <p className="text-gray-900">{selectedCard.patient.cpf || '—'}</p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-xs text-gray-500">Emitida em</p>
-                      <p className="text-gray-900">
-                        {selectedCard.issuedAt ? new Date(selectedCard.issuedAt).toLocaleDateString('pt-BR') : '—'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Válida até</p>
-                      <p className="text-gray-900">
-                        {selectedCard.expiresAt ? new Date(selectedCard.expiresAt).toLocaleDateString('pt-BR') : '—'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="pt-2">
-                    <p className="text-sm font-semibold text-gray-900 mb-1">Receita ativa</p>
-                    {selectedCard.activePrescription ? (
-                      <div className="text-sm text-gray-700 space-y-1">
-                        <p>
-                          <span className="text-gray-500">Médico:</span> {selectedCard.activePrescription.doctor.name}
-                        </p>
-                        <p>
-                          <span className="text-gray-500">CRM:</span> {selectedCard.activePrescription.doctor.crm}
-                        </p>
-                        <p>
-                          <span className="text-gray-500">Emissão:</span>{' '}
-                          {new Date(selectedCard.activePrescription.issuedAt).toLocaleDateString('pt-BR')}
-                        </p>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-500">Sem receita vinculada</p>
-                    )}
-                  </div>
+              {/* Mesmo layout da tela do paciente (modelo único) */}
+              <div className="flex justify-center mb-6">
+                <div className="w-full max-w-2xl">
+                  <CarteirinhaCard
+                    ref={modalCardRef}
+                    card={selectedCard}
+                    showDownloadButton={false}
+                  />
                 </div>
+              </div>
 
-                <div className="flex flex-col items-center justify-center">
-                  <div className="bg-gray-50 rounded-xl p-4 w-full flex flex-col items-center">
-                    <p className="text-xs text-gray-500 mb-3">QR Code de verificação</p>
-                    {selectedCard.qrCodeUrl ? (
-                      <div className="bg-white p-3 rounded-lg shadow-sm">
-                        <img
-                          src={selectedCard.qrCodeUrl}
-                          alt="QR Code da Carteirinha"
-                          className="w-52 h-52"
-                        />
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-500">QR Code indisponível</p>
-                    )}
-
-                    <div className="mt-4 flex gap-2">
-                      <button
-                        onClick={() => downloadQrPng(selectedCard)}
-                        disabled={!selectedCard.qrCodeUrl}
-                        className="inline-flex items-center gap-2 bg-white border border-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-50 transition disabled:opacity-50"
-                      >
-                        <Download size={18} />
-                        Baixar QR
-                      </button>
-                      <button
-                        onClick={() => downloadCardPdf(selectedCard)}
-                        className="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
-                      >
-                        <Download size={18} />
-                        Baixar PDF
-                      </button>
-                    </div>
-                  </div>
-                </div>
+              <div className="flex flex-wrap justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => void downloadCardPdfFromRef()}
+                  disabled={generatingPdf}
+                  className="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition disabled:opacity-50"
+                >
+                  <Download size={18} />
+                  {generatingPdf ? 'Gerando PDF...' : 'Baixar PDF'}
+                </button>
               </div>
             </div>
           </div>

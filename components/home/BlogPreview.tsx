@@ -1,17 +1,18 @@
 import Link from 'next/link';
+import AgendarTrigger from '@/components/agendar/AgendarTrigger';
 
 const blogPosts = [
   {
-    title: 'CannaLize: Tudo que você precisa saber!',
+    title: 'CannabiLize: Tudo que você precisa saber!',
     date: '29/04/2025',
-    category: 'Guia CannaLize',
+    category: 'Guia CannabiLize',
     readTime: '8 minutos de leitura',
     slug: '/blog/cannalize-tudo-que-precisa-saber',
   },
   {
-    title: 'Consulta na CannaLize: Por que o acompanhamento médico é essencial',
+    title: 'Consulta na CannabiLize: Por que o acompanhamento médico é essencial',
     date: '05/11/2025',
-    category: 'Guia CannaLize',
+    category: 'Guia CannabiLize',
     readTime: '9 minutos de leitura',
     slug: '/blog/consulta-cannalize',
   },
@@ -30,10 +31,10 @@ export default function BlogPreview() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Artigos em destaque
+            Central de Conhecimento Cannabilize
           </h2>
-          <p className="text-lg text-gray-600">
-            Explore artigos e notícias sobre o universo da Cannabis Medicinal
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Conteúdos desenvolvidos para orientar pacientes e profissionais sobre o uso seguro e responsável da cannabis medicinal.
           </p>
         </div>
 
@@ -60,12 +61,21 @@ export default function BlogPreview() {
           ))}
         </div>
 
+        <div className="mt-10 mb-8 text-center">
+          <p className="text-gray-600 mb-3">Quer iniciar sua avaliação médica?</p>
+          <AgendarTrigger
+            className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-700 transition"
+          >
+            Iniciar avaliação médica
+          </AgendarTrigger>
+        </div>
+
         <div className="text-center mt-8">
           <Link
             href="/blog"
             className="inline-block border-2 border-primary text-primary px-8 py-4 rounded-lg text-lg font-semibold hover:bg-primary hover:text-white transition"
           >
-            Ver todos os artigos
+            Acessar Central de Conhecimento
           </Link>
         </div>
       </div>

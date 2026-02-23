@@ -63,21 +63,26 @@ export async function POST(
       );
     }
 
-    // Verificar se o pagamento foi confirmado
+    // Verificar pagamento: sem registro permite (consulta gratuita/teste); com pagamento exige PAID; admin sempre permite; em desenvolvimento médico também pode (teste)
     const payment = await prisma.payment.findUnique({
       where: { consultationId: params.id },
     });
 
-    if (!payment || payment.status !== 'PAID') {
+    const isAdmin = session.user.role === 'ADMIN';
+    const allowUnpaidInDev = process.env.NODE_ENV === 'development';
+    const hasUnpaidPayment = payment && payment.status !== 'PAID';
+    if (hasUnpaidPayment && !isAdmin && !allowUnpaidInDev) {
       return NextResponse.json(
         { error: 'Pagamento não confirmado. A reunião só pode ser criada após o pagamento.' },
         { status: 400 }
       );
     }
 
-    const body = await request.json();
+    const body = await request.json().catch(() => ({}));
     // Se não especificar plataforma, o serviço detectará automaticamente qual está configurada
     const platform = body.platform || undefined;
+    // Gravação em nuvem (Zoom): ativa transcrição e laudo por IA. Requer plano Zoom com cloud recording.
+    const recordMeeting = body.recordMeeting === true;
 
     // Quando o médico clica em "Iniciar Reunião", SEMPRE usar data/hora atual.
     // Assim a reunião é criada como instantânea (type 1) e todos entram sem "Waiting for the host".
@@ -91,6 +96,7 @@ export async function POST(
       startTime: meetingStartTime,
       duration: 30, // Duração padrão de 30 minutos
       platform: platform as 'ZOOM' | 'GOOGLE_MEET' | undefined,
+      recordMeeting,
     });
 
     return NextResponse.json({

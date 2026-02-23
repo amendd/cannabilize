@@ -7,6 +7,9 @@ import Link from 'next/link';
 import { CreditCard, CheckCircle, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useEffectivePatientId } from '@/components/impersonation/useEffectivePatientId';
+import Breadcrumbs from '@/components/ui/Breadcrumbs';
+import { SkeletonPatientList } from '@/components/ui/Skeleton';
+import { getPaymentStatusLabel } from '@/lib/status-labels';
 
 export default function PagamentoPage() {
   const { data: session } = useSession();
@@ -61,7 +64,12 @@ export default function PagamentoPage() {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center min-h-screen">Carregando...</div>;
+    return (
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <Breadcrumbs baseHref="/paciente" items={[{ label: 'Pagamentos', href: '/paciente/pagamentos' }, { label: 'Detalhe' }]} />
+        <SkeletonPatientList count={3} />
+      </div>
+    );
   }
 
   if (!payment) {
@@ -78,14 +86,9 @@ export default function PagamentoPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <Link href="/paciente" className="text-primary hover:underline mb-4 inline-block">
-            ← Voltar
-          </Link>
-          <h1 className="text-3xl font-bold text-gray-900">Pagamento</h1>
-        </div>
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <Breadcrumbs baseHref="/paciente" items={[{ label: 'Pagamentos', href: '/paciente/pagamentos' }, { label: 'Detalhe' }]} />
+      <h1 className="text-3xl font-bold text-gray-900 mb-8">Pagamento</h1>
 
         <div className="bg-white rounded-lg shadow-md p-8">
           <div className="mb-6">
@@ -122,7 +125,7 @@ export default function PagamentoPage() {
                       : 'bg-gray-100 text-gray-800'
                   }`}
                 >
-                  {payment.status}
+                  {getPaymentStatusLabel(payment.status)}
                 </span>
               </div>
             </div>
@@ -214,7 +217,6 @@ export default function PagamentoPage() {
             </div>
           )}
         </div>
-      </div>
     </div>
   );
 }

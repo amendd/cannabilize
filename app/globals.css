@@ -24,6 +24,25 @@ body {
   .text-balance {
     text-wrap: balance;
   }
+
+  /* Micro UX: transições suaves e feedback visual (área do paciente) */
+  .transition-smooth {
+    transition: all 0.25s ease-out;
+  }
+  .animate-check-in {
+    animation: checkIn 0.4s ease-out;
+  }
+  @keyframes checkIn {
+    0% { opacity: 0; transform: scale(0.95); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  .animate-fade-up {
+    animation: fadeUp 0.35s ease-out;
+  }
+  @keyframes fadeUp {
+    0% { opacity: 0; transform: translateY(8px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
 }
 
 /* Custom Scrollbar */
@@ -42,4 +61,23 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #008048;
+}
+
+/* Contraste nos selects: texto escuro nas opções para legibilidade */
+select,
+select option {
+  color: #171717;
+  background-color: #ffffff;
+}
+
+/* Texto sempre visível dentro de inputs e textareas (evita cinza claro em fundo branco) */
+input:not([type="checkbox"]):not([type="radio"]),
+textarea,
+select {
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827;
+}
+input::placeholder,
+textarea::placeholder {
+  color: #6b7280;
 }

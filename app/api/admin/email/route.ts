@@ -7,20 +7,23 @@ import { z } from 'zod';
 const emailConfigSchema = z.object({
   provider: z.enum(['RESEND', 'SENDGRID', 'AWS_SES', 'SMTP']),
   enabled: z.boolean().default(false),
-  apiKey: z.string().optional(),
-  apiSecret: z.string().optional(),
-  fromEmail: z.string().email().optional(),
-  fromName: z.string().optional(),
-  replyTo: z.string().email().optional(),
-  smtpHost: z.string().optional(),
-  smtpPort: z.number().int().min(1).max(65535).optional(),
-  smtpUser: z.string().optional(),
-  smtpPassword: z.string().optional(),
+  apiKey: z.string().nullish(),
+  apiSecret: z.string().nullish(),
+  fromEmail: z.string().email().nullish(),
+  fromName: z.string().nullish(),
+  replyTo: z.string().email().nullish(),
+  smtpHost: z.string().nullish(),
+  smtpPort: z.preprocess(
+    (v) => (v === '' || v === null || v === undefined ? undefined : (typeof v === 'string' ? parseInt(v, 10) : v)),
+    z.number().int().min(1).max(65535).optional()
+  ),
+  smtpUser: z.string().nullish(),
+  smtpPassword: z.string().nullish(),
   smtpSecure: z.boolean().default(true),
-  domain: z.string().optional(),
-  region: z.string().optional(),
-  config: z.string().optional(), // JSON string
-  testEmail: z.string().email().optional(),
+  domain: z.string().nullish(),
+  region: z.string().nullish(),
+  config: z.string().nullish(), // JSON string
+  testEmail: z.string().email().nullish(),
 });
 
 // Função para mascarar chaves sensíveis mostrando início e fim

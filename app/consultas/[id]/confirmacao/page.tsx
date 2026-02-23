@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Calendar, Clock, MapPin, Phone, Mail, CheckCircle, Upload, FileText, X, Download } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -21,11 +21,28 @@ export default function ConfirmationPage() {
   const [password, setPassword] = useState('');
   const [password2, setPassword2] = useState('');
   const [claiming, setClaiming] = useState(false);
+  const [contact, setContact] = useState<{ phone: string; email: string } | null>(null);
+  const [documentType, setDocumentType] = useState<string>('EXAM'); // EXAM | PRESCRIPTION | REPORT | OTHER
 
-  const loadFiles = async () => {
+  const searchParams = useSearchParams();
+  const tokenFromUrl = searchParams.get('token');
+
+  const documentTypeLabel = (type: string) => {
+    switch (type) {
+      case 'EXAM': return 'Exame';
+      case 'PRESCRIPTION': return 'Receita';
+      case 'REPORT': return 'Laudo/Relatório';
+      default: return 'Outro';
+    }
+  };
+
+  const loadFiles = async (token: string | null) => {
     if (!consultationId) return;
+    const url = token
+      ? `/api/consultations/${consultationId}/public/upload?token=${encodeURIComponent(token)}`
+      : `/api/consultations/${consultationId}/public/upload`;
     try {
-      const response = await fetch(`/api/consultations/${consultationId}/public/upload`);
+      const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
         setFiles(data.files || []);
@@ -37,7 +54,10 @@ export default function ConfirmationPage() {
 
   useEffect(() => {
     if (consultationId) {
-      fetch(`/api/consultations/${consultationId}/public`)
+      const url = tokenFromUrl
+        ? `/api/consultations/${consultationId}/public?token=${encodeURIComponent(tokenFromUrl)}`
+        : `/api/consultations/${consultationId}/public`;
+      fetch(url)
         .then(res => res.json())
         .then(data => {
           setConsultation(data);
@@ -47,17 +67,29 @@ export default function ConfirmationPage() {
           console.error(err);
           setLoading(false);
         });
-      
-      // Carregar arquivos já enviados
-      loadFiles();
+      loadFiles(tokenFromUrl);
     }
-  }, [consultationId]);
+  }, [consultationId, tokenFromUrl]);
 
-  // Se já estiver logado, ir direto para a tela da consulta
   useEffect(() => {
-    if (authStatus === 'authenticated' && consultationId) {
-      router.replace(`/paciente/consultas/${consultationId}`);
-    }
+    fetch('/api/config/contact')
+      .then(res => res.json())
+      .then(data => setContact(data))
+      .catch(() => setContact({ phone: '(11) 99999-9999', email: 'contato@cannabilizi.com.br' }));
+  }, []);
+
+  // Só redirecionar para a área do paciente se estiver logado E a consulta for dele (evita 403 e redirect para /paciente)
+  useEffect(() => {
+    if (authStatus !== 'authenticated' || !consultationId) return;
+    let cancelled = false;
+    fetch(`/api/consultations/${consultationId}`)
+      .then(res => {
+        if (cancelled) return;
+        if (res.ok) router.replace(`/paciente/consultas/${consultationId}`);
+        // Se 401/403: não redirecionar — usuário logado é outra conta; deixar ver a página de confirmação
+      })
+      .catch(() => { /* manter na confirmação em caso de erro */ });
+    return () => { cancelled = true; };
   }, [authStatus, consultationId, router]);
 
   const handleClaimAndLogin = async () => {
@@ -155,29 +187,21 @@ export default function ConfirmationPage() {
     const formData = new FormData();
     formData.append('file', file);
     
-    // Determinar tipo de arquivo baseado no nome
-    let fileType = 'OTHER';
-    const fileName = file.name.toLowerCase();
-    if (fileName.includes('receita') || fileName.includes('prescrição')) {
-      fileType = 'PRESCRIPTION';
-    } else if (fileName.includes('laudo') || fileName.includes('exame')) {
-      fileType = 'EXAM';
-    } else if (fileName.includes('relatório')) {
-      fileType = 'REPORT';
-    }
-    
-    formData.append('fileType', fileType);
+    formData.append('fileType', documentType);
     formData.append('description', '');
 
+    const uploadUrl = tokenFromUrl
+      ? `/api/consultations/${consultationId}/public/upload?token=${encodeURIComponent(tokenFromUrl)}`
+      : `/api/consultations/${consultationId}/public/upload`;
     try {
-      const response = await fetch(`/api/consultations/${consultationId}/public/upload`, {
+      const response = await fetch(uploadUrl, {
         method: 'POST',
         body: formData,
       });
 
       if (response.ok) {
         toast.success('Documento enviado com sucesso!');
-        loadFiles();
+        loadFiles(tokenFromUrl);
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
         }
@@ -305,18 +329,38 @@ export default function ConfirmationPage() {
               </div>
             </section>
 
-            {/* Upload de Documentos */}
+            {/* Upload de Documentos — anexados diretamente à consulta do médico */}
             <section className="mb-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                📎 Enviar Documentos (Opcional)
+                📎 Exames, receitas e laudos anteriores
               </h2>
               
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-4">
-                <p className="text-gray-700 mb-4">
-                  Se desejar, você já pode anexar documentos como receitas, laudos ou exames relacionados à sua consulta. 
-                  Isso ajudará o médico a ter uma visão mais completa do seu caso.
+              <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-4">
+                <p className="text-gray-800 mb-4">
+                  Você pode enviar <strong>exames, receitas e laudos anteriores</strong> por aqui. Eles serão <strong>anexados diretamente à sua consulta</strong> e o médico terá acesso antes e durante o atendimento.
                 </p>
-                
+                <p className="text-sm text-gray-600 mb-4">
+                  Escolha o tipo do documento e envie quantos arquivos precisar. PDF, fotos (JPG/PNG) ou Word.
+                </p>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Tipo do documento</label>
+                  <div className="flex flex-wrap gap-2">
+                    {(['EXAM', 'PRESCRIPTION', 'REPORT', 'OTHER'] as const).map((type) => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => setDocumentType(type)}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                          documentType === type
+                            ? 'bg-primary text-white'
+                            : 'bg-white border border-gray-300 text-gray-700 hover:border-primary'
+                        }`}
+                      >
+                        {documentTypeLabel(type)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -324,18 +368,16 @@ export default function ConfirmationPage() {
                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
                   className="hidden"
                 />
-                
                 <button
                   onClick={handleFileSelect}
                   disabled={uploading}
                   className="w-full bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-dark transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Upload size={18} />
-                  {uploading ? 'Enviando...' : 'Selecionar Documento'}
+                  {uploading ? 'Enviando...' : 'Selecionar e enviar documento'}
                 </button>
-                
                 <p className="text-xs text-gray-500 mt-3 text-center">
-                  Formatos aceitos: PDF, JPG, PNG, DOC, DOCX (máximo 10MB por arquivo)
+                  PDF, JPG, PNG, DOC, DOCX — máximo 10MB por arquivo
                 </p>
               </div>
 
@@ -344,7 +386,7 @@ export default function ConfirmationPage() {
                 <div className="bg-gray-50 rounded-lg p-4 mt-4">
                   <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
                     <FileText size={18} />
-                    Documentos Enviados ({files.length})
+                    Documentos anexados à consulta ({files.length})
                   </h3>
                   <div className="space-y-2">
                     {files.map((file) => (
@@ -357,7 +399,7 @@ export default function ConfirmationPage() {
                           <div className="flex-1">
                             <p className="font-medium text-gray-900 text-sm">{file.fileName}</p>
                             <p className="text-xs text-gray-500">
-                              {file.fileType} • {formatFileSize(file.fileSize || 0)} • {new Date(file.uploadedAt).toLocaleDateString('pt-BR')}
+                              {documentTypeLabel(file.fileType || 'OTHER')} • {formatFileSize(file.fileSize || 0)} • {new Date(file.uploadedAt).toLocaleDateString('pt-BR')}
                             </p>
                           </div>
                         </div>
@@ -437,14 +479,14 @@ export default function ConfirmationPage() {
                   <Phone className="w-5 h-5 text-primary" />
                   <div>
                     <p className="text-sm text-gray-600">Telefone</p>
-                    <p className="font-semibold text-gray-900">(00) 00000-0000</p>
+                    <p className="font-semibold text-gray-900">{contact?.phone ?? '(11) 99999-9999'}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <Mail className="w-5 h-5 text-primary" />
                   <div>
                     <p className="text-sm text-gray-600">Email</p>
-                    <p className="font-semibold text-gray-900">contato@cannalize.com</p>
+                    <p className="font-semibold text-gray-900">{contact?.email ?? 'contato@cannabilizi.com.br'}</p>
                   </div>
                 </div>
               </div>
@@ -455,10 +497,21 @@ export default function ConfirmationPage() {
               <div className="flex-1">
                 {consultation?.payment?.status === 'PAID' ? (
                   <div className="bg-white border border-gray-200 rounded-lg p-4">
-                    <p className="font-semibold text-gray-900 mb-1">Acessar sua conta agora</p>
-                    <p className="text-sm text-gray-600 mb-4">
-                      Crie uma senha (confirmando seu CPF) e você já será direcionado para a tela da sua consulta.
-                    </p>
+                    <p className="font-semibold text-gray-900 mb-1">Acessar sua conta</p>
+                    {consultation?.email ? (
+                      <>
+                        <p className="text-sm text-gray-600 mb-4">
+                          Crie uma senha (confirmando seu CPF) ou faça login se já tiver conta.
+                        </p>
+                        <div className="mb-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                          <p className="text-sm text-gray-700 mb-2">Já tem conta?</p>
+                          <Link
+                        href={`/login?callbackUrl=${encodeURIComponent(`/paciente/consultas/${consultationId}`)}`}
+                        className="inline-flex items-center justify-center w-full sm:w-auto bg-primary text-white px-4 py-2 rounded-lg font-medium hover:bg-primary/90 transition text-sm"
+                      >
+                        Fazer login para acessar minha área
+                      </Link>
+                    </div>
 
                     <div className="space-y-3">
                       <div>
@@ -517,7 +570,13 @@ export default function ConfirmationPage() {
                         </Link>
                       </div>
                     </div>
-                  </div>
+                      </>
+                    ) : (
+                      <p className="text-sm text-gray-600 mb-4">
+                        Acesse pelo link enviado no seu email para definir sua senha ou fazer login na sua área do paciente.
+                      </p>
+                    )}
+                </div>
                 ) : (
                   <Link
                     href="/login"

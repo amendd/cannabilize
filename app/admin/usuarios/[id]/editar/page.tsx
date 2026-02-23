@@ -8,12 +8,15 @@ import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import Breadcrumbs from '@/components/ui/Breadcrumbs';
 import LoadingPage from '@/components/ui/Loading';
-import { Shield, Stethoscope, User } from 'lucide-react';
+import { canManageUsers, ROLE_ACCESS_DESCRIPTIONS } from '@/lib/roles-permissions';
+import { ADMIN_MENU_GROUPS } from '@/lib/admin-menu';
+import { Shield, Stethoscope, User, UserCog, ShieldCheck, ShieldAlert, Leaf } from 'lucide-react';
 
 interface UserForm {
   name: string;
   email: string;
   password: string;
+  passwordConfirm: string;
   role: string;
   phone: string;
   cpf: string;
@@ -21,9 +24,13 @@ interface UserForm {
 }
 
 const ROLES = [
-  { value: 'ADMIN', label: 'Administrador', icon: Shield },
-  { value: 'DOCTOR', label: 'Médico', icon: Stethoscope },
-  { value: 'PATIENT', label: 'Paciente', icon: User },
+  { value: 'SUPER_ADMIN', label: 'Super Admin', icon: ShieldCheck, adminOnly: true },
+  { value: 'ADMIN', label: 'Administrador', icon: Shield, adminOnly: false },
+  { value: 'SUBADMIN', label: 'Subadmin', icon: ShieldAlert, adminOnly: false },
+  { value: 'OPERATOR', label: 'Operador', icon: UserCog, adminOnly: false },
+  { value: 'DOCTOR', label: 'Médico', icon: Stethoscope, adminOnly: false },
+  { value: 'PATIENT', label: 'Paciente', icon: User, adminOnly: false },
+  { value: 'AGRONOMIST', label: 'Engenheiro Agrônomo', icon: Leaf, adminOnly: false },
 ];
 
 export default function EditUserPage() {
@@ -34,29 +41,32 @@ export default function EditUserPage() {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [subadminMenuIds, setSubadminMenuIds] = useState<string[]>([]);
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
     watch,
-  } = useForm<UserForm>({ defaultValues: { role: 'PATIENT', phone: '', cpf: '', address: '', password: '' } });
+  } = useForm<UserForm>({ defaultValues: { role: 'PATIENT', phone: '', cpf: '', address: '', password: '', passwordConfirm: '' } });
 
   const roleValue = watch('role');
+  const passwordValue = watch('password');
+  const isSuperAdmin = session?.user?.role === 'SUPER_ADMIN';
 
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login');
       return;
     }
-    if (status === 'authenticated' && session?.user.role !== 'ADMIN') {
+    if (status === 'authenticated' && !canManageUsers(session?.user?.role)) {
       router.push('/');
       return;
     }
   }, [status, session?.user?.role, router]);
 
   useEffect(() => {
-    if (session?.user.role === 'ADMIN' && id) {
+    if (canManageUsers(session?.user?.role) && id) {
       fetchUser();
     }
   }, [session?.user?.role, id]);
@@ -72,11 +82,13 @@ export default function EditUserPage() {
           name: data.name || '',
           email: data.email || '',
           password: '',
+          passwordConfirm: '',
           role: data.role || 'PATIENT',
           phone: data.phone || '',
           cpf: data.cpf || '',
           address: data.address || '',
         });
+        setSubadminMenuIds(Array.isArray(data.adminMenuPermissions) ? data.adminMenuPermissions : []);
       } else {
         toast.error('Usuário não encontrado');
         router.push('/admin/usuarios');
@@ -90,6 +102,10 @@ export default function EditUserPage() {
   };
 
   const onSubmit = async (data: UserForm) => {
+    if (data.password && data.password.trim() !== '' && data.password !== data.passwordConfirm) {
+      toast.error('As senhas não coincidem.');
+      return;
+    }
     setIsSubmitting(true);
     try {
       const body: any = {
@@ -100,6 +116,9 @@ export default function EditUserPage() {
         cpf: data.cpf?.replace(/\D/g, '') || null,
         address: data.address?.trim() || null,
       };
+      if (data.role === 'SUBADMIN') {
+        body.adminMenuPermissions = subadminMenuIds;
+      }
       if (data.password && data.password.trim() !== '') {
         body.password = data.password;
       }
@@ -124,7 +143,7 @@ export default function EditUserPage() {
   };
 
   if (status === 'loading' || loading) return <LoadingPage />;
-  if (!session || session.user.role !== 'ADMIN') return null;
+  if (!session || !canManageUsers(session.user?.role)) return null;
   if (!user) return null;
 
   return (
@@ -181,14 +200,29 @@ export default function EditUserPage() {
             </div>
 
             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Confirmar nova senha</label>
+              <input
+                {...register('passwordConfirm', {
+                  minLength: passwordValue ? { value: 6, message: 'Mínimo 6 caracteres' } : undefined,
+                })}
+                type="password"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="Obrigatório se alterar a senha"
+              />
+              {errors.passwordConfirm && <p className="text-red-500 text-sm mt-1">{errors.passwordConfirm.message}</p>}
+              <p className="text-xs text-gray-500 mt-1">Ao alterar a senha, o usuário precisará fazer login novamente.</p>
+            </div>
+
+            <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">Perfil de acesso *</label>
               <div className="space-y-2">
-                {ROLES.map((r) => {
+                {ROLES.filter((r) => !r.adminOnly || isSuperAdmin).map((r) => {
                   const Icon = r.icon;
+                  const description = ROLE_ACCESS_DESCRIPTIONS[r.value];
                   return (
                     <label
                       key={r.value}
-                      className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition ${
+                      className={`flex gap-3 p-3 border rounded-lg cursor-pointer transition ${
                         roleValue === r.value ? 'border-primary bg-primary/5' : 'border-gray-200 hover:bg-gray-50'
                       }`}
                     >
@@ -196,19 +230,50 @@ export default function EditUserPage() {
                         type="radio"
                         value={r.value}
                         {...register('role', { required: 'Selecione um perfil' })}
-                        className="text-primary focus:ring-primary"
+                        className="text-primary focus:ring-primary mt-0.5 shrink-0"
                       />
-                      <Icon size={20} className="text-gray-600" />
-                      <span className="font-medium">{r.label}</span>
+                      <div className="min-w-0">
+                        <span className="font-medium text-gray-900">{r.label}</span>
+                        {description && (
+                          <p className="text-xs text-gray-500 mt-0.5">{description}</p>
+                        )}
+                      </div>
+                      <Icon size={20} className="text-gray-400 shrink-0" />
                     </label>
                   );
                 })}
               </div>
-              <p className="text-xs text-gray-500 mt-1">
-                O perfil define quais áreas do sistema o usuário pode acessar após o login.
-              </p>
               {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role.message}</p>}
             </div>
+
+            {roleValue === 'SUBADMIN' && (
+              <div className="md:col-span-2 p-4 border border-primary-200 rounded-lg bg-primary-50/50">
+                <label className="block text-sm font-medium text-gray-700 mb-3">Menus visíveis no painel admin</label>
+                <p className="text-xs text-gray-500 mb-3">Marque quais seções este usuário poderá ver no menu lateral.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {ADMIN_MENU_GROUPS.map((group) => (
+                    <label
+                      key={group.id}
+                      className="flex items-center gap-2 p-2 rounded hover:bg-white/60 cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={subadminMenuIds.includes(group.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSubadminMenuIds((prev) => [...prev, group.id]);
+                          } else {
+                            setSubadminMenuIds((prev) => prev.filter((id) => id !== group.id));
+                          }
+                        }}
+                        className="rounded border-gray-300 text-primary focus:ring-primary"
+                      />
+                      <span className="text-sm text-gray-800">{group.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Telefone</label>

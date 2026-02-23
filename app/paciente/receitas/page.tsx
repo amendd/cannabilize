@@ -1,12 +1,37 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { FileText, Download, Calendar, Clock, User, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { FileText, Download, Calendar, Clock, User, CheckCircle, XCircle, ExternalLink, Pill } from 'lucide-react';
 import { useEffectivePatientId } from '@/components/impersonation/useEffectivePatientId';
 import { motion } from 'framer-motion';
+import toast from 'react-hot-toast';
+import Breadcrumbs from '@/components/ui/Breadcrumbs';
+import EmptyState from '@/components/patient/EmptyState';
+import { SkeletonPatientList } from '@/components/ui/Skeleton';
+
+function parsePrescriptionData(prescription: any): { diagnosis?: string; posologySummary?: string } {
+  try {
+    const data = typeof prescription.prescriptionData === 'string'
+      ? JSON.parse(prescription.prescriptionData)
+      : prescription.prescriptionData || {};
+    const diagnosis = data.diagnosis || null;
+    const meds = data.medications || prescription.medications;
+    let posologySummary = '';
+    if (Array.isArray(meds) && meds.length > 0) {
+      posologySummary = meds
+        .slice(0, 3)
+        .map((m: any) => m.medicationName || m.name || m.substance)
+        .filter(Boolean)
+        .join(', ');
+      if (meds.length > 3) posologySummary += '…';
+    }
+    return { diagnosis: diagnosis || undefined, posologySummary: posologySummary || undefined };
+  } catch {
+    return {};
+  }
+}
 
 export default function PacienteReceitasPage() {
   const { data: session, status } = useSession();
@@ -61,82 +86,146 @@ export default function PacienteReceitasPage() {
     return new Date(expiresAt) < new Date();
   };
 
-  const handleDownload = async (prescription: any) => {
+  /** Converte pdfUrl (data URL ou URL normal) em Blob para download/visualização */
+  const pdfUrlToBlob = (pdfUrl: string): Blob | null => {
+    if (!pdfUrl) return null;
+    if (pdfUrl.startsWith('data:')) {
+      try {
+        const base64 = pdfUrl.split(',')[1];
+        if (!base64) return null;
+        const binary = atob(base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        return new Blob([bytes], { type: 'application/pdf' });
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  };
+
+  const handleDownload = (prescription: any) => {
     if (!prescription.pdfUrl) {
-      alert('PDF não disponível para download');
+      toast.error('PDF não disponível para download');
       return;
     }
-
     try {
-      const response = await fetch(prescription.pdfUrl);
-      const blob = await response.blob();
-      const downloadUrl = window.URL.createObjectURL(blob);
+      const blob = pdfUrlToBlob(prescription.pdfUrl);
+      if (blob) {
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `receita-${prescription.id.slice(0, 8)}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(downloadUrl);
+        toast.success('Receita baixada com sucesso');
+        return;
+      }
+      // Fallback: URL normal (ex.: S3)
       const link = document.createElement('a');
-      link.href = downloadUrl;
+      link.href = prescription.pdfUrl;
       link.download = `receita-${prescription.id.slice(0, 8)}.pdf`;
+      link.target = '_blank';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(downloadUrl);
+      toast.success('Receita baixada com sucesso');
     } catch (error) {
-      console.error('Erro ao baixar PDF:', error);
-      alert('Erro ao baixar receita');
+      toast.error('Erro ao baixar receita. Tente novamente.');
     }
   };
 
+  const handleView = (prescription: any) => {
+    if (!prescription.pdfUrl) {
+      toast.error('PDF não disponível para visualização');
+      return;
+    }
+    const blob = pdfUrlToBlob(prescription.pdfUrl);
+    if (blob) {
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank', 'noopener,noreferrer');
+      setTimeout(() => window.URL.revokeObjectURL(url), 60000);
+      return;
+    }
+    window.open(prescription.pdfUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  type FilterType = 'ALL' | 'VALID' | 'EXPIRED';
+  const [filterType, setFilterType] = useState<FilterType>('ALL');
+
+  const filteredPrescriptions = useMemo(() => {
+    let list = [...prescriptions].sort(
+      (a, b) => new Date(b.issuedAt).getTime() - new Date(a.issuedAt).getTime()
+    );
+    if (filterType === 'VALID') list = list.filter(p => !isExpired(p.expiresAt));
+    if (filterType === 'EXPIRED') list = list.filter(p => isExpired(p.expiresAt));
+    return list;
+  }, [prescriptions, filterType]);
+
   if (status === 'loading' || loading || loadingPatientId) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-xl">Carregando...</div>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <Breadcrumbs baseHref="/paciente" items={[{ label: 'Receitas' }]} />
+        <SkeletonPatientList count={5} />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <Link href="/paciente" className="text-primary hover:underline mb-4 inline-block">
-            ← Voltar
-          </Link>
-          <h1 className="text-3xl font-bold text-gray-900">Minhas Receitas Médicas</h1>
-          <p className="text-gray-600 mt-2">Visualize e baixe suas receitas médicas</p>
-        </div>
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <Breadcrumbs baseHref="/paciente" items={[{ label: 'Meu Tratamento', href: '/paciente' }, { label: 'Receitas' }]} />
+      <h1 className="text-3xl font-bold text-gray-900 mb-2">Tratamento ativo</h1>
+      <p className="text-gray-600 mb-6">Suas receitas e orientações do médico em acompanhamento</p>
 
-        <div className="space-y-4">
-          {prescriptions.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-lg shadow-md p-12 text-center"
-            >
-              <FileText size={48} className="text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">Você ainda não possui receitas médicas.</p>
-            </motion.div>
-          ) : (
-            prescriptions.map((prescription, index) => {
+      {/* Filtros */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        {(['ALL', 'VALID', 'EXPIRED'] as const).map((f) => (
+          <button
+            key={f}
+            onClick={() => setFilterType(f)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+              filterType === f ? 'bg-purple-600 text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-purple-50'
+            }`}
+          >
+            {f === 'ALL' ? 'Todas' : f === 'VALID' ? 'Válidas' : 'Expiradas'}
+          </button>
+        ))}
+      </div>
+
+      <div className="space-y-4">
+        {filteredPrescriptions.length === 0 ? (
+          <EmptyState
+            icon={FileText}
+            title={prescriptions.length === 0 ? 'Seu tratamento em um só lugar' : 'Nenhuma receita com esses filtros'}
+            description={prescriptions.length === 0 ? 'Após suas consultas, as receitas e orientações do médico aparecerão aqui.' : 'Tente alterar o filtro.'}
+          />
+        ) : (
+            filteredPrescriptions.map((prescription, index) => {
               const consultation = prescription.consultation;
               const doctor = prescription.doctor || consultation?.doctor;
               const expired = isExpired(prescription.expiresAt);
+              const { diagnosis, posologySummary } = parsePrescriptionData(prescription);
 
               return (
                 <motion.div
                   key={prescription.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden"
+                  transition={{ delay: index * 0.08 }}
+                  className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow overflow-hidden border border-gray-100"
                 >
                   <div className="p-6">
-                    <div className="flex items-start justify-between mb-4">
+                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                       <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className="p-2 bg-green-100 rounded-lg">
-                            <FileText size={24} className="text-green-600" />
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="p-3 bg-emerald-100 rounded-xl">
+                            <Pill size={24} className="text-emerald-600" />
                           </div>
                           <div>
                             <h3 className="text-lg font-semibold text-gray-900">
-                              Receita Médica
+                              {diagnosis || 'Tratamento médico'}
                             </h3>
                             <p className="text-sm text-gray-500">
                               Emitida em {formatDateTime(prescription.issuedAt)}
@@ -144,70 +233,71 @@ export default function PacienteReceitasPage() {
                           </div>
                         </div>
 
-                        {/* Informações da Consulta */}
-                        {consultation && (
-                          <div className="ml-11 mb-4 p-3 bg-gray-50 rounded-lg">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                              <div className="flex items-center gap-2 text-gray-600">
-                                <Calendar size={16} />
-                                <span>
-                                  <strong>Data da Consulta:</strong>{' '}
-                                  {consultation.scheduledAt
-                                    ? formatDate(consultation.scheduledAt)
-                                    : consultation.scheduledDate
-                                    ? formatDate(consultation.scheduledDate)
-                                    : 'N/A'}
-                                </span>
-                              </div>
-                              {doctor && (
-                                <div className="flex items-center gap-2 text-gray-600">
-                                  <User size={16} />
-                                  <span>
-                                    <strong>Médico:</strong> {doctor.name}
-                                    {doctor.crm && ` - CRM ${doctor.crm}`}
-                                  </span>
-                                </div>
-                              )}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm mb-4">
+                          {doctor && (
+                            <div className="flex items-center gap-2 text-gray-700">
+                              <User size={16} className="text-gray-400" />
+                              <span>Dr(a). {doctor.name}{doctor.crm ? ` — CRM ${doctor.crm}` : ''}</span>
                             </div>
-                          </div>
-                        )}
-
-                        {/* Status e Validade */}
-                        <div className="ml-11 flex items-center gap-4 flex-wrap">
+                          )}
+                          {consultation?.scheduledAt && (
+                            <div className="flex items-center gap-2 text-gray-700">
+                              <Calendar size={16} className="text-gray-400" />
+                              <span>Consulta em {formatDate(consultation.scheduledAt)}</span>
+                            </div>
+                          )}
+                          {posologySummary && (
+                            <div className="flex items-start gap-2 text-gray-700 sm:col-span-2">
+                              <Pill size={16} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                              <span><strong>Posologia:</strong> {posologySummary}</span>
+                            </div>
+                          )}
                           <div className="flex items-center gap-2">
                             {expired ? (
                               <>
                                 <XCircle size={16} className="text-red-500" />
-                                <span className="text-sm text-red-600 font-medium">Expirada</span>
+                                <span className="text-red-600 font-medium">Expirada</span>
                               </>
                             ) : (
                               <>
                                 <CheckCircle size={16} className="text-green-500" />
-                                <span className="text-sm text-green-600 font-medium">Válida</span>
+                                <span className="text-green-600 font-medium">Válida</span>
+                                {prescription.expiresAt && (
+                                  <span className="text-gray-500">até {formatDate(prescription.expiresAt)}</span>
+                                )}
                               </>
                             )}
                           </div>
-                          {prescription.expiresAt && (
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                              <Clock size={16} />
-                              <span>
-                                Válida até {formatDate(prescription.expiresAt)}
-                              </span>
-                            </div>
-                          )}
                         </div>
+                        <p className="text-xs text-gray-500">
+                          Próxima revisão recomendada conforme orientação do médico.
+                        </p>
                       </div>
 
-                      {/* Botão de Download */}
-                      <div className="ml-4">
-                        <button
-                          onClick={() => handleDownload(prescription)}
-                          disabled={!prescription.pdfUrl}
-                          className="flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary-dark transition disabled:bg-gray-300 disabled:cursor-not-allowed font-medium"
-                        >
-                          <Download size={20} />
-                          Baixar PDF
-                        </button>
+                      <div className="flex flex-wrap gap-2 md:flex-shrink-0">
+                        {prescription.pdfUrl && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => handleView(prescription)}
+                              className="inline-flex items-center gap-2 border border-purple-600 text-purple-600 px-4 py-2 rounded-lg hover:bg-purple-50 transition text-sm font-medium"
+                            >
+                              <ExternalLink size={18} />
+                              Visualizar PDF
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDownload(prescription)}
+                              className="inline-flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition text-sm font-medium"
+                            >
+                              <Download size={18} />
+                              Baixar PDF
+                            </button>
+                          </>
+                        )}
+                        {!prescription.pdfUrl && (
+                          <span className="text-sm text-gray-500">PDF em processamento</span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -215,7 +305,6 @@ export default function PacienteReceitasPage() {
               );
             })
           )}
-        </div>
       </div>
     </div>
   );

@@ -1,54 +1,38 @@
 import type { Metadata } from "next";
-import { Inter, Poppins, Montserrat, Lato, Roboto } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import ConditionalNavbar from "@/components/layout/ConditionalNavbar";
 import ConditionalFooter from "@/components/layout/ConditionalFooter";
 import { Providers } from "./providers";
+import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
+import { getLandingConfigPublic } from "@/lib/landing-config";
 
-const inter = Inter({ 
+const inter = Inter({
   subsets: ["latin"],
-  variable: '--font-inter',
-  display: 'swap',
+  variable: "--font-inter",
+  display: "swap",
 });
 
-const poppins = Poppins({
-  weight: ['400', '500', '600', '700'],
-  subsets: ["latin"],
-  variable: '--font-poppins',
-  display: 'swap',
-});
-
-const montserrat = Montserrat({
-  weight: ['400', '500', '600', '700'],
-  subsets: ["latin"],
-  variable: '--font-montserrat',
-  display: 'swap',
-});
-
-const lato = Lato({
-  weight: ['400', '700'],
-  subsets: ["latin"],
-  variable: '--font-lato',
-  display: 'swap',
-});
-
-const roboto = Roboto({
-  weight: ['400', '500', '700'],
-  subsets: ["latin"],
-  variable: '--font-roboto',
-  display: 'swap',
-});
-
-export const metadata: Metadata = {
-  title: "CannabiLize | Líder em Tratamentos com Cannabis Medicinal",
-  description: "Consultas online com médicos especialistas em cannabis medicinal por apenas R$50. Suporte completo no processo de importação legal.",
-  keywords: "cannabis medicinal, CBD, consulta médica online, telemedicina, tratamento com cannabis",
-  icons: {
-    icon: "/images/cannalize-logo.png",
-    apple: "/images/cannalize-logo.png",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  try {
+    const config = await getLandingConfigPublic();
+    const logoUrl = config.logoUrl || "/images/cannalize-logo.png";
+    return {
+      title: "Cannabilize | Plataforma nacional de acesso ao tratamento com cannabis medicinal",
+      description: "A Cannabilize conecta pacientes e médicos especializados em cannabis medicinal. Atendimento em todo o Brasil, com acompanhamento e suporte em todas as etapas.",
+      keywords: "cannabis medicinal, CBD, consulta médica online, telemedicina, tratamento com cannabis",
+      icons: { icon: logoUrl, apple: logoUrl },
+    };
+  } catch {
+    return {
+      title: "Cannabilize | Plataforma nacional de acesso ao tratamento com cannabis medicinal",
+      description: "A Cannabilize conecta pacientes e médicos especializados em cannabis medicinal. Atendimento em todo o Brasil, com acompanhamento e suporte em todas as etapas.",
+      keywords: "cannabis medicinal, CBD, consulta médica online, telemedicina, tratamento com cannabis",
+      icons: { icon: "/images/cannalize-logo.png", apple: "/images/cannalize-logo.png" },
+    };
+  }
+}
 
 export default function RootLayout({
   children,
@@ -56,9 +40,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className={`${inter.variable} ${poppins.variable} ${montserrat.variable} ${lato.variable} ${roboto.variable}`}>
+    <html lang="pt-BR" className={inter.variable}>
       <body className={`${inter.className} antialiased`}>
         <Providers>
+          <GoogleAnalytics />
           {/* Skip Link para acessibilidade */}
           <a
             href="#main-content"

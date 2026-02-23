@@ -44,6 +44,13 @@ export async function GET(request: NextRequest) {
                 email: true,
               },
             },
+            doctor: {
+              select: {
+                id: true,
+                name: true,
+                crm: true,
+              },
+            },
           },
         },
       },

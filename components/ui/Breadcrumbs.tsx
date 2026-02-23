@@ -10,9 +10,11 @@ interface BreadcrumbItem {
 
 interface BreadcrumbsProps {
   items: BreadcrumbItem[];
+  /** Base da navegação: "/" ou "/paciente" para área do paciente */
+  baseHref?: string;
 }
 
-export default function Breadcrumbs({ items }: BreadcrumbsProps) {
+export default function Breadcrumbs({ items, baseHref = '/' }: BreadcrumbsProps) {
   return (
     <nav 
       aria-label="Breadcrumb" 
@@ -21,9 +23,9 @@ export default function Breadcrumbs({ items }: BreadcrumbsProps) {
       <ol className="flex items-center space-x-2 text-sm">
         <li>
           <Link 
-            href="/" 
-            className="text-gray-500 hover:text-primary transition-colors"
-            aria-label="Página inicial"
+            href={baseHref} 
+            className="text-gray-500 hover:text-purple-600 transition-colors"
+            aria-label={baseHref === '/paciente' ? 'Área do paciente' : 'Página inicial'}
           >
             <Home size={16} />
           </Link>
@@ -34,7 +36,7 @@ export default function Breadcrumbs({ items }: BreadcrumbsProps) {
             {item.href ? (
               <Link
                 href={item.href}
-                className="text-gray-500 hover:text-primary transition-colors"
+                className="text-gray-500 hover:text-purple-600 transition-colors"
               >
                 {item.label}
               </Link>

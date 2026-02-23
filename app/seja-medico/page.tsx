@@ -7,47 +7,47 @@ import { motion } from 'framer-motion';
 export default function SejaMedicoPage() {
   const whatsappNumber = '5511999999999'; // Substitua pelo número real
   const whatsappMessage = encodeURIComponent(
-    'Olá! Tenho interesse em me tornar um médico parceiro da CannaLize e trabalhar com fitocanabinoides.'
+    'Olá! Tenho interesse em me tornar um médico parceiro da Cannabilize e trabalhar com fitocanabinoides.'
   );
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
 
   const beneficios = [
     {
       icon: <TrendingUp className="w-8 h-8" />,
-      title: 'Crescimento Exponencial',
-      description: 'Mercado em expansão com demanda crescente por tratamentos com cannabis medicinal'
+      title: 'Expanda sua base de pacientes com suporte especializado',
+      description: 'Crescimento sustentável com demanda qualificada por tratamentos com cannabis medicinal'
     },
     {
       icon: <Users className="w-8 h-8" />,
-      title: 'Base de Pacientes',
-      description: 'Acesso a milhares de pacientes já cadastrados na plataforma'
+      title: 'Receba pacientes previamente orientados pela plataforma',
+      description: 'Acesso a pacientes já cadastrados e informados sobre o fluxo de atendimento'
     },
     {
       icon: <Clock className="w-8 h-8" />,
-      title: 'Flexibilidade de Horários',
-      description: 'Defina seus próprios horários e trabalhe de onde quiser'
+      title: 'Atenda online com autonomia e organização da sua agenda',
+      description: 'Defina seus horários com liberdade e trabalhe de onde quiser'
     },
     {
       icon: <Shield className="w-8 h-8" />,
-      title: 'Suporte Completo',
-      description: 'Equipe dedicada para te auxiliar em todo o processo'
+      title: 'Equipe dedicada para apoio clínico e operacional',
+      description: 'Suporte para dúvidas clínicas, regulatórias e uso da plataforma'
     },
     {
       icon: <Award className="w-8 h-8" />,
       title: 'Reconhecimento Profissional',
-      description: 'Torne-se referência em tratamentos com fitocanabinoides'
+      description: 'Torne-se referência em tratamentos com fitocanabinoides com capacitação contínua'
     },
     {
       icon: <Zap className="w-8 h-8" />,
       title: 'Tecnologia de Ponta',
-      description: 'Plataforma moderna e intuitiva para gestão de consultas'
+      description: 'Plataforma moderna e intuitiva para gestão de consultas e prontuários'
     }
   ];
 
   const estatisticas = [
     { numero: '+90.000', label: 'Pacientes Atendidos' },
-    { numero: '+400.000', label: 'Seguidores nas Redes' },
-    { numero: '18+', label: 'Patologias Tratadas' },
+    { numero: '18+', label: 'Médicos Ativos na Plataforma' },
+    { numero: '+50.000', label: 'Consultas Realizadas Mensalmente' },
     { numero: '24/7', label: 'Suporte Disponível' }
   ];
 
@@ -91,7 +91,7 @@ export default function SejaMedicoPage() {
               transition={{ duration: 0.6 }}
               className="inline-block px-6 py-3 bg-green-100 text-green-800 rounded-full text-sm font-semibold mb-4"
             >
-              🌿 Seja um Médico Parceiro
+              🌿 Parceria Médica Cannabilize
             </motion.div>
 
             <motion.h1
@@ -110,8 +110,7 @@ export default function SejaMedicoPage() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="text-xl md:text-2xl text-gray-600 leading-relaxed"
             >
-              Junte-se à nossa equipe de médicos especialistas e faça parte da revolução 
-              no tratamento com fitocanabinoides
+              A Cannabilize é uma plataforma nacional que conecta pacientes e médicos especializados em cannabis medicinal. Amplie sua prática com suporte clínico especializado, fluxo de pacientes qualificados e capacitação contínua.
             </motion.p>
 
             <motion.div
@@ -127,7 +126,7 @@ export default function SejaMedicoPage() {
                 className="group bg-green-600 text-white px-10 py-5 rounded-xl text-lg font-semibold hover:bg-green-700 transition-all duration-300 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
               >
                 <MessageCircle size={24} />
-                Falar no WhatsApp
+                Conversar com nossa equipe médica
                 <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
               </a>
               <a
@@ -136,6 +135,27 @@ export default function SejaMedicoPage() {
               >
                 Conheça os Benefícios
               </a>
+            </motion.div>
+
+            {/* Filtro psicológico — texto institucional */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="mt-12 pt-8 border-t border-green-200/60 space-y-4 text-center max-w-3xl mx-auto"
+            >
+              <p className="text-gray-600 text-base md:text-lg leading-relaxed">
+                Buscamos médicos comprometidos com medicina baseada em evidências, atendimento humanizado e acompanhamento contínuo do paciente.
+              </p>
+              <p className="text-gray-500 text-sm md:text-base leading-relaxed">
+                A Cannabilize apoia profissionais que desejam atuar com responsabilidade e se desenvolver continuamente na prática da medicina canabinoide.
+              </p>
+              <p className="text-gray-500 text-sm leading-relaxed pt-2">
+                Faça parte da rede médica Cannabilize. Corpo clínico apoiado por diretrizes clínicas e protocolos assistenciais desenvolvidos pela equipe Cannabilize.
+              </p>
+              <p className="text-gray-400 text-xs md:text-sm leading-relaxed pt-1">
+                Atuação médica realizada dentro das normas vigentes, com suporte técnico e regulatório especializado.
+              </p>
             </motion.div>
           </div>
         </div>
@@ -184,6 +204,16 @@ export default function SejaMedicoPage() {
             ))}
           </div>
         </div>
+
+        {/* Rede médica + indicação entre pares */}
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 mt-10 text-center">
+          <p className="text-gray-700 text-base md:text-lg font-medium">
+            Faça parte da rede médica Cannabilize — médicos parceiros distribuídos nacionalmente, com cannabis medicinal em todo o Brasil.
+          </p>
+          <p className="text-gray-500 text-sm mt-3">
+            Médicos especialistas parceiros Cannabilize. Muitos chegam por indicação de colegas que já atuam na plataforma.
+          </p>
+        </div>
       </section>
 
       {/* Benefícios */}
@@ -193,8 +223,11 @@ export default function SejaMedicoPage() {
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               Por que ser um médico parceiro?
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Oferecemos tudo que você precisa para ter sucesso no tratamento com cannabis medicinal
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-4">
+              Parceria profissional estruturada, com suporte clínico real e desenvolvimento contínuo na medicina canabinoide
+            </p>
+            <p className="text-gray-600 max-w-2xl mx-auto text-base">
+              A equipe Cannabilize oferece apoio clínico, operacional e educacional contínuo durante toda a jornada do médico parceiro.
             </p>
           </div>
 
@@ -230,8 +263,11 @@ export default function SejaMedicoPage() {
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               Como funciona?
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-6">
               Um processo simples e rápido para você começar a atender
+            </p>
+            <p className="text-gray-600 max-w-2xl mx-auto text-base">
+              Processo validado e acompanhado pela equipe Cannabilize, garantindo segurança clínica e operacional.
             </p>
           </div>
 
@@ -280,18 +316,21 @@ export default function SejaMedicoPage() {
             {[
               {
                 nome: 'Dr. João Silva',
-                especialidade: 'Psiquiatra',
-                depoimento: 'A plataforma me permitiu expandir meu atendimento e ajudar muito mais pacientes. A tecnologia é incrível!'
+                especialidade: 'Psiquiatria',
+                area: 'Médico parceiro Cannabilize',
+                depoimento: 'A plataforma me permitiu expandir meu atendimento com suporte clínico real. O fluxo de pacientes qualificados e a capacitação contínua fazem a diferença na prática.'
               },
               {
                 nome: 'Dra. Maria Santos',
-                especialidade: 'Neurologista',
-                depoimento: 'O suporte da equipe é excepcional. Me sinto parte de uma comunidade que realmente faz a diferença.'
+                especialidade: 'Neurologia',
+                area: 'Médica parceira Cannabilize',
+                depoimento: 'O suporte da equipe é excepcional tanto no operacional quanto nas dúvidas clínicas. Me sinto parte de um ecossistema médico estruturado.'
               },
               {
                 nome: 'Dr. Carlos Oliveira',
-                especialidade: 'Clínico Geral',
-                depoimento: 'Trabalhar com fitocanabinoides mudou minha perspectiva sobre medicina. Recomendo a todos!'
+                especialidade: 'Clínica Geral',
+                area: 'Médico parceiro Cannabilize',
+                depoimento: 'Atuar com responsabilidade e acompanhamento contínuo dos pacientes é o que encontrei aqui. Parceria séria, não apenas mais uma oportunidade de atendimento.'
               }
             ].map((depoimento, index) => (
               <motion.div
@@ -311,8 +350,8 @@ export default function SejaMedicoPage() {
                   "{depoimento.depoimento}"
                 </p>
                 <div>
-                  <div className="font-bold text-gray-900">{depoimento.nome}</div>
-                  <div className="text-sm text-gray-600">{depoimento.especialidade}</div>
+                  <div className="font-bold text-gray-900">{depoimento.nome} — {depoimento.especialidade}</div>
+                  <div className="text-sm text-gray-600">{depoimento.area}</div>
                 </div>
               </motion.div>
             ))}
@@ -334,8 +373,7 @@ export default function SejaMedicoPage() {
               Pronto para fazer a diferença?
             </h2>
             <p className="text-xl text-green-100 max-w-2xl mx-auto">
-              Entre em contato conosco agora e descubra como você pode transformar vidas 
-              através do tratamento com cannabis medicinal
+              Converse com nosso time de parcerias médicas e conheça como integrar a rede clínica Cannabilize.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
               <a
@@ -345,13 +383,16 @@ export default function SejaMedicoPage() {
                 className="group bg-white text-green-600 px-10 py-5 rounded-xl text-lg font-semibold hover:bg-green-50 transition-all duration-300 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
               >
                 <MessageCircle size={24} />
-                Falar no WhatsApp Agora
+                Falar com o time de parcerias médicas
                 <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
               </a>
             </div>
-            <div className="pt-8 flex items-center justify-center gap-2 text-green-100">
+            <p className="text-green-100/90 text-sm max-w-xl mx-auto pt-6">
+              Atuação médica realizada dentro das normas vigentes, com suporte técnico e regulatório especializado.
+            </p>
+            <div className="pt-6 flex items-center justify-center gap-2 text-green-100">
               <CheckCircle2 size={20} />
-              <span className="text-sm">Resposta em até 24 horas</span>
+              <span className="text-sm">Resposta inicial em até 24 horas pela equipe médica Cannabilize.</span>
             </div>
           </motion.div>
         </div>

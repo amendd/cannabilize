@@ -6,6 +6,7 @@ import { useRouter, useParams } from 'next/navigation';
 import ConsultationDetail from '@/components/admin/ConsultationDetail';
 import PrescriptionForm from '@/components/admin/PrescriptionForm';
 import ReportGenerator from '@/components/admin/ReportGenerator';
+import { canAccessAdmin } from '@/lib/roles-permissions';
 
 export default function ConsultationDetailPage() {
   const { data: session, status } = useSession();
@@ -20,7 +21,7 @@ export default function ConsultationDetailPage() {
       router.push('/login');
       return;
     }
-    if (status === 'authenticated' && session?.user.role !== 'ADMIN' && session?.user.role !== 'DOCTOR') {
+    if (status === 'authenticated' && !canAccessAdmin(session?.user?.role) && session?.user?.role !== 'DOCTOR') {
       router.push('/');
       return;
     }

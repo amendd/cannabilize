@@ -3,17 +3,26 @@ import { prisma } from '@/lib/prisma';
 
 /**
  * POST - Upload de arquivo público (página de confirmação)
- * Permite upload sem autenticação, mas valida que a consulta existe e o pagamento foi confirmado
+ * Exige token de confirmação (LGPD): só quem tem o link com ?token= pode enviar/listar arquivos.
  */
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const tokenParam = request.nextUrl.searchParams.get('token');
+    if (!tokenParam) {
+      return NextResponse.json(
+        { error: 'Token de confirmação é obrigatório para enviar documentos.' },
+        { status: 403 }
+      );
+    }
+
     const consultation = await prisma.consultation.findUnique({
       where: { id: params.id },
       include: {
         payment: true,
+        confirmationToken: true,
         patient: {
           select: {
             id: true,
@@ -26,6 +35,17 @@ export async function POST(
       return NextResponse.json(
         { error: 'Consulta não encontrada' },
         { status: 404 }
+      );
+    }
+
+    if (
+      !consultation.confirmationToken ||
+      consultation.confirmationToken.token !== tokenParam ||
+      new Date() > consultation.confirmationToken.expiresAt
+    ) {
+      return NextResponse.json(
+        { error: 'Token inválido ou expirado. Use o link enviado no seu email.' },
+        { status: 403 }
       );
     }
 
@@ -108,16 +128,26 @@ export async function POST(
 
 /**
  * GET - Listar arquivos da consulta (público)
+ * Exige token de confirmação para evitar que quem saiba só o ID da consulta liste arquivos.
  */
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const tokenParam = request.nextUrl.searchParams.get('token');
+    if (!tokenParam) {
+      return NextResponse.json(
+        { error: 'Token de confirmação é obrigatório.' },
+        { status: 403 }
+      );
+    }
+
     const consultation = await prisma.consultation.findUnique({
       where: { id: params.id },
       include: {
         payment: true,
+        confirmationToken: true,
       },
     });
 
@@ -125,6 +155,17 @@ export async function GET(
       return NextResponse.json(
         { error: 'Consulta não encontrada' },
         { status: 404 }
+      );
+    }
+
+    if (
+      !consultation.confirmationToken ||
+      consultation.confirmationToken.token !== tokenParam ||
+      new Date() > consultation.confirmationToken.expiresAt
+    ) {
+      return NextResponse.json(
+        { error: 'Token inválido ou expirado.' },
+        { status: 403 }
       );
     }
 

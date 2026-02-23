@@ -7,6 +7,7 @@ import {
   isTimeSlotAvailable,
   getEarlierAvailableSlots,
 } from '@/lib/reschedule-invites';
+import { getRescheduleInvitesEnabled } from '@/lib/consultation-config';
 import { sendRescheduleInviteEmail } from '@/lib/email';
 
 export async function POST(
@@ -20,6 +21,14 @@ export async function POST(
       return NextResponse.json(
         { error: 'Não autorizado' },
         { status: 401 }
+      );
+    }
+
+    const rescheduleEnabled = await getRescheduleInvitesEnabled();
+    if (!rescheduleEnabled) {
+      return NextResponse.json(
+        { error: 'A ferramenta de adiantamento de consultas está desativada pelo administrador.' },
+        { status: 403 }
       );
     }
 
@@ -98,12 +107,13 @@ export async function POST(
       );
     }
 
-    // Verificar se horário está disponível
+    // Verificar se horário está disponível (médico sugere o horário: não exige antecedência mínima)
     const availabilityCheck = await isTimeSlotAvailable(
       newScheduledDate,
       newScheduledTime,
       doctorId,
-      consultation.id
+      consultation.id,
+      { skipAdvanceBookingCheck: true }
     );
 
     if (!availabilityCheck.available) {
@@ -163,7 +173,13 @@ export async function POST(
     });
 
     // Enviar email ao paciente (não bloqueia a resposta)
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      process.env.APP_URL ||
+      process.env.NEXT_PUBLIC_BASE_URL ||
+      process.env.NEXTAUTH_URL ||
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined) ||
+      'http://localhost:3000';
     const acceptUrl = `${baseUrl}/paciente/consultas?invite=${invite.id}&action=accept`;
     const rejectUrl = `${baseUrl}/paciente/consultas?invite=${invite.id}&action=reject`;
 
@@ -180,6 +196,30 @@ export async function POST(
     }).catch(error => {
       console.error('Erro ao enviar email de convite:', error);
     });
+
+    // Enviar WhatsApp ao paciente (não bloqueia a resposta)
+    if (consultation.patient.phone) {
+      const { sendWhatsAppMessage } = await import('@/lib/whatsapp');
+      const { getRescheduleInviteMessage } = await import('@/lib/whatsapp-templates');
+      
+      const whatsappMessage = await getRescheduleInviteMessage({
+        patientName: consultation.patient.name,
+        doctorName: consultation.doctor?.name || 'Médico',
+        currentDate: new Date(currentScheduledAt).toLocaleDateString('pt-BR'),
+        currentTime: consultation.scheduledTime || '',
+        newDate: newScheduledDate,
+        newTime: newScheduledTime,
+        acceptLink: acceptUrl,
+        rejectLink: rejectUrl,
+      });
+
+      sendWhatsAppMessage({
+        to: consultation.patient.phone,
+        message: whatsappMessage,
+      }).catch(error => {
+        console.error('Erro ao enviar WhatsApp de convite:', error);
+      });
+    }
 
     return NextResponse.json({
       id: invite.id,
@@ -209,6 +249,14 @@ export async function GET(
       return NextResponse.json(
         { error: 'Não autorizado' },
         { status: 401 }
+      );
+    }
+
+    const rescheduleEnabled = await getRescheduleInvitesEnabled();
+    if (!rescheduleEnabled) {
+      return NextResponse.json(
+        { error: 'A ferramenta de adiantamento de consultas está desativada.' },
+        { status: 403 }
       );
     }
 

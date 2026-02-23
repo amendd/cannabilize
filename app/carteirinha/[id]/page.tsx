@@ -114,7 +114,7 @@ export default function CarteirinhaPublicaPage() {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Carteirinha Digital</h1>
-              <p className="text-gray-600">Validação pública (CannaLize)</p>
+              <p className="text-gray-600">Validação pública (CannabiLizi)</p>
             </div>
           </div>
           <div className="mt-4">{badge()}</div>

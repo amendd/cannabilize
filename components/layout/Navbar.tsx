@@ -1,11 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Menu, X, Phone } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import LogoImage from '@/components/ui/LogoImage';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -30,14 +30,7 @@ export default function Navbar() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <Image
-              src="/images/cannalize-logo.png"
-              alt="CannabiLize"
-              width={180}
-              height={56}
-              className="h-11 sm:h-12 w-auto"
-              priority
-            />
+            <LogoImage className="h-11 sm:h-12 w-auto" width={180} height={56} />
           </Link>
 
           {/* Desktop Menu */}
@@ -49,13 +42,13 @@ export default function Navbar() {
               Sobre Nós
             </Link>
             <Link href="/blog" className="text-gray-700 hover:text-primary transition">
-              Blog
+              Central de Conhecimento
             </Link>
             <Link href="/galeria" className="text-gray-700 hover:text-primary transition">
               Galeria
             </Link>
             <Link href="/seja-medico" className="text-green-600 hover:text-green-700 font-semibold transition">
-              Seja Médico
+              Para Médicos
             </Link>
             {session?.user ? (
               <Link href="/paciente" className="text-gray-700 hover:text-primary transition">
@@ -131,7 +124,7 @@ export default function Navbar() {
                   className="block px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition min-h-[44px] flex items-center"
                   onClick={() => setIsOpen(false)}
                 >
-                  Blog
+                  Central de Conhecimento
                 </Link>
                 <Link 
                   href="/galeria" 
@@ -145,7 +138,7 @@ export default function Navbar() {
                   className="block px-4 py-3 text-green-600 hover:bg-green-50 rounded-lg transition min-h-[44px] flex items-center font-semibold"
                   onClick={() => setIsOpen(false)}
                 >
-                  Seja Médico
+                  Para Médicos
                 </Link>
                 {session?.user && (
                   <Link 

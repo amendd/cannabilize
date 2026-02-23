@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import AgendarTrigger from '@/components/agendar/AgendarTrigger';
 import { Calendar, Clock, Eye, Download } from 'lucide-react';
 
 interface ConsultationsHistoryProps {
@@ -13,10 +14,10 @@ export default function ConsultationsHistory({ patientId }: ConsultationsHistory
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/consultations?patientId=${patientId}`)
-      .then(res => res.json())
-      .then(data => {
-        setConsultations(data);
+    fetch(`/api/consultations?patientId=${patientId}&limit=100`)
+      .then((res) => res.json())
+      .then((data) => {
+        setConsultations(data.consultations ?? data ?? []);
         setLoading(false);
       })
       .catch(err => {
@@ -36,12 +37,11 @@ export default function ConsultationsHistory({ patientId }: ConsultationsHistory
       {consultations.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
           <p>Você ainda não possui consultas agendadas.</p>
-          <Link
-            href="/agendamento"
-            className="text-primary hover:underline mt-4 inline-block"
+          <AgendarTrigger
+            className="text-primary hover:underline mt-4 inline-block cursor-pointer bg-transparent border-0 p-0"
           >
             Agendar sua primeira consulta
-          </Link>
+          </AgendarTrigger>
         </div>
       ) : (
         <div className="space-y-4">

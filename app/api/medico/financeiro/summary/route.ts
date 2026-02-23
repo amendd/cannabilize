@@ -224,20 +224,10 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Log para debug
-    console.log(`[Finance Summary] Consultas COMPLETED com receita e pagamento PAID: ${completedConsultationsWithPrescriptions.length}`);
-
-    // Somar os valores dos pagamentos das consultas concluídas com receita
     const allTimePaid = completedConsultationsWithPrescriptions.reduce(
-      (sum, consultation) => {
-        const amount = consultation.payment?.amount || 0;
-        console.log(`[Finance Summary] Consulta ${consultation.id}: R$ ${amount}`);
-        return sum + amount;
-      },
+      (sum, consultation) => sum + (consultation.payment?.amount || 0),
       0
     );
-
-    console.log(`[Finance Summary] Total pago (consultas concluídas com receita): R$ ${allTimePaid}`);
 
     const allTimeReserved = await prisma.doctorPayout.aggregate({
       where: {
@@ -248,10 +238,7 @@ export async function GET(request: NextRequest) {
     });
 
     const reservedAmount = allTimeReserved._sum.amount || 0;
-    console.log(`[Finance Summary] Repasses reservados: R$ ${reservedAmount}`);
-
     available = (allTimePaid || 0) - reservedAmount;
-    console.log(`[Finance Summary] Disponível para saque: R$ ${available}`);
   } catch (e) {
     console.error('Error computing available amount for doctor summary:', e);
     available = 0;

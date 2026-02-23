@@ -1,6 +1,9 @@
+'use client';
+
 import Link from 'next/link';
-import Image from 'next/image';
+import AgendarTrigger from '@/components/agendar/AgendarTrigger';
 import { Instagram, Facebook, Youtube } from 'lucide-react';
+import LogoImage from '@/components/ui/LogoImage';
 
 export default function Footer() {
   return (
@@ -9,16 +12,13 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Logo e Descrição */}
           <div className="col-span-1 md:col-span-2">
-            <Image
-              src="/images/cannalize-logo.png"
-              alt="CannabiLize"
+            <LogoImage
               width={150}
               height={50}
               className="h-12 w-auto mb-4"
             />
             <p className="text-gray-400 mb-4">
-              Líder em tratamentos com cannabis medicinal na América Latina. 
-              Democratizando o acesso ao tratamento com consultas acessíveis e suporte completo.
+              A Cannabilize é uma plataforma nacional que conecta pacientes e médicos especializados em cannabis medicinal.
             </p>
             <div className="flex space-x-4">
               <a 
@@ -54,13 +54,18 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <AgendarTrigger className="text-gray-400 hover:text-primary transition cursor-pointer bg-transparent border-0 p-0 text-left">
+                  Agendar consulta
+                </AgendarTrigger>
+              </li>
+              <li>
                 <Link href="/sobre-nos" className="text-gray-400 hover:text-primary transition">
                   Sobre Nós
                 </Link>
               </li>
               <li>
                 <Link href="/blog" className="text-gray-400 hover:text-primary transition">
-                  Blog
+                  Central de Conhecimento
                 </Link>
               </li>
               <li>
@@ -93,8 +98,22 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-          <p>&copy; {new Date().getFullYear()} CannabiLize. Todos os direitos reservados.</p>
+        <div className="border-t border-gray-800 mt-8 pt-8 space-y-4">
+          <p className="text-center text-gray-400 text-sm font-medium">
+            Cannabilize — Plataforma nacional de acesso ao tratamento com cannabis medicinal.
+          </p>
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-gray-400 text-sm">
+            <p>&copy; {new Date().getFullYear()} Cannabilize. Todos os direitos reservados.</p>
+            <div className="flex gap-4">
+              <Link href="/privacidade" className="hover:text-primary transition">
+                Política de Privacidade
+              </Link>
+              <span>•</span>
+              <Link href="/termos" className="hover:text-primary transition">
+                Termos de Uso
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </footer>

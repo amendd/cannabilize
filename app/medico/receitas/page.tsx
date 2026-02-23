@@ -232,7 +232,7 @@ export default function MedicoReceitasPage() {
                             )}
                             {prescription.consultationId && (
                               <Link
-                                href={`/admin/consultas/${prescription.consultationId}`}
+                                href={`/medico/consultas/${prescription.consultationId}`}
                                 className="inline-flex items-center gap-2 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition text-sm"
                               >
                                 <FileText size={16} />

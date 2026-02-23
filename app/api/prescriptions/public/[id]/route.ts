@@ -37,6 +37,11 @@ export async function GET(
             status: true,
           },
         },
+        medications: {
+          include: {
+            medication: true,
+          },
+        },
       },
     });
 
@@ -47,8 +52,9 @@ export async function GET(
       );
     }
 
-    // Verificar se a receita está válida
-    if (prescription.status !== 'ISSUED') {
+    // Status válidos para exibição pública (QR code): ACTIVE e EXPIRING são os atuais; ISSUED é legado
+    const validStatuses = ['ACTIVE', 'EXPIRING', 'ISSUED'];
+    if (!validStatuses.includes(prescription.status)) {
       return NextResponse.json(
         { error: 'Receita não está mais válida' },
         { status: 403 }
@@ -63,7 +69,34 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(prescription);
+    // Acesso via QR code: quem escaneia teve o documento apresentado pelo paciente, que assim
+    // autoriza a exibição dos dados necessários para validação (nome, CPF, email de contato).
+    return NextResponse.json({
+      id: prescription.id,
+      status: prescription.status,
+      issuedAt: prescription.issuedAt,
+      expiresAt: prescription.expiresAt,
+      doctor: {
+        name: prescription.doctor.name,
+        crm: prescription.doctor.crm,
+      },
+      patient: prescription.patient
+        ? {
+            name: prescription.patient.name,
+            cpf: prescription.patient.cpf,
+            email: prescription.patient.email,
+          }
+        : null,
+      consultation: prescription.consultation
+        ? {
+            scheduledAt: prescription.consultation.scheduledAt,
+            status: prescription.consultation.status,
+          }
+        : null,
+      prescriptionData: prescription.prescriptionData,
+      medications: prescription.medications,
+      pdfUrl: prescription.pdfUrl,
+    });
   } catch (error) {
     console.error('Erro ao buscar receita pública:', error);
     return NextResponse.json(

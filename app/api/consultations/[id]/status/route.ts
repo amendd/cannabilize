@@ -2,16 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { canAccessAdmin } from '@/lib/roles-permissions';
 
-const ALLOWED_STATUSES = new Set(['SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']);
+const ALLOWED_STATUSES = new Set(['SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'NO_SHOW']);
 
-function isAllowedTransition(from: string, to: string) {
-  // Regra simples e segura (pode evoluir depois):
-  // - SCHEDULED -> IN_PROGRESS | COMPLETED
-  // - IN_PROGRESS -> COMPLETED
-  // - COMPLETED -> (não muda)
-  // - CANCELLED -> (não muda)
+function isAllowedTransition(from: string, to: string, isAdmin: boolean) {
   if (from === to) return true;
+  // Admin/operador: pode mover entre qualquer status (fluxo completo)
+  if (isAdmin) return true;
+  // Médico: regras restritas
   if (from === 'SCHEDULED' && (to === 'IN_PROGRESS' || to === 'COMPLETED')) return true;
   if (from === 'IN_PROGRESS' && to === 'COMPLETED') return true;
   return false;
@@ -28,7 +27,9 @@ export async function PUT(
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session || (session.user.role !== 'DOCTOR' && session.user.role !== 'ADMIN')) {
+    const isAdmin = session && canAccessAdmin(session.user?.role);
+    const isDoctor = session?.user?.role === 'DOCTOR';
+    if (!session || (!isDoctor && !isAdmin)) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
@@ -51,8 +52,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Consulta não encontrada' }, { status: 404 });
     }
 
-    // Verificar se é o médico da consulta ou admin (com o mesmo padrão de notes/return-date)
-    if (session.user.role !== 'ADMIN') {
+    if (!isAdmin) {
       const doctor = await prisma.doctor.findUnique({
         where: { userId: session.user.id },
         select: { id: true },
@@ -82,7 +82,7 @@ export async function PUT(
     }
 
     const fromStatus = String(consultation.status || '').toUpperCase();
-    if (!isAllowedTransition(fromStatus, nextStatus)) {
+    if (!isAllowedTransition(fromStatus, nextStatus, !!isAdmin)) {
       return NextResponse.json(
         { error: `Transição de status não permitida (${fromStatus} -> ${nextStatus})` },
         { status: 400 }

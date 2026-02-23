@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
-import Image from 'next/image';
+import LogoImage from '@/components/ui/LogoImage';
 import { usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, 
@@ -14,11 +14,14 @@ import {
   Menu,
   X,
   Clock,
-  Bell,
-  DollarSign
+  DollarSign,
+  CalendarClock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import AdminDoctorImpersonationBanner from '@/components/impersonation/AdminDoctorImpersonationBanner';
+import DoctorAlertsProvider from '@/components/doctor/DoctorAlertsProvider';
+import NotificationsDropdown from '@/components/notifications/NotificationsDropdown';
+import { useLogoUrl } from '@/lib/public-config-context';
 
 interface DoctorLayoutProps {
   children: React.ReactNode;
@@ -30,10 +33,11 @@ export default function DoctorLayout({ children }: DoctorLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const menuItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', href: '/medico', exact: true },
-    { icon: Calendar, label: 'Minhas Consultas', href: '/medico/consultas' },
-    { icon: FileText, label: 'Receitas', href: '/medico/receitas' },
+    { icon: LayoutDashboard, label: 'Visão Geral', href: '/medico', exact: true },
+    { icon: CalendarClock, label: 'Agenda', href: '/medico/disponibilidade' },
+    { icon: Calendar, label: 'Atendimentos', href: '/medico/consultas' },
     { icon: User, label: 'Pacientes', href: '/medico/pacientes' },
+    { icon: FileText, label: 'Receitas', href: '/medico/receitas' },
     { icon: DollarSign, label: 'Financeiro', href: '/medico/financeiro' },
   ];
 
@@ -46,24 +50,19 @@ export default function DoctorLayout({ children }: DoctorLayoutProps) {
 
   return (
     <div className="min-h-screen bg-green-50">
+      {/* Alertas sonoros: nova consulta agendada + consulta próxima do início */}
+      <DoctorAlertsProvider />
       {/* Admin Impersonation Banner */}
       <AdminDoctorImpersonationBanner />
       
       {/* Sidebar Desktop */}
       <aside className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-56 lg:flex-col">
-        <div className="flex flex-col flex-grow bg-gradient-to-b from-green-700 to-green-600 text-white shadow-lg">
+        <div className="flex flex-col flex-grow min-h-0 bg-gradient-to-b from-green-700 to-green-600 text-white shadow-lg">
           {/* Logo */}
           <div className="flex items-center flex-shrink-0 px-4 py-5 border-b border-green-600">
             <Link href="/medico" className="flex items-center gap-3">
               <span className="bg-white/95 rounded-md px-2 py-1 shadow-sm">
-                <Image
-                  src="/images/cannalize-logo.png"
-                  alt="CannabiLize"
-                  width={132}
-                  height={42}
-                  className="h-8 w-auto"
-                  priority
-                />
+                <LogoImage width={132} height={42} className="h-8 w-auto" />
               </span>
               <span className="text-sm font-semibold leading-tight">
                 Área Médica
@@ -72,7 +71,7 @@ export default function DoctorLayout({ children }: DoctorLayoutProps) {
           </div>
 
           {/* Menu */}
-          <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto">
+          <nav className="flex-1 min-h-0 px-3 py-6 space-y-1 overflow-y-auto">
             {menuItems.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.href, item.exact);
@@ -134,18 +133,11 @@ export default function DoctorLayout({ children }: DoctorLayoutProps) {
               transition={{ type: 'tween', duration: 0.3 }}
               className="fixed inset-y-0 left-0 z-50 w-56 bg-gradient-to-b from-green-700 to-green-600 text-white lg:hidden"
             >
-              <div className="flex flex-col h-full">
-                <div className="flex items-center justify-between px-4 py-5 border-b border-green-600">
+              <div className="flex flex-col h-full min-h-0">
+                <div className="flex items-center justify-between px-4 py-5 border-b border-green-600 flex-shrink-0">
                   <div className="flex items-center gap-3">
                     <span className="bg-white/95 rounded-md px-2 py-1 shadow-sm">
-                      <Image
-                        src="/images/cannalize-logo.png"
-                        alt="CannabiLize"
-                        width={132}
-                        height={42}
-                        className="h-8 w-auto"
-                        priority
-                      />
+                      <LogoImage width={132} height={42} className="h-8 w-auto" />
                     </span>
                     <span className="text-sm font-semibold leading-tight">
                       Área Médica
@@ -158,7 +150,7 @@ export default function DoctorLayout({ children }: DoctorLayoutProps) {
                     <X size={24} />
                   </button>
                 </div>
-                <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto">
+                <nav className="flex-1 min-h-0 px-3 py-6 space-y-1 overflow-y-auto">
                   {menuItems.map((item) => {
                     const Icon = item.icon;
                     const active = isActive(item.href, item.exact);
@@ -220,10 +212,7 @@ export default function DoctorLayout({ children }: DoctorLayoutProps) {
                 <Clock size={18} />
                 <span>{new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
-              <button className="p-2 rounded-lg hover:bg-green-50 relative">
-                <Bell size={20} className="text-gray-600" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-green-500 rounded-full"></span>
-              </button>
+              <NotificationsDropdown />
               <div className="hidden sm:flex items-center gap-2">
                 <div className="text-right">
                   <p className="text-sm font-medium text-gray-900">

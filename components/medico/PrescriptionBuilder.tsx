@@ -14,6 +14,8 @@ interface PrescriptionBuilderProps {
   consultationStatus: string;
   existingPrescription?: any;
   onPrescriptionSaved?: () => void;
+  /** Se false, o botão "Finalizar e Emitir Receita" fica desabilitado até o médico marcar que a chamada por vídeo foi encerrada. */
+  allowEmitPrescription?: boolean;
 }
 
 interface Medication {
@@ -58,6 +60,7 @@ export default function PrescriptionBuilder({
   consultationStatus,
   existingPrescription,
   onPrescriptionSaved,
+  allowEmitPrescription = true,
 }: PrescriptionBuilderProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
@@ -303,6 +306,7 @@ export default function PrescriptionBuilder({
 
   const canEdit = consultationStatus === 'IN_PROGRESS' || consultationStatus === 'SCHEDULED';
   const hasPrescription = existingPrescription && existingPrescription.status === 'ISSUED';
+  const canEmit = canEdit && allowEmitPrescription;
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
@@ -573,26 +577,38 @@ export default function PrescriptionBuilder({
           </div>
 
           {canEdit && (
-            <div className="flex gap-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleSubmit(saveDraft)}
-                loading={isSavingDraft}
-                className="flex-1"
-              >
-                <Save size={16} />
-                Salvar Rascunho
-              </Button>
-              <Button
-                type="submit"
-                loading={isSubmitting}
-                className="flex-1"
-              >
-                <CheckCircle size={16} />
-                Finalizar e Emitir Receita
-              </Button>
-            </div>
+            <>
+              {!allowEmitPrescription && (
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-3">
+                  <XCircle className="text-amber-600 shrink-0" size={20} />
+                  <p className="text-sm text-amber-800">
+                    Para emitir a receita, informe antes que a <strong>chamada por vídeo foi encerrada</strong> (botão na área da reunião).
+                  </p>
+                </div>
+              )}
+              <div className="flex gap-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleSubmit(saveDraft)}
+                  loading={isSavingDraft}
+                  className="flex-1"
+                >
+                  <Save size={16} />
+                  Salvar Rascunho
+                </Button>
+                <Button
+                  type="submit"
+                  loading={isSubmitting}
+                  disabled={!canEmit}
+                  className="flex-1"
+                  title={!canEmit ? 'Encerre a chamada por vídeo antes de emitir a receita.' : undefined}
+                >
+                  <CheckCircle size={16} />
+                  Finalizar e Emitir Receita
+                </Button>
+              </div>
+            </>
           )}
         </form>
       )}

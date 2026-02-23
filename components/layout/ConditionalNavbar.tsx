@@ -9,7 +9,10 @@ export default function ConditionalNavbar() {
   // Ocultar navbar padrão nas rotas que têm layouts próprios
   const hideNavbar = pathname?.startsWith('/admin') || 
                      pathname?.startsWith('/medico') || 
-                     pathname?.startsWith('/paciente');
+                     pathname?.startsWith('/paciente') ||
+                     pathname?.startsWith('/erp-canna') ||
+                     pathname?.startsWith('/ifp-canna') ||
+                     pathname?.startsWith('/gpp-canna');
   
   if (hideNavbar) {
     return null;

@@ -77,8 +77,22 @@ export function clearRateLimit(ip?: string) {
 
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  
-  // Excluir rotas de autenticação e debug do rate limiting
+
+  // Nunca interceptar assets do Next.js (evita CSS/JS servidos como HTML → erro MIME)
+  if (pathname.startsWith('/_next/') || pathname.startsWith('/next/')) {
+    return NextResponse.next();
+  }
+
+  // Proteger rotas de dashboard: redirecionar para login se não houver sessão
+  const protectedPrefixes = ['/admin', '/paciente', '/medico', '/engenheiro', '/erp-canna', '/ifp-canna', '/gpp-canna'];
+  const isProtected = protectedPrefixes.some((prefix) => pathname.startsWith(prefix));
+  if (isProtected && !hasNextAuthSessionCookie(request)) {
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('callbackUrl', pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // Excluir rotas de autenticação, webhooks e debug do rate limiting
   const excludedPaths = [
     '/api/auth',
     '/api/auth/session',
@@ -88,6 +102,7 @@ export function middleware(request: NextRequest) {
     '/api/auth/signout',
     '/api/auth/callback',
     '/api/debug', // Rotas de debug
+    '/api/whatsapp', // Webhooks Z-API, Twilio, etc. (callbacks externos não devem ser limitados)
   ];
   
   const isExcluded = excludedPaths.some(path => pathname.startsWith(path));
@@ -118,11 +133,11 @@ export function middleware(request: NextRequest) {
   // Permite reCAPTCHA do Google
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.google.com https://www.gstatic.com",
+    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.google.com https://www.gstatic.com https://www.googletagmanager.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: https: blob:",
     "font-src 'self' data: https://fonts.gstatic.com",
-    "connect-src 'self' https://www.google.com https://www.google.com/recaptcha",
+    "connect-src 'self' https://www.google.com https://www.google.com/recaptcha https://www.googletagmanager.com",
     "frame-src 'self' https://www.google.com",
     "object-src 'none'",
     "base-uri 'self'",
@@ -174,5 +189,16 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/api/:path*',
+    '/admin/:path*',
+    '/paciente/:path*',
+    '/medico/:path*',
+    '/engenheiro',
+    '/engenheiro/:path*',
+    '/erp-canna',
+    '/erp-canna/:path*',
+    '/ifp-canna',
+    '/ifp-canna/:path*',
+    '/gpp-canna',
+    '/gpp-canna/:path*',
   ],
 };

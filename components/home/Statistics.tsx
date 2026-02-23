@@ -2,56 +2,38 @@
 
 import { useEffect, useState } from 'react';
 import { Users, MessageCircle, Calendar, MapPin, Star, TrendingUp } from 'lucide-react';
+import { Skeleton } from '@/components/ui/Skeleton';
+import type { LandingConfigPublic } from '@/lib/landing-config';
 
 const stats = [
-  { 
-    icon: Users, 
-    value: 90000, 
-    label: 'Atendimentos', 
-    suffix: '+',
-    color: 'from-blue-500 to-blue-600',
-    bgColor: 'bg-blue-50',
-  },
-  { 
-    icon: MessageCircle, 
-    value: 400000, 
-    label: 'Seguidores', 
-    suffix: '+',
-    color: 'from-purple-500 to-purple-600',
-    bgColor: 'bg-purple-50',
-  },
-  { 
-    icon: Calendar, 
-    value: 30000, 
-    label: 'Consultas', 
-    suffix: '+',
-    color: 'from-green-500 to-green-600',
-    bgColor: 'bg-green-50',
-  },
-  { 
-    icon: Star, 
-    value: 2000, 
-    label: 'Depoimentos', 
-    suffix: '+',
-    color: 'from-yellow-500 to-yellow-600',
-    bgColor: 'bg-yellow-50',
-  },
-  { 
-    icon: MapPin, 
-    value: 2000, 
-    label: 'Cidades atendidas', 
-    suffix: '+',
-    color: 'from-red-500 to-red-600',
-    bgColor: 'bg-red-50',
-  },
+  { key: 'patients' as const, icon: Users, value: 90000, label: 'Atendimentos', suffix: '+', color: 'from-blue-500 to-blue-600', bgColor: 'bg-blue-50' },
+  { key: null, icon: MessageCircle, value: 400000, label: 'Seguidores', suffix: '+', color: 'from-purple-500 to-purple-600', bgColor: 'bg-purple-50' },
+  { key: 'consultations' as const, icon: Calendar, value: 30000, label: 'Consultas', suffix: '+', color: 'from-green-500 to-green-600', bgColor: 'bg-green-50' },
+  { key: 'testimonials' as const, icon: Star, value: 2000, label: 'Depoimentos', suffix: '+', color: 'from-yellow-500 to-yellow-600', bgColor: 'bg-yellow-50' },
+  { key: 'cities' as const, icon: MapPin, value: 2000, label: 'Cidades atendidas', suffix: '+', color: 'from-red-500 to-red-600', bgColor: 'bg-red-50' },
 ];
 
-export default function Statistics() {
+interface StatisticsProps {
+  config?: LandingConfigPublic | null;
+}
+
+export default function Statistics({ config }: StatisticsProps) {
   const [counted, setCounted] = useState(false);
 
   useEffect(() => {
-    setCounted(true);
+    const t = setTimeout(() => setCounted(true), 400);
+    return () => clearTimeout(t);
   }, []);
+
+  const displayValue = (stat: (typeof stats)[0], index: number) => {
+    if (!counted) return null;
+    if (config?.stats && stat.key && config.stats[stat.key]) {
+      const raw = config.stats[stat.key];
+      if (!raw || String(raw).replace(/\D/g, '') === '0') return stat.value.toLocaleString('pt-BR') + stat.suffix;
+      return raw + (stat.suffix || '');
+    }
+    return stat.value.toLocaleString('pt-BR') + stat.suffix;
+  };
 
   return (
     <section className="py-20 bg-gradient-to-br from-green-600 via-green-700 to-green-800 text-white relative overflow-hidden">
@@ -63,15 +45,15 @@ export default function Statistics() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="text-center mb-12">
-          <div className="inline-block px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-sm font-semibold mb-4">
+        <div className="text-center mb-14">
+          <div className="inline-block px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-sm font-semibold mb-5">
             Números que Comprovam
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          <h2 className="text-3xl md:text-4xl font-extrabold mb-5 tracking-tight">
             Confiança e Resultados
           </h2>
-          <p className="text-lg text-white/90 max-w-2xl mx-auto">
-            Milhares de pacientes já confiaram na CannaLize para seu tratamento
+          <p className="text-lg text-white/80 max-w-2xl mx-auto">
+            Pacientes acompanhados pela Cannabilize em diferentes regiões do país. Atendimento em todo o Brasil.
           </p>
         </div>
 
@@ -88,16 +70,16 @@ export default function Statistics() {
                   <Icon size={28} className="text-white" />
                 </div>
 
-                {/* Value */}
-                <div className="text-3xl md:text-4xl font-bold mb-2">
-                  {counted ? (
-                    <>
-                      {stat.value.toLocaleString('pt-BR')}
-                      {stat.suffix}
-                    </>
-                  ) : (
-                    '0'
-                  )}
+                {/* Value — nunca exibir zero; skeleton até carregar */}
+                <div className="text-3xl md:text-4xl font-bold mb-2 min-h-[2.5rem] flex items-end">
+                  {(() => {
+                    const value = displayValue(stat, index);
+                    return value === null ? (
+                      <Skeleton className="h-9 w-24" />
+                    ) : (
+                      <span className="tabular-nums">{value}</span>
+                    );
+                  })()}
                 </div>
 
                 {/* Label */}

@@ -6,22 +6,70 @@ import { prisma } from '@/lib/prisma';
 /**
  * Atualiza a última atividade do médico (heartbeat)
  * POST /api/doctors/activity
+ * Body opcional: { doctorId?: string } — quando ADMIN impersona médico, enviar doctorId para atualizar aquele médico
  */
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
-    if (!session || session.user.role !== 'DOCTOR') {
+
+    if (!session || (session.user.role !== 'DOCTOR' && session.user.role !== 'ADMIN')) {
       return NextResponse.json(
-        { error: 'Não autorizado. Apenas médicos podem atualizar atividade.' },
+        { error: 'Não autorizado. Apenas médicos (ou admin) podem atualizar atividade.' },
         { status: 401 }
       );
     }
 
-    // Buscar médico pelo userId
-    const doctor = await prisma.doctor.findUnique({
-      where: { userId: session.user.id },
-    });
+    let doctor: { id: string } | null = null;
+
+    // ADMIN pode enviar doctorId no body para atualizar atividade do médico impersonado
+    if (session.user.role === 'ADMIN') {
+      try {
+        const body = await request.json().catch(() => ({}));
+        const doctorId = typeof body?.doctorId === 'string' ? body.doctorId.trim() : undefined;
+        if (doctorId) {
+          const found = await prisma.doctor.findUnique({
+            where: { id: doctorId },
+            select: { id: true },
+          });
+          if (found) doctor = found;
+        }
+      } catch {
+        // body vazio ou inválido
+      }
+    }
+
+    // Médico logado como DOCTOR (ou ADMIN sem doctorId no body): resolver médico pelo userId
+    if (!doctor && session.user.role === 'DOCTOR') {
+      doctor = await prisma.doctor.findUnique({
+        where: { userId: session.user.id },
+        select: { id: true },
+      });
+    }
+
+    // Fallback: médico vinculado só por email
+    if (!doctor && session.user.role === 'DOCTOR') {
+      let emailToUse = session.user.email;
+      if (!emailToUse) {
+        const userRow = await prisma.user.findUnique({
+          where: { id: session.user.id },
+          select: { email: true },
+        });
+        emailToUse = userRow?.email ?? undefined;
+      }
+      if (emailToUse) {
+        const byEmail = await prisma.doctor.findFirst({
+          where: { email: emailToUse },
+          select: { id: true },
+        });
+        if (byEmail) {
+          doctor = byEmail;
+          await prisma.doctor.update({
+            where: { id: byEmail.id },
+            data: { userId: session.user.id },
+          });
+        }
+      }
+    }
 
     if (!doctor) {
       return NextResponse.json(
@@ -36,7 +84,7 @@ export async function POST(request: NextRequest) {
       data: { lastActiveAt: new Date() },
     });
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       success: true,
       lastActiveAt: new Date().toISOString(),
     });

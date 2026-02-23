@@ -5,20 +5,22 @@
 import { prisma } from '@/lib/prisma';
 import { getAvailableSlots, isDoctorOnline } from './availability';
 import { 
-  getDefaultConsultationDurationMinutes,
   getMinAdvanceBookingMinutesOnline,
   getMinAdvanceBookingMinutesOffline,
+  getRescheduleInviteExpiryMinutes,
 } from './consultation-config';
 
 /**
  * Verifica se um horário está disponível para remarcação
  * Agora verifica se está dentro do período de disponibilidade, não apenas se está na lista exata de slots
+ * @param options.skipAdvanceBookingCheck - Quando true (ex.: médico sugerindo o horário), não exige antecedência mínima para "hoje"
  */
 export async function isTimeSlotAvailable(
   date: string,
   time: string,
   doctorId: string,
-  excludeConsultationId?: string
+  excludeConsultationId?: string,
+  options?: { skipAdvanceBookingCheck?: boolean }
 ): Promise<{ available: boolean; reason?: string }> {
   try {
     // Buscar médico e suas disponibilidades
@@ -49,25 +51,15 @@ export async function isTimeSlotAvailable(
     // Verificar se o horário está dentro do período de disponibilidade
     const [timeHour, timeMin] = time.split(':').map(Number);
     const [startHour, startMin] = dayAvailability.startTime.split(':').map(Number);
-    const [endHour, endMin] = dayAvailability.endTime.split(':').map(Number);
 
     const timeMinutes = timeHour * 60 + timeMin;
     const startMinutes = startHour * 60 + startMin;
-    const endMinutes = endHour * 60 + endMin;
-    const consultationDuration = dayAvailability.duration || await getDefaultConsultationDurationMinutes();
 
-    // Verificar se o horário está dentro do período E se a consulta cabe (horário + duração não ultrapassa o fim)
+    // Verificar se o horário está dentro do período (início da disponibilidade)
     if (timeMinutes < startMinutes) {
       return { 
         available: false, 
         reason: `Horário antes do início da disponibilidade (${dayAvailability.startTime})` 
-      };
-    }
-
-    if (timeMinutes + consultationDuration > endMinutes) {
-      return { 
-        available: false, 
-        reason: `Horário muito próximo do fim da disponibilidade. A consulta de ${consultationDuration}min não cabe até ${dayAvailability.endTime}` 
       };
     }
 
@@ -122,25 +114,25 @@ export async function isTimeSlotAvailable(
       return { available: false, reason: 'Já existe um convite pendente para este horário' };
     }
 
-      // Verificar antecedência mínima (configurável: padrão 5min online, 2h offline)
+    // Verificar antecedência mínima para "hoje" (não se aplica quando o médico está sugerindo o horário)
+    if (!options?.skipAdvanceBookingCheck) {
       const now = new Date();
       const isToday = date === now.toISOString().split('T')[0];
-      
       if (isToday) {
         const doctorIsOnline = await isDoctorOnline(doctorId);
         const minMinutesOnline = await getMinAdvanceBookingMinutesOnline();
         const minMinutesOffline = await getMinAdvanceBookingMinutesOffline();
         const minMinutes = doctorIsOnline ? minMinutesOnline : minMinutesOffline;
         const minTime = new Date(now.getTime() + minMinutes * 60 * 1000);
-        
         if (scheduledAt < minTime) {
-          return { 
-            available: false, 
-            reason: `É necessário pelo menos ${minMinutes} minutos de antecedência para agendamentos hoje` 
+          return {
+            available: false,
+            reason: `É necessário pelo menos ${minMinutes} minutos de antecedência para agendamentos hoje`,
           };
         }
       }
-    
+    }
+
     return { available: true };
   } catch (error) {
     console.error('Erro ao verificar disponibilidade do horário:', error);
@@ -239,8 +231,8 @@ export async function createRescheduleInvite(data: {
   newScheduledTime: string;
   message?: string;
 }) {
-  // Expira em 5 minutos
-  const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+  const expiryMinutes = await getRescheduleInviteExpiryMinutes();
+  const expiresAt = new Date(Date.now() + expiryMinutes * 60 * 1000);
   
   return await prisma.consultationRescheduleInvite.create({
     data: {

@@ -28,6 +28,7 @@ export default function ConsultationFilters({ filters, onFiltersChange }: Consul
             <option value="IN_PROGRESS">Em Andamento</option>
             <option value="COMPLETED">Concluída</option>
             <option value="CANCELLED">Cancelada</option>
+            <option value="NO_SHOW">Não compareceu</option>
           </select>
         </div>
 

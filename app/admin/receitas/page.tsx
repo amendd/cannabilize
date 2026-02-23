@@ -4,10 +4,11 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { FileText, Download, Calendar, User, Clock, Search, Filter, Eye, Pill } from 'lucide-react';
+import { FileText, Download, Calendar, User, Clock, Search, Filter, Eye, Pill, FileDown, ChevronUp, ChevronDown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import LoadingPage from '@/components/ui/Loading';
 import Breadcrumbs from '@/components/ui/Breadcrumbs';
+import { canAccessAdmin } from '@/lib/roles-permissions';
 
 interface Prescription {
   id: string;
@@ -57,13 +58,15 @@ export default function AdminReceitasPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<'patient' | 'doctor' | 'issuedAt' | 'expiresAt' | 'status'>('issuedAt');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login');
       return;
     }
-    if (status === 'authenticated' && session?.user.role !== 'ADMIN') {
+    if (status === 'authenticated' && !canAccessAdmin(session?.user?.role)) {
       router.push('/');
       return;
     }
@@ -71,7 +74,7 @@ export default function AdminReceitasPage() {
   }, [status, session?.user?.role]);
 
   useEffect(() => {
-    if (session?.user.role === 'ADMIN') {
+    if (canAccessAdmin(session?.user?.role)) {
       fetchPrescriptions();
     }
   }, [session]);
@@ -188,6 +191,50 @@ export default function AdminReceitasPage() {
     return prescription.prescriptionData;
   };
 
+  const sortedPrescriptions = [...filteredPrescriptions].sort((a, b) => {
+    let cmp = 0;
+    if (sortBy === 'patient') {
+      const na = (a.consultation?.patient?.name || '').toLowerCase();
+      const nb = (b.consultation?.patient?.name || '').toLowerCase();
+      cmp = na.localeCompare(nb);
+    } else if (sortBy === 'doctor') {
+      const da = (a.doctor?.name || a.consultation?.doctor?.name || '').toLowerCase();
+      const db = (b.doctor?.name || b.consultation?.doctor?.name || '').toLowerCase();
+      cmp = da.localeCompare(db);
+    } else if (sortBy === 'issuedAt') {
+      cmp = new Date(a.issuedAt).getTime() - new Date(b.issuedAt).getTime();
+    } else if (sortBy === 'expiresAt') {
+      const ta = a.expiresAt ? new Date(a.expiresAt).getTime() : 0;
+      const tb = b.expiresAt ? new Date(b.expiresAt).getTime() : 0;
+      cmp = ta - tb;
+    } else {
+      cmp = (a.status || '').localeCompare(b.status || '');
+    }
+    return sortDir === 'asc' ? cmp : -cmp;
+  });
+
+  const toggleSort = (key: typeof sortBy) => {
+    if (sortBy === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    else {
+      setSortBy(key);
+      setSortDir(key === 'issuedAt' || key === 'expiresAt' ? 'desc' : 'asc');
+    }
+  };
+
+  const SortTh = ({ colKey, label }: { colKey: typeof sortBy; label: string }) => (
+    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+      <button
+        type="button"
+        onClick={() => toggleSort(colKey)}
+        className="inline-flex items-center gap-1 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500/30 rounded"
+        aria-label={`Ordenar por ${label}`}
+      >
+        {label}
+        {sortBy === colKey ? (sortDir === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />) : null}
+      </button>
+    </th>
+  );
+
   if (status === 'loading' || loading) {
     return <LoadingPage />;
   }
@@ -224,17 +271,27 @@ export default function AdminReceitasPage() {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-8 flex flex-wrap items-start justify-between gap-4"
         >
-          <Breadcrumbs items={[
-            { label: 'Admin', href: '/admin' },
-            { label: 'Receitas' },
-          ]} />
-          <h1 className="text-3xl font-bold text-gray-900 font-display mt-4 flex items-center gap-2">
-            <FileText className="text-green-600" size={32} />
-            Gestão de Receitas
-          </h1>
-          <p className="text-gray-600 mt-2">Gerencie todas as receitas médicas emitidas na plataforma</p>
+          <div>
+            <Breadcrumbs items={[
+              { label: 'Admin', href: '/admin' },
+              { label: 'Receitas' },
+            ]} />
+            <h1 className="text-3xl font-bold text-gray-900 font-display mt-4 flex items-center gap-2">
+              <FileText className="text-green-600" size={32} />
+              Gestão de Receitas
+            </h1>
+            <p className="text-gray-600 mt-2">Gerencie todas as receitas médicas emitidas na plataforma</p>
+          </div>
+          <a
+            href="/api/admin/reports?period=365&format=csv"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 text-sm font-medium"
+            download="relatorio-prescricoes.csv"
+          >
+            <FileDown size={18} />
+            Exportar CSV
+          </a>
         </motion.div>
 
         {/* Estatísticas */}
@@ -366,17 +423,17 @@ export default function AdminReceitasPage() {
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Paciente</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Médico</th>
+                    <SortTh colKey="patient" label="Paciente" />
+                    <SortTh colKey="doctor" label="Médico" />
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Medicamentos</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Data de Emissão</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Validade</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <SortTh colKey="issuedAt" label="Data de Emissão" />
+                    <SortTh colKey="expiresAt" label="Validade" />
+                    <SortTh colKey="status" label="Status" />
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {filteredPrescriptions.map((prescription, index) => {
+                  {sortedPrescriptions.map((prescription, index) => {
                     const prescriptionData = getPrescriptionData(prescription);
                     const medications = prescriptionData?.medications || prescription.medications || [];
                     const isExpired = prescription.expiresAt && new Date(prescription.expiresAt) < new Date();

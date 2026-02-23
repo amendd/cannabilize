@@ -19,13 +19,37 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { platform, clientId, clientSecret, refreshToken, accountId } = body;
+    let { platform, clientId, clientSecret, refreshToken, accountId } = body;
+
+    // Se credenciais vieram mascaradas (***) ou vazias, usar as salvas no banco
+    // (o front retorna "***" para secrets após carregar a página, então "Testar" enviava literal "***" para o Google)
+    const isMasked = (v: string | null | undefined) => !v || v.trim() === '' || v === '***';
+    if (platform === 'GOOGLE_MEET' && (isMasked(clientSecret) || isMasked(refreshToken) || isMasked(clientId))) {
+      const stored = await prisma.telemedicineConfig.findUnique({
+        where: { platform: 'GOOGLE_MEET' },
+      });
+      if (stored?.clientId && stored?.clientSecret && stored?.refreshToken) {
+        clientId = stored.clientId;
+        clientSecret = stored.clientSecret;
+        refreshToken = stored.refreshToken;
+      }
+    }
+    if (platform === 'ZOOM' && (isMasked(clientSecret) || isMasked(clientId) || isMasked(accountId))) {
+      const stored = await prisma.telemedicineConfig.findUnique({
+        where: { platform: 'ZOOM' },
+      });
+      if (stored?.accountId && stored?.clientId && stored?.clientSecret) {
+        accountId = stored.accountId;
+        clientId = stored.clientId;
+        clientSecret = stored.clientSecret;
+      }
+    }
 
     if (platform === 'GOOGLE_MEET') {
       // Testar credenciais do Google Meet
       if (!clientId || !clientSecret || !refreshToken) {
         return NextResponse.json(
-          { error: 'Client ID, Client Secret e Refresh Token são obrigatórios' },
+          { error: 'Client ID, Client Secret e Refresh Token são obrigatórios. Preencha os campos e salve, ou use "Testar Credenciais" após já ter salvado.' },
           { status: 400 }
         );
       }

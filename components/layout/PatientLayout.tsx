@@ -3,23 +3,27 @@
 import { useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
-import Image from 'next/image';
+import LogoImage from '@/components/ui/LogoImage';
 import { usePathname } from 'next/navigation';
-import { 
-  LayoutDashboard, 
-  Calendar, 
-  FileText, 
+import {
+  LayoutDashboard,
+  Calendar,
+  FileText,
   CreditCard,
   Package,
   LogOut,
   Menu,
   X,
-  Bell,
-  User
+  User,
+  IdCard,
+  History,
+  ChevronDown,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import AdminImpersonationBanner from '@/components/impersonation/AdminImpersonationBanner';
 import { useEffectivePatientId } from '@/components/impersonation/useEffectivePatientId';
+import NotificationsDropdown from '@/components/notifications/NotificationsDropdown';
+import { useLogoUrl } from '@/lib/public-config-context';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
@@ -32,7 +36,10 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
   const router = useRouter();
   const { effectivePatientId, loading: loadingPatientId, isImpersonating } = useEffectivePatientId();
   const pathname = usePathname();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [treatmentDropdownOpen, setTreatmentDropdownOpen] = useState(false);
+  const [consentChecked, setConsentChecked] = useState(false);
 
   // Redirecionar admin sem impersonação
   useEffect(() => {
@@ -43,27 +50,57 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
     }
   }, [session, status, isImpersonating, loadingPatientId, router]);
 
-  const menuItems = [
-    { icon: LayoutDashboard, label: 'Início', href: '/paciente', exact: true },
-    { icon: Calendar, label: 'Minhas Consultas', href: '/paciente/consultas' },
+  // Paciente: bloquear uso da área até aceitar consentimento LGPD
+  useEffect(() => {
+    if (status !== 'authenticated' || session?.user.role !== 'PATIENT' || consentChecked) return;
+    if (pathname === '/paciente/consentimento') {
+      setConsentChecked(true);
+      return;
+    }
+    fetch('/api/paciente/consentimento/status', { credentials: 'include' })
+      .then((res) => res.json())
+      .then((data) => {
+        setConsentChecked(true);
+        if (data.hasConsent !== true) {
+          router.replace('/paciente/consentimento');
+        }
+      })
+      .catch(() => setConsentChecked(true));
+  }, [status, session?.user?.role, pathname, router, consentChecked]);
+
+  // Fechar dropdowns ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('[data-user-dropdown]')) setUserDropdownOpen(false);
+      if (!target.closest('[data-treatment-dropdown]')) setTreatmentDropdownOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Fechar dropdown quando menu mobile abrir (evitar conflito)
+  useEffect(() => {
+    if (mobileNavOpen) {
+      setUserDropdownOpen(false);
+    }
+  }, [mobileNavOpen]);
+
+  const treatmentItems = [
+    { icon: Calendar, label: 'Consultas', href: '/paciente/consultas' },
     { icon: FileText, label: 'Receitas', href: '/paciente/receitas' },
+    { icon: Package, label: 'Documentos do Tratamento', href: '/paciente/documentos' },
     { icon: CreditCard, label: 'Pagamentos', href: '/paciente/pagamentos' },
-    { icon: Package, label: 'Documentos', href: '/paciente/documentos' },
-    { icon: User, label: 'Meu Perfil', href: '/paciente/perfil' },
+    { icon: History, label: 'Histórico', href: '/paciente/historico' },
   ];
 
-  const isActive = (href: string, exact?: boolean) => {
-    if (exact) {
-      return pathname === href;
-    }
-    return pathname?.startsWith(href);
-  };
+  const isTreatmentActive = treatmentItems.some((item) => pathname?.startsWith(item.href));
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
-      {/* Admin Impersonation Banner */}
+    <div className="relative min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
+      {/* Modo admin: aviso discreto no topo direito */}
       <AdminImpersonationBanner />
-      
+
       {/* Top Navigation */}
       <header className="bg-white shadow-sm border-b border-purple-100 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -71,53 +108,107 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
             {/* Logo */}
             <Link href="/paciente" className="flex items-center">
               <div className="flex items-center gap-3">
-                <Image
-                  src="/images/cannalize-logo.png"
-                  alt="CannabiLize"
+                <LogoImage
                   width={132}
                   height={42}
                   className="h-9 w-auto"
-                  priority
                 />
                 <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                  Área do Paciente
+                  Centro de Tratamento
                 </span>
               </div>
             </Link>
 
-            {/* Desktop Menu */}
+            {/* Desktop Menu — Meu Tratamento + Identidade + Perfil */}
             <nav className="hidden md:flex items-center space-x-1">
-              {menuItems.map((item) => {
-                const Icon = item.icon;
-                const active = isActive(item.href, item.exact);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                      active
-                        ? 'bg-purple-100 text-purple-700'
-                        : 'text-gray-600 hover:bg-purple-50 hover:text-purple-700'
-                    }`}
-                  >
-                    <Icon size={18} className="mr-2" />
-                    {item.label}
-                  </Link>
-                );
-              })}
+              <Link
+                href="/paciente"
+                className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  pathname === '/paciente'
+                    ? 'bg-purple-100 text-purple-700'
+                    : 'text-gray-600 hover:bg-purple-50 hover:text-purple-700'
+                }`}
+              >
+                <LayoutDashboard size={18} className="mr-2" />
+                Início
+              </Link>
+
+              <div className="relative" data-treatment-dropdown>
+                <button
+                  type="button"
+                  onClick={() => setTreatmentDropdownOpen(!treatmentDropdownOpen)}
+                  className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    isTreatmentActive
+                      ? 'bg-purple-100 text-purple-700'
+                      : 'text-gray-600 hover:bg-purple-50 hover:text-purple-700'
+                  }`}
+                >
+                  Meu Tratamento
+                  <ChevronDown size={16} className={`ml-1 transition-transform ${treatmentDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+                <AnimatePresence>
+                  {treatmentDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      className="absolute left-0 top-full mt-1 w-56 rounded-lg border border-gray-200 bg-white py-1 shadow-lg z-50"
+                    >
+                      {treatmentItems.map((item) => {
+                        const Icon = item.icon;
+                        const active = pathname?.startsWith(item.href);
+                        return (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            onClick={() => setTreatmentDropdownOpen(false)}
+                            className={`flex items-center px-4 py-2.5 text-sm transition-colors ${
+                              active ? 'bg-purple-50 text-purple-700' : 'text-gray-700 hover:bg-gray-50'
+                            }`}
+                          >
+                            <Icon size={18} className="mr-3 text-gray-500" />
+                            {item.label}
+                          </Link>
+                        );
+                      })}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <Link
+                href="/paciente/carteirinha"
+                className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  pathname?.startsWith('/paciente/carteirinha')
+                    ? 'bg-purple-100 text-purple-700'
+                    : 'text-gray-600 hover:bg-purple-50 hover:text-purple-700'
+                }`}
+              >
+                <IdCard size={18} className="mr-2" />
+                Carteirinha
+              </Link>
+
+              <Link
+                href="/paciente/perfil"
+                className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  pathname?.startsWith('/paciente/perfil')
+                    ? 'bg-purple-100 text-purple-700'
+                    : 'text-gray-600 hover:bg-purple-50 hover:text-purple-700'
+                }`}
+              >
+                <User size={18} className="mr-2" />
+                Meu Perfil
+              </Link>
             </nav>
 
             {/* Right Side */}
             <div className="flex items-center gap-3">
-              <button className="p-2 rounded-lg hover:bg-purple-50 relative">
-                <Bell size={20} className="text-gray-600" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-purple-500 rounded-full"></span>
-              </button>
+              <NotificationsDropdown />
               
               {/* User Menu */}
-              <div className="relative">
+              <div className="relative" data-user-dropdown>
                 <button
-                  onClick={() => setMenuOpen(!menuOpen)}
+                  onClick={() => setUserDropdownOpen(!userDropdownOpen)}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-purple-50 transition-colors"
                 >
                   <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center text-white text-sm font-semibold">
@@ -130,7 +221,7 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
 
                 {/* Dropdown Menu */}
                 <AnimatePresence>
-                  {menuOpen && (
+                  {userDropdownOpen && (
                     <motion.div
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -147,7 +238,7 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
                       </div>
                       <button
                         onClick={() => {
-                          setMenuOpen(false);
+                          setUserDropdownOpen(false);
                           signOut({ callbackUrl: '/login' });
                         }}
                         className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
@@ -162,10 +253,10 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
 
               {/* Mobile Menu Button */}
               <button
-                onClick={() => setMenuOpen(!menuOpen)}
+                onClick={() => setMobileNavOpen(!mobileNavOpen)}
                 className="md:hidden p-2 rounded-lg hover:bg-purple-50"
               >
-                {menuOpen ? <X size={24} /> : <Menu size={24} />}
+                {mobileNavOpen ? <X size={24} /> : <Menu size={24} />}
               </button>
             </div>
           </div>
@@ -173,7 +264,7 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
 
         {/* Mobile Menu */}
         <AnimatePresence>
-          {menuOpen && (
+          {mobileNavOpen && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
@@ -181,18 +272,29 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
               className="md:hidden border-t border-purple-100 bg-white"
             >
               <nav className="px-4 py-2 space-y-1">
-                {menuItems.map((item) => {
+                <Link
+                  href="/paciente"
+                  onClick={() => setMobileNavOpen(false)}
+                  className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg ${
+                    pathname === '/paciente' ? 'bg-purple-100 text-purple-700' : 'text-gray-600 hover:bg-purple-50'
+                  }`}
+                >
+                  <LayoutDashboard size={18} className="mr-3" />
+                  Início
+                </Link>
+                <p className="px-4 pt-3 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                  Meu Tratamento
+                </p>
+                {treatmentItems.map((item) => {
                   const Icon = item.icon;
-                  const active = isActive(item.href, item.exact);
+                  const active = pathname?.startsWith(item.href);
                   return (
                     <Link
                       key={item.href}
                       href={item.href}
-                      onClick={() => setMenuOpen(false)}
-                      className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
-                        active
-                          ? 'bg-purple-100 text-purple-700'
-                          : 'text-gray-600 hover:bg-purple-50 hover:text-purple-700'
+                      onClick={() => setMobileNavOpen(false)}
+                      className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg ${
+                        active ? 'bg-purple-100 text-purple-700' : 'text-gray-600 hover:bg-purple-50'
                       }`}
                     >
                       <Icon size={18} className="mr-3" />
@@ -200,6 +302,29 @@ export default function PatientLayout({ children }: PatientLayoutProps) {
                     </Link>
                   );
                 })}
+                <p className="px-4 pt-3 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                  Identidade do Paciente
+                </p>
+                <Link
+                  href="/paciente/carteirinha"
+                  onClick={() => setMobileNavOpen(false)}
+                  className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg ${
+                    pathname?.startsWith('/paciente/carteirinha') ? 'bg-purple-100 text-purple-700' : 'text-gray-600 hover:bg-purple-50'
+                  }`}
+                >
+                  <IdCard size={18} className="mr-3" />
+                  Carteirinha digital
+                </Link>
+                <Link
+                  href="/paciente/perfil"
+                  onClick={() => setMobileNavOpen(false)}
+                  className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg ${
+                    pathname?.startsWith('/paciente/perfil') ? 'bg-purple-100 text-purple-700' : 'text-gray-600 hover:bg-purple-50'
+                  }`}
+                >
+                  <User size={18} className="mr-3" />
+                  Meu Perfil
+                </Link>
               </nav>
             </motion.div>
           )}

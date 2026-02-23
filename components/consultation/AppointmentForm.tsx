@@ -10,15 +10,47 @@ import toast from 'react-hot-toast';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import HoneypotField from '@/components/security/HoneypotField';
+import { generateHoneypotFieldName } from '@/lib/security/honeypot';
 import { useRecaptcha } from '@/components/security/RecaptchaProvider';
+
+/** Normaliza CPF (só dígitos) e valida: 11 dígitos + dígitos verificadores */
+function normalizeAndValidateCPF(value: string): { ok: true; cpf: string } | { ok: false; message: string } {
+  const digits = (value || '').replace(/\D/g, '');
+  if (digits.length !== 11) {
+    return { ok: false, message: digits.length < 11 ? 'CPF deve ter 11 dígitos (com ou sem pontuação).' : 'CPF deve ter exatamente 11 dígitos.' };
+  }
+  if (/^(\d)\1{10}$/.test(digits)) {
+    return { ok: false, message: 'CPF inválido (números repetidos).' };
+  }
+  let sum = 0;
+  for (let i = 0; i < 9; i++) sum += parseInt(digits[i], 10) * (10 - i);
+  let rest = (sum * 10) % 11;
+  if (rest === 10) rest = 0;
+  if (rest !== parseInt(digits[9], 10)) {
+    return { ok: false, message: 'CPF inválido (verifique os números).' };
+  }
+  sum = 0;
+  for (let i = 0; i < 10; i++) sum += parseInt(digits[i], 10) * (11 - i);
+  rest = (sum * 10) % 11;
+  if (rest === 10) rest = 0;
+  if (rest !== parseInt(digits[10], 10)) {
+    return { ok: false, message: 'CPF inválido (verifique os números).' };
+  }
+  return { ok: true, cpf: digits };
+}
 
 const appointmentSchema = z.object({
   name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
   email: z.string().email('Email inválido'),
   phone: z.string().min(10, 'Telefone inválido'),
-  cpf: z.string().min(11, 'CPF inválido'),
+  cpf: z.string().min(1, 'CPF é obrigatório').refine(
+    (v) => normalizeAndValidateCPF(v).ok,
+    (v) => { const r = normalizeAndValidateCPF(v); return { message: r.ok ? '' : r.message }; }
+  ),
   birthDate: z.string().min(1, 'Data de nascimento obrigatória'),
   pathologies: z.array(z.string()).min(1, 'Selecione pelo menos uma patologia'),
+  consentPrivacy: z.boolean().optional(),
+  consentTerms: z.boolean().optional(),
   scheduledDate: z.string().min(1, 'Data obrigatória').refine((date) => {
     // Criar data a partir da string no formato YYYY-MM-DD usando timezone local
     const [year, month, day] = date.split('-').map(Number);
@@ -36,12 +68,7 @@ const appointmentSchema = z.object({
     return selectedDayOnly.getTime() >= todayOnly.getTime();
   }, 'Não é possível agendar para datas passadas'),
   scheduledTime: z.string().min(1, 'Horário obrigatório'),
-  anamnesis: z.object({
-    previousTreatments: z.string().optional(),
-    currentMedications: z.string().optional(),
-    allergies: z.string().optional(),
-    additionalInfo: z.string().optional(),
-  }),
+  // Anamnese removida do agendamento; paciente preenche após o pagamento na área da consulta
 }).refine((data) => {
   // Validação da relação entre data e horário
   if (!data.scheduledDate || !data.scheduledTime) return true;
@@ -86,8 +113,10 @@ export default function AppointmentForm({ initialPathologies = [] }: Appointment
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [availableSlots, setAvailableSlots] = useState<Array<{time: string, doctorName: string}>>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
+  const [emptySlotsDayName, setEmptySlotsDayName] = useState<string | null>(null);
   const [recaptchaSiteKey, setRecaptchaSiteKey] = useState<string>('');
   const formStartTimeRef = useRef<number>(Date.now());
+  const formRef = useRef<HTMLFormElement>(null);
   const { executeRecaptcha } = useRecaptcha(recaptchaSiteKey);
 
   // Buscar site key do servidor
@@ -112,16 +141,26 @@ export default function AppointmentForm({ initialPathologies = [] }: Appointment
   const {
     register,
     handleSubmit,
+    getValues,
     formState: { errors, touchedFields },
     watch,
     setValue,
     trigger,
+    clearErrors,
   } = useForm<AppointmentFormData>({
     resolver: zodResolver(appointmentSchema),
     mode: 'onChange', // Validação em tempo real
     defaultValues: {
-      pathologies: initialPathologies,
-      anamnesis: {},
+      name: '',
+      email: '',
+      phone: '',
+      cpf: '',
+      birthDate: '',
+      pathologies: initialPathologies ?? [],
+      scheduledDate: '',
+      scheduledTime: '',
+      consentPrivacy: false,
+      consentTerms: false,
     },
   });
 
@@ -137,6 +176,7 @@ export default function AppointmentForm({ initialPathologies = [] }: Appointment
   const fetchAvailableSlots = async (date: string) => {
     if (!date) {
       setAvailableSlots([]);
+      setEmptySlotsDayName(null);
       setValue('scheduledTime', '');
       return;
     }
@@ -167,15 +207,17 @@ export default function AppointmentForm({ initialPathologies = [] }: Appointment
           }));
 
           setAvailableSlots(slots);
+          setEmptySlotsDayName(null);
         } else {
-          // Nenhum slot disponível
           setAvailableSlots([]);
-          console.log('Nenhum horário disponível para a data:', date);
+          setEmptySlotsDayName(data.dayName || null);
+          console.log('Nenhum horário disponível para a data:', date, data.dayName ? `(${data.dayName})` : '');
         }
       } else {
         const errorData = await response.json().catch(() => ({}));
         console.error('Erro ao buscar horários:', errorData);
         setAvailableSlots([]);
+        setEmptySlotsDayName(null);
         // Mostrar mensagem de erro apenas se não for um erro de validação esperado
         if (response.status !== 400) {
           toast.error('Erro ao buscar horários disponíveis. Tente novamente.');
@@ -184,6 +226,7 @@ export default function AppointmentForm({ initialPathologies = [] }: Appointment
     } catch (error) {
       console.error('Erro ao buscar horários:', error);
       setAvailableSlots([]);
+      setEmptySlotsDayName(null);
       toast.error('Erro ao conectar com o servidor. Verifique sua conexão.');
     } finally {
       setLoadingSlots(false);
@@ -220,6 +263,34 @@ export default function AppointmentForm({ initialPathologies = [] }: Appointment
   const onSubmit = async (data: AppointmentFormData) => {
     setIsSubmitting(true);
     try {
+      // Ler valores do DOM (FormData) como fonte da verdade — evita payload vazio quando o estado do react-hook-form não reflete os inputs
+      const form = formRef.current;
+      const fromDom: Record<string, string | string[]> = {
+        name: '',
+        email: '',
+        phone: '',
+        cpf: '',
+        birthDate: '',
+        scheduledDate: '',
+        scheduledTime: '',
+      };
+      const honeypotFieldName = generateHoneypotFieldName();
+      if (form) {
+        const fd = new FormData(form);
+        fromDom.name = (fd.get('name') as string) ?? '';
+        fromDom.email = (fd.get('email') as string) ?? '';
+        fromDom.phone = (fd.get('phone') as string) ?? '';
+        fromDom.cpf = (fd.get('cpf') as string) ?? '';
+        fromDom.birthDate = (fd.get('birthDate') as string) ?? '';
+        fromDom.scheduledDate = (fd.get('scheduledDate') as string) ?? '';
+        fromDom.scheduledTime = (fd.get('scheduledTime') as string) ?? '';
+      }
+      const current = getValues();
+      // Priorizar estado atual do formulário (getValues), depois DOM (FormData), depois data do callback — evita enviar undefined (JSON.stringify omite e o backend retorna "Required")
+      const pathologies = Array.isArray(data.pathologies) && data.pathologies.length > 0
+        ? data.pathologies
+        : (Array.isArray(current.pathologies) ? current.pathologies : []);
+
       // Executar reCAPTCHA
       let recaptchaToken: string | null = null;
       if (recaptchaSiteKey) {
@@ -231,9 +302,25 @@ export default function AppointmentForm({ initialPathologies = [] }: Appointment
         }
       }
 
-      // Preparar dados com campos de segurança
+      // CPF normalizado (só dígitos) para a API
+      const cpfStr = (current.cpf ?? fromDom.cpf ?? data.cpf ?? '').toString();
+      const cpfResult = normalizeAndValidateCPF(cpfStr);
+      const cpfNormalized = cpfResult.ok ? cpfResult.cpf : cpfStr.replace(/\D/g, '').slice(0, 11);
+
+      const honeypotValue = form ? (form.elements.namedItem(honeypotFieldName) as HTMLInputElement | null)?.value ?? '' : '';
+      // Garantir que nenhum campo obrigatório seja undefined (senão JSON.stringify omite a chave e o backend retorna "Required")
       const submissionData = {
-        ...data,
+        name: String(current.name ?? fromDom.name ?? data.name ?? ''),
+        email: String(current.email ?? fromDom.email ?? data.email ?? ''),
+        phone: String(current.phone ?? fromDom.phone ?? data.phone ?? ''),
+        cpf: cpfNormalized,
+        birthDate: String(current.birthDate ?? fromDom.birthDate ?? data.birthDate ?? ''),
+        pathologies: Array.isArray(pathologies) ? pathologies : [],
+        scheduledDate: String(current.scheduledDate ?? fromDom.scheduledDate ?? data.scheduledDate ?? ''),
+        scheduledTime: String(current.scheduledTime ?? fromDom.scheduledTime ?? data.scheduledTime ?? ''),
+        consentPrivacy: true,
+        consentTerms: true,
+        honeypot: honeypotValue,
         recaptchaToken,
         formStartTime: formStartTimeRef.current,
       };
@@ -257,16 +344,17 @@ export default function AppointmentForm({ initialPathologies = [] }: Appointment
           fullResponse: responseData
         });
         
-        // Mostrar mensagem de erro mais detalhada
-        // (inclui erros de segurança como reCAPTCHA ausente/bloqueio)
+        // Evitar exibir mensagens técnicas ao usuário (ex.: "Cannot read properties of undefined")
+        const detailsStr = typeof errorDetails === 'string' ? errorDetails : (errorDetails ? JSON.stringify(errorDetails) : '');
+        const isTechnicalError = /Cannot read properties|undefined|is not a function|Unexpected token/i.test(detailsStr);
+        
         if (response.status === 400) {
-          // Erro de validação
           if (Array.isArray(errorDetails)) {
             const validationErrors = errorDetails.map((e: any) => 
               `${e.path?.join('.') || 'campo'}: ${e.message}`
             ).join(', ');
             toast.error(`Dados inválidos: ${validationErrors}`);
-          } else if (errorDetails) {
+          } else if (errorDetails && !isTechnicalError) {
             toast.error(`${errorMessage}: ${errorDetails}`);
           } else {
             toast.error(errorMessage);
@@ -274,36 +362,33 @@ export default function AppointmentForm({ initialPathologies = [] }: Appointment
         } else if (response.status === 403) {
           if (Array.isArray(errorDetails) && errorDetails.length > 0) {
             toast.error(`${errorMessage}: ${errorDetails.join(' | ')}`);
-          } else if (errorDetails) {
+          } else if (errorDetails && !isTechnicalError) {
             toast.error(`${errorMessage}: ${String(errorDetails)}`);
           } else {
             toast.error(errorMessage);
           }
         } else {
-          // Outros erros
-          // Em desenvolvimento, mostrar details (se vier do servidor) pra facilitar debug.
-          if (process.env.NODE_ENV === 'development' && errorDetails) {
-            const detailsText =
-              typeof errorDetails === 'string'
-                ? errorDetails
-                : JSON.stringify(errorDetails);
-            toast.error(`${errorMessage}: ${detailsText}`);
-          } else {
-            toast.error(errorMessage || 'Erro ao agendar consulta. Tente novamente.');
-          }
+          // 500 ou outros: mensagem amigável, sem expor detalhes técnicos ao usuário
+          const friendlyMessage = isTechnicalError
+            ? 'Falha ao processar o agendamento. Tente novamente ou entre em contato se o problema persistir.'
+            : (errorMessage || 'Erro ao agendar consulta. Tente novamente.');
+          toast.error(friendlyMessage);
         }
         return;
       }
 
       const result = responseData;
       console.log('Consulta criada com sucesso:', result);
-      
-      // Redirecionar para página de pagamento (sem mensagem de sucesso ainda)
-      // A mensagem de sucesso só aparecerá após o pagamento ser confirmado
-      window.location.href = `/consultas/${result.id}/pagamento`;
+      const token = result.confirmationToken ? `?token=${encodeURIComponent(result.confirmationToken)}` : '';
+      window.location.href = `/consultas/${result.id}/pagamento${token}`;
     } catch (error) {
       console.error('Erro ao enviar formulário:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      const rawMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      // Evitar expor mensagens técnicas (ex.: "Cannot read properties of undefined")
+      const isTechnical = /Cannot read properties|undefined|is not a function|Unexpected token/i.test(rawMessage);
+      const errorMessage = isTechnical
+        ? 'Falha ao processar o agendamento. Tente novamente ou entre em contato se o problema persistir.'
+        : rawMessage;
       toast.error(`Erro ao agendar consulta: ${errorMessage}. Verifique sua conexão e tente novamente.`);
     } finally {
       setIsSubmitting(false);
@@ -311,7 +396,7 @@ export default function AppointmentForm({ initialPathologies = [] }: Appointment
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-lg shadow-lg p-8">
+    <form ref={formRef} onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-lg shadow-lg p-8">
       {/* Campo Honeypot (invisível) */}
       <HoneypotField />
       
@@ -394,6 +479,7 @@ export default function AppointmentForm({ initialPathologies = [] }: Appointment
               showValidationIcon
               isValid={!errors.cpf && touchedFields.cpf}
             />
+            <p className="text-xs text-gray-500 mt-1">Digite os 11 dígitos, com ou sem pontuação.</p>
           </motion.div>
 
           <motion.div
@@ -434,10 +520,10 @@ export default function AppointmentForm({ initialPathologies = [] }: Appointment
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className={`
-                p-4 rounded-lg border-2 transition-all text-left
+                p-4 rounded-lg border-2 transition-all text-left font-medium
                 ${selectedPathologies.includes(pathology)
                   ? 'border-primary bg-primary/10 text-primary font-semibold shadow-md'
-                  : 'border-gray-200 hover:border-primary/50 hover:bg-gray-50'
+                  : 'border-gray-300 bg-gray-50 text-gray-800 hover:border-primary/50 hover:bg-green-50/70 hover:text-gray-900'
                 }
               `}
             >
@@ -507,11 +593,22 @@ export default function AppointmentForm({ initialPathologies = [] }: Appointment
                   <p className="text-yellow-800 font-medium mb-1">
                     Nenhum horário disponível para esta data
                   </p>
-                  <p className="text-yellow-700 text-sm">
-                    Por favor, selecione outra data ou tente novamente mais tarde.
-                  </p>
+                  {emptySlotsDayName ? (
+                    <p className="text-yellow-700 text-sm mb-1">
+                      A data escolhida é um <strong>{emptySlotsDayName}</strong>. Os horários dependem do <strong>dia da semana</strong>: para aparecerem opções, algum médico precisa ter esse dia cadastrado em <strong>Admin → Médicos → [Médico] → Disponibilidade</strong> (ex.: adicionar &quot;Sábado&quot; com início e fim do expediente).
+                    </p>
+                  ) : (
+                    <p className="text-yellow-700 text-sm mb-1">
+                      Por favor, selecione outra data ou tente novamente mais tarde.
+                    </p>
+                  )}
+                  {selectedDate === new Date().toISOString().slice(0, 10) && (
+                    <p className="text-yellow-700 text-xs mt-2">
+                      Para <strong>hoje</strong>: os médicos precisam estar online e com a opção de agendamento com 30 min ativa (não é necessário ter horário configurado para o dia). Tente uma data futura ou outro dia.
+                    </p>
+                  )}
                   <p className="text-yellow-600 text-xs mt-2">
-                    💡 Dica: Tente selecionar uma data futura ou outro dia da semana.
+                    💡 Dica: Tente outro dia da semana ou peça ao admin para cadastrar disponibilidade para {emptySlotsDayName || 'esse dia'}.
                   </p>
                 </div>
               ) : (
@@ -527,13 +624,13 @@ export default function AppointmentForm({ initialPathologies = [] }: Appointment
                     },
                   })}
                   disabled={!selectedDate || availableSlots.length === 0}
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all ${
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-gray-900 ${
                     errors.scheduledTime
                       ? 'border-red-500 focus:ring-red-500'
                       : touchedFields.scheduledTime && !errors.scheduledTime
                       ? 'border-green-500 focus:ring-green-500'
                       : 'border-gray-300'
-                  } ${!selectedDate ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                  } ${!selectedDate ? 'bg-gray-100 cursor-not-allowed text-gray-500' : 'bg-white'}`}
                 >
                   <option value="">
                     {!selectedDate ? 'Selecione primeiro uma data' : 'Selecione um horário'}
@@ -560,62 +657,75 @@ export default function AppointmentForm({ initialPathologies = [] }: Appointment
         </div>
       </section>
 
-      {/* Anamnese */}
-      <section className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-          <FileText size={24} className="text-primary" />
-          Anamnese (Pré-consulta)
-        </h2>
+      {/* Consentimento LGPD - ao clicar nos links a pessoa concorda */}
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.45 }}
+        className="mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200"
+      >
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          Consentimento e Termos
+        </h3>
+        <p className="text-sm text-gray-600 mb-4">
+          Clique nos links abaixo para ler e concordar. Ao abrir cada documento, seu consentimento é registrado.
+        </p>
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tratamentos Anteriores
+          <div className="flex items-start gap-3">
+            {watch('consentPrivacy') ? (
+              <span className="text-green-600 font-medium text-sm shrink-0">✓ Concordado</span>
+            ) : null}
+            <label className="text-sm text-gray-700">
+              Eu concordo com a{' '}
+              <a
+                href="/privacidade"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline font-medium cursor-pointer"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setValue('consentPrivacy', true, { shouldValidate: true });
+                  clearErrors('consentPrivacy');
+                  window.open('/privacidade', '_blank', 'noopener,noreferrer');
+                }}
+              >
+                Política de Privacidade
+              </a>
+              {' '}e autorizo o tratamento dos meus dados pessoais conforme a LGPD.
             </label>
-            <textarea
-              {...register('anamnesis.previousTreatments')}
-              rows={3}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-              placeholder="Descreva tratamentos anteriores relacionados à sua condição..."
-            />
           </div>
+          {errors.consentPrivacy && (
+            <p className="text-sm text-red-600">{errors.consentPrivacy.message}</p>
+          )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Medicamentos Atuais
+          <div className="flex items-start gap-3">
+            {watch('consentTerms') ? (
+              <span className="text-green-600 font-medium text-sm shrink-0">✓ Concordado</span>
+            ) : null}
+            <label className="text-sm text-gray-700">
+              Eu concordo com os{' '}
+              <a
+                href="/termos"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline font-medium cursor-pointer"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setValue('consentTerms', true, { shouldValidate: true });
+                  clearErrors('consentTerms');
+                  window.open('/termos', '_blank', 'noopener,noreferrer');
+                }}
+              >
+                Termos de Uso
+              </a>
+              {' '}dos serviços da CannabiLizi.
             </label>
-            <textarea
-              {...register('anamnesis.currentMedications')}
-              rows={3}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-              placeholder="Liste os medicamentos que você está tomando atualmente..."
-            />
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Alergias
-            </label>
-            <textarea
-              {...register('anamnesis.allergies')}
-              rows={2}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-              placeholder="Informe se você tem alguma alergia..."
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Informações Adicionais
-            </label>
-            <textarea
-              {...register('anamnesis.additionalInfo')}
-              rows={4}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-              placeholder="Qualquer informação adicional que considere relevante..."
-            />
-          </div>
+          {errors.consentTerms && (
+            <p className="text-sm text-red-600">{errors.consentTerms.message}</p>
+          )}
         </div>
-      </section>
+      </motion.section>
 
       {/* Submit */}
       <motion.div

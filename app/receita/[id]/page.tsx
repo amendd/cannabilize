@@ -10,8 +10,8 @@ interface PrescriptionData {
   issuedAt: string;
   expiresAt: string | null;
   status: string;
-  prescriptionData: any;
-  patient: {
+  prescriptionData?: any;
+  patient?: {
     name: string;
     cpf: string | null;
     email: string;
@@ -20,9 +20,11 @@ interface PrescriptionData {
     name: string;
     crm: string;
   };
-  consultation: {
+  consultation?: {
     scheduledAt: string;
-  };
+  } | null;
+  medications?: any[];
+  pdfUrl?: string | null;
 }
 
 export default function ReceitaPublicaPage() {
@@ -134,7 +136,7 @@ export default function ReceitaPublicaPage() {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Receita Médica</h1>
-              <p className="text-gray-600">CannaLize - Cannabis Medicinal</p>
+              <p className="text-gray-600">CannabiLizi - Cannabis Medicinal</p>
             </div>
           </div>
           <div className="mt-4">{getStatusBadge()}</div>
@@ -170,24 +172,30 @@ export default function ReceitaPublicaPage() {
               </div>
             </div>
 
-            {/* Informações do Paciente */}
+            {/* Informações do Paciente (omitidas na verificação pública por LGPD; disponíveis na área logada) */}
             <div className="border-b border-gray-200 pb-4">
               <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
                 <User className="text-green-600" size={20} />
                 Dados do Paciente
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Nome</p>
-                  <p className="font-medium text-gray-900">{prescription.patient.name}</p>
-                </div>
-                {prescription.patient.cpf && (
+              {prescription.patient ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <p className="text-xs text-gray-500 mb-1">CPF</p>
-                    <p className="font-medium text-gray-900">{prescription.patient.cpf}</p>
+                    <p className="text-xs text-gray-500 mb-1">Nome</p>
+                    <p className="font-medium text-gray-900">{prescription.patient.name}</p>
                   </div>
-                )}
-              </div>
+                  {prescription.patient.cpf && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">CPF</p>
+                      <p className="font-medium text-gray-900">{prescription.patient.cpf}</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-sm">
+                  Dados do paciente não exibidos nesta verificação (proteção de dados). O titular pode ver os dados completos em <Link href="/paciente/receitas" className="text-green-600 hover:underline">Minhas Receitas</Link> após login.
+                </p>
+              )}
             </div>
 
             {/* Informações da Receita */}
@@ -285,8 +293,10 @@ export default function ReceitaPublicaPage() {
           {/* Footer */}
           <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
             <p className="text-xs text-gray-500 text-center">
-              Esta receita foi verificada através do QR code de autenticidade do documento (CannaLize).
-              Para mais informações, entre em contato através do email: {prescription.patient.email}
+              Esta receita foi verificada através do QR code de autenticidade do documento (CannabiLizi).
+              {prescription.patient?.email
+                ? ` Para mais informações, entre em contato através do email: ${prescription.patient.email}`
+                : ' Para mais informações, entre em contato através do site.'}
             </p>
           </div>
         </div>

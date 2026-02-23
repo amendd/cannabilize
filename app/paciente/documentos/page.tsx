@@ -20,6 +20,10 @@ import {
 } from 'lucide-react';
 import { useEffectivePatientId } from '@/components/impersonation/useEffectivePatientId';
 import { motion, AnimatePresence } from 'framer-motion';
+import Breadcrumbs from '@/components/ui/Breadcrumbs';
+import EmptyState from '@/components/patient/EmptyState';
+import { SkeletonPatientList } from '@/components/ui/Skeleton';
+import { getConsultationStatusLabel } from '@/lib/status-labels';
 
 const fileTypeConfig = {
   EXAM: {
@@ -69,17 +73,16 @@ export default function PacienteDocumentosPage() {
   useEffect(() => {
     if (effectivePatientId && !loadingPatientId) {
       Promise.all([
-        fetch(`/api/patients/${effectivePatientId}/files`).then(res => res.json()),
-        fetch(`/api/consultations?patientId=${effectivePatientId}`).then(res => res.json()),
+        fetch(`/api/patients/${effectivePatientId}/files`).then((res) => res.json()),
+        fetch(`/api/consultations?patientId=${effectivePatientId}&limit=100`).then((res) => res.json()),
       ])
-        .then(([filesData, consultationsData]) => {
+        .then(([filesData, consultationsResp]) => {
           setFiles(filesData.files || []);
-          setConsultations(consultationsData || []);
+          const list = consultationsResp.consultations ?? consultationsResp ?? [];
+          setConsultations(list);
           setLoading(false);
-          
-          // Expandir primeira consulta por padrão
-          if (consultationsData && consultationsData.length > 0) {
-            setExpandedConsultations(new Set([consultationsData[0].id]));
+          if (list.length > 0) {
+            setExpandedConsultations(new Set([list[0].id]));
           }
         })
         .catch(err => {
@@ -155,8 +158,9 @@ export default function PacienteDocumentosPage() {
 
   if (status === 'loading' || loading || loadingPatientId) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-xl">Carregando...</div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <Breadcrumbs baseHref="/paciente" items={[{ label: 'Documentos' }]} />
+        <SkeletonPatientList count={4} />
       </div>
     );
   }
@@ -170,17 +174,12 @@ export default function PacienteDocumentosPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <Link href="/paciente" className="text-primary hover:underline mb-4 inline-block">
-            ← Voltar
-          </Link>
-          <h1 className="text-3xl font-bold text-gray-900">Histórico Médico</h1>
-          <p className="text-gray-600 mt-2">
-            Visualize todos os documentos e arquivos enviados para análise médica
-          </p>
-        </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <Breadcrumbs baseHref="/paciente" items={[{ label: 'Meu Tratamento', href: '/paciente' }, { label: 'Documentos do Tratamento' }]} />
+      <h1 className="text-3xl font-bold text-gray-900 mb-2">Documentos do Tratamento</h1>
+      <p className="text-gray-600 mb-8">
+        Documentos organizados por consulta para acompanhamento do seu tratamento
+      </p>
 
         {/* Estatísticas */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
@@ -256,7 +255,7 @@ export default function PacienteDocumentosPage() {
                 onClick={() => setFilterType(type)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
                   filterType === type
-                    ? 'bg-primary text-white'
+                    ? 'bg-purple-600 text-white'
                     : config.color
                 }`}
               >
@@ -269,17 +268,11 @@ export default function PacienteDocumentosPage() {
         {/* Timeline de Consultas */}
         <div className="space-y-4">
           {consultationsWithFiles.length === 0 && orphanFiles.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-lg shadow-md p-12 text-center"
-            >
-              <FileText size={48} className="text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 mb-2">Nenhum documento encontrado.</p>
-              <p className="text-sm text-gray-500">
-                Os documentos enviados para análise médica aparecerão aqui organizados por consulta.
-              </p>
-            </motion.div>
+            <EmptyState
+              icon={FileText}
+              title="Nenhum documento encontrado"
+              description="Os documentos enviados para análise médica aparecerão aqui organizados por consulta."
+            />
           ) : (
             <>
               {consultationsWithFiles.map((consultation, index) => {
@@ -303,13 +296,13 @@ export default function PacienteDocumentosPage() {
                       className="w-full p-6 flex items-center justify-between hover:bg-gray-50 transition"
                     >
                       <div className="flex items-center gap-4 flex-1 text-left">
-                        <div className="flex-shrink-0 w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                          <Calendar className="text-primary" size={24} />
+                        <div className="flex-shrink-0 w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                          <Calendar className="text-purple-600" size={24} />
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-1">
                             <h3 className="text-lg font-semibold text-gray-900">
-                              Consulta - {formatDate(consultation.scheduledAt || consultation.createdAt)}
+                              Consulta {formatDate(consultation.scheduledAt || consultation.createdAt)}
                             </h3>
                             <span className={`px-2 py-1 rounded text-xs font-medium ${
                               consultation.status === 'COMPLETED'
@@ -318,7 +311,7 @@ export default function PacienteDocumentosPage() {
                                 ? 'bg-blue-100 text-blue-800'
                                 : 'bg-gray-100 text-gray-800'
                             }`}>
-                              {consultation.status}
+                              {getConsultationStatusLabel(consultation.status)}
                             </span>
                           </div>
                           <div className="flex items-center gap-4 text-sm text-gray-600">
@@ -399,7 +392,7 @@ export default function PacienteDocumentosPage() {
                                           href={`/api/consultation-files/${file.id}`}
                                           target="_blank"
                                           rel="noopener noreferrer"
-                                          className="p-2 text-primary hover:bg-primary/10 rounded-lg transition"
+                                          className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition"
                                           title="Visualizar"
                                         >
                                           <Eye size={20} />
@@ -408,7 +401,7 @@ export default function PacienteDocumentosPage() {
                                           href={`/api/consultation-files/${file.id}?download=1`}
                                           target="_blank"
                                           rel="noopener noreferrer"
-                                          className="p-2 text-primary hover:bg-primary/10 rounded-lg transition"
+                                          className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition"
                                           title="Baixar"
                                         >
                                           <Download size={20} />
@@ -493,7 +486,6 @@ export default function PacienteDocumentosPage() {
             </>
           )}
         </div>
-      </div>
     </div>
   );
 }

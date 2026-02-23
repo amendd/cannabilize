@@ -36,6 +36,8 @@ export async function GET(
           },
         },
         payment: true,
+        files: { orderBy: { uploadedAt: 'desc' } },
+        feedback: true,
       },
     });
 
@@ -83,7 +85,23 @@ export async function GET(
       }
     }
 
-    return NextResponse.json(consultation);
+    // Parsear anamnesis (vem como string JSON do banco) para admin/médico
+    if (consultation.anamnesis) {
+      try {
+        consultation.anamnesis = typeof consultation.anamnesis === 'string'
+          ? JSON.parse(consultation.anamnesis)
+          : consultation.anamnesis;
+      } catch (error) {
+        console.error('Error parsing anamnesis:', error);
+      }
+    }
+
+    // Paciente não recebe meetingStartUrl (link de host) — só meetingLink (entrada como participante)
+    const payload = session.user.role === 'PATIENT' && consultation.meetingStartUrl
+      ? { ...consultation, meetingStartUrl: null }
+      : consultation;
+
+    return NextResponse.json(payload);
   } catch (error) {
     console.error('Error fetching consultation:', error);
     return NextResponse.json(

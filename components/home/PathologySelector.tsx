@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
-import { Check, Sparkles } from 'lucide-react';
+import AgendarTrigger from '@/components/agendar/AgendarTrigger';
+import { Check, Sparkles, Info } from 'lucide-react';
 
 const PATHOLOGIES = [
   'Alcoolismo',
@@ -25,8 +25,32 @@ const PATHOLOGIES = [
   'Intestino irritável',
 ];
 
+const COMMON_CONDITIONS = ['Ansiedade', 'Dores', 'Insônia', 'Depressão', 'Fibromialgia', 'Enxaqueca'];
+
+const MICROCOPY: Record<string, string> = {
+  Alcoolismo: 'A cannabis medicinal é utilizada em protocolos de redução de danos e dependência, mediante avaliação médica.',
+  Ansiedade: 'A cannabis medicinal é amplamente utilizada para ansiedade, com acompanhamento médico para dosagem e evolução.',
+  'Perda de peso': 'Canabinoides podem auxiliar no metabolismo e apetite; a avaliação médica define se o tratamento é indicado.',
+  Obesidade: 'A cannabis medicinal pode fazer parte de um protocolo multidisciplinar, com avaliação médica individual.',
+  Depressão: 'A cannabis medicinal é utilizada em muitos casos de depressão refratária, sempre com acompanhamento médico.',
+  Dores: 'A cannabis medicinal é amplamente utilizada para dores crônicas; o médico avalia seu caso e indica o melhor protocolo.',
+  Epilepsia: 'A cannabis medicinal é reconhecida pela ANVISA para epilepsias refratárias, com acompanhamento médico especializado.',
+  Insônia: 'A cannabis medicinal é muito utilizada para distúrbios do sono; o médico ajusta a dosagem conforme sua resposta.',
+  Tabagismo: 'Canabinoides podem auxiliar em protocolos de cessação do tabaco, com avaliação médica.',
+  Autismo: 'A cannabis medicinal é utilizada em diversos protocolos para TEA, com acompanhamento médico especializado.',
+  Enxaqueca: 'A cannabis medicinal é amplamente utilizada para enxaqueca crônica, mediante avaliação médica.',
+  Fibromialgia: 'A cannabis medicinal é amplamente utilizada para fibromialgia, com alívio de dores e melhora na qualidade do sono.',
+  Parkinson: 'A cannabis medicinal pode auxiliar em sintomas do Parkinson; o médico avalia indicação e dosagem.',
+  TDAH: 'Em alguns casos a cannabis medicinal é utilizada no TDAH; a avaliação médica define se é indicada para você.',
+  Alzheimer: 'A cannabis medicinal é estudada e utilizada em protocolos para sintomas relacionados; avaliação médica necessária.',
+  Anorexia: 'A cannabis medicinal pode auxiliar em protocolos nutricionais e de apetite, com acompanhamento médico.',
+  Crohn: 'A cannabis medicinal é utilizada em doenças inflamatórias intestinais, com acompanhamento médico.',
+  'Intestino irritável': 'A cannabis medicinal é utilizada em casos de intestino irritável, mediante avaliação médica.',
+};
+
 export default function PathologySelector() {
   const [selected, setSelected] = useState<string[]>([]);
+  const lastSelected = selected.length > 0 ? selected[selected.length - 1] : null;
 
   const togglePathology = (pathology: string) => {
     setSelected(prev =>
@@ -45,16 +69,20 @@ export default function PathologySelector() {
             <span>Tratamento Personalizado</span>
           </div>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
-            Para qual condição você busca um tratamento?
+            Qual condição você busca tratar?
           </h2>
-          <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
-            Selecione as suas patologias abaixo e inicie seu tratamento com cannabis medicinal ainda hoje!
+          <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto mb-2">
+            Indique abaixo — tudo passa por avaliação médica. É o primeiro passo para acessar o tratamento com acompanhamento especializado.
+          </p>
+          <p className="text-sm text-gray-500 max-w-xl mx-auto">
+            Selecione sua condição para entender como podemos ajudar você.
           </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 mb-10">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 mb-6">
           {PATHOLOGIES.map((pathology) => {
             const isSelected = selected.includes(pathology);
+            const isCommon = COMMON_CONDITIONS.includes(pathology);
             return (
               <button
                 key={pathology}
@@ -66,10 +94,14 @@ export default function PathologySelector() {
                     ? 'border-green-600 bg-gradient-to-br from-green-50 to-green-100 text-green-700 font-semibold shadow-md'
                     : 'border-gray-200 bg-white hover:border-green-300 hover:bg-green-50/50 text-gray-700'
                   }
+                  ${isCommon ? 'ring-1 ring-green-200' : ''}
                 `}
               >
+                {isCommon && (
+                  <span className="absolute top-2 right-2 text-[10px] uppercase tracking-wide text-green-600 font-medium bg-green-100 px-1.5 py-0.5 rounded">Comum</span>
+                )}
                 <div className="flex items-center justify-between">
-                  <span className="text-sm md:text-base">{pathology}</span>
+                  <span className="text-sm md:text-base pr-6">{pathology}</span>
                   {isSelected && (
                     <div className="flex-shrink-0 ml-2">
                       <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center">
@@ -78,8 +110,6 @@ export default function PathologySelector() {
                     </div>
                   )}
                 </div>
-                
-                {/* Hover effect */}
                 {!isSelected && (
                   <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-green-500/0 to-green-500/0 group-hover:from-green-500/5 group-hover:to-green-500/10 transition-all duration-300 pointer-events-none"></div>
                 )}
@@ -88,12 +118,19 @@ export default function PathologySelector() {
           })}
         </div>
 
+        {lastSelected && MICROCOPY[lastSelected] && (
+          <div className="mb-10 flex items-start gap-3 p-4 rounded-xl bg-green-50 border border-green-200 text-left">
+            <Info size={20} className="text-green-600 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-gray-700">
+              <strong className="text-green-800">{lastSelected}:</strong> {MICROCOPY[lastSelected]}
+            </p>
+          </div>
+        )}
+
         <div className="text-center">
-          <Link
-            href={{
-              pathname: '/agendamento',
-              query: { pathologies: selected.join(',') }
-            }}
+          <AgendarTrigger
+            pathologies={selected}
+            disabled={selected.length === 0}
             className={`
               inline-flex items-center gap-3 px-10 py-5 rounded-xl text-lg font-bold transition-all duration-300 shadow-lg
               ${selected.length > 0
@@ -101,17 +138,16 @@ export default function PathologySelector() {
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               }
             `}
-            style={{ pointerEvents: selected.length > 0 ? 'auto' : 'none' }}
           >
             {selected.length > 0 ? (
               <>
-                <span>Iniciar jornada com {selected.length} {selected.length === 1 ? 'condição' : 'condições'}</span>
+                <span>Continuar minha avaliação</span>
                 <Sparkles size={20} />
               </>
             ) : (
               <span>Selecione pelo menos uma condição</span>
             )}
-          </Link>
+          </AgendarTrigger>
           
           {selected.length > 0 && (
             <p className="mt-4 text-sm text-gray-600">
