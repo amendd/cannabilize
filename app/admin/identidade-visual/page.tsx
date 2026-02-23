@@ -93,6 +93,19 @@ type LandingConfig = {
 
 type LandingTestimonialRow = LandingConfig['testimonials'][0] & { active?: boolean };
 
+/** Trata resposta do upload: 413 retorna HTML, evita parse JSON quebrado. */
+async function parseUploadResponse(res: Response): Promise<{ url?: string; error?: string }> {
+  const text = await res.text();
+  if (res.status === 413) {
+    return { error: 'Arquivo muito grande. Use até 2MB por imagem (ou 8MB para logo). Se o problema continuar, o servidor pode precisar de configuração (ex.: nginx client_max_body_size).' };
+  }
+  try {
+    return JSON.parse(text) as { url?: string; error?: string };
+  } catch {
+    return { error: 'Erro ao enviar imagem' };
+  }
+}
+
 export default function AdminIdentidadeVisualPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -334,7 +347,7 @@ export default function AdminIdentidadeVisualPage() {
         method: 'POST',
         body: formData,
       });
-      const data = await res.json();
+      const data = await parseUploadResponse(res);
       if (res.ok && data.url) {
         setConfig({
           ...config,
@@ -375,7 +388,7 @@ export default function AdminIdentidadeVisualPage() {
         method: 'POST',
         body: formData,
       });
-      const data = await res.json();
+      const data = await parseUploadResponse(res);
       if (res.ok && data.url) {
         setConfig({ ...config, logoUrl: data.url });
         toast.success('Logo enviado. Clique em "Salvar logo" para aplicar.');
@@ -413,7 +426,7 @@ export default function AdminIdentidadeVisualPage() {
         method: 'POST',
         body: formData,
       });
-      const data = await res.json();
+      const data = await parseUploadResponse(res);
       if (res.ok && data.url) {
         setConfig({
           ...config,
@@ -479,7 +492,7 @@ export default function AdminIdentidadeVisualPage() {
         method: 'POST',
         body: formData,
       });
-      const data = await res.json();
+      const data = await parseUploadResponse(res);
       if (res.ok && data.url) {
         setConfig({
           ...config,
@@ -520,7 +533,7 @@ export default function AdminIdentidadeVisualPage() {
         method: 'POST',
         body: formData,
       });
-      const data = await res.json();
+      const data = await parseUploadResponse(res);
       if (res.ok && data.url) {
         const items = [...(config.consumptionForms?.items ?? [])];
         while (items.length < index) items.push({ order: items.length + 1, title: '', description: '', imageUrl: '' });
