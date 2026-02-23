@@ -9,6 +9,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import Button from '@/components/ui/Button';
 import { useLogoUrl } from '@/lib/public-config-context';
+import LogoImage from '@/components/ui/LogoImage';
 
 export default function ResetPasswordPage() {
   const router = useRouter();

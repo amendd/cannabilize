@@ -10,6 +10,7 @@ import Link from 'next/link';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { useLogoUrl } from '@/lib/public-config-context';
+import LogoImage from '@/components/ui/LogoImage';
 
 export default function RecuperarSenhaPage() {
   const router = useRouter();

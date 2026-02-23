@@ -1,6 +1,7 @@
 'use client';
 
 import LogoImage from '@/components/ui/LogoImage';
+import { useLogoUrl } from '@/lib/public-config-context';
 import { Download, User, Calendar, Pill, FileCheck, Stethoscope, Hash, Shield } from 'lucide-react';
 import { useState } from 'react';
 

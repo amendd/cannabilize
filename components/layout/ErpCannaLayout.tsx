@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import LogoImage from '@/components/ui/LogoImage';
+import { useLogoUrl } from '@/lib/public-config-context';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,

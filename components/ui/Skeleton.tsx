@@ -17,14 +17,14 @@ export function SkeletonCard() {
   );
 }
 
-export function SkeletonTable() {
+export function SkeletonTable({ rows = 5, cols = 3 }: { rows?: number; cols?: number } = {}) {
   return (
     <div className="space-y-3">
-      {[1, 2, 3, 4, 5].map((i) => (
+      {Array.from({ length: rows }).map((_, i) => (
         <div key={i} className="flex gap-4">
-          <Skeleton className="h-12 flex-1" />
-          <Skeleton className="h-12 w-32" />
-          <Skeleton className="h-12 w-24" />
+          {Array.from({ length: cols }).map((_, j) => (
+            <Skeleton key={j} className={j === 0 ? 'h-12 flex-1' : j === 1 ? 'h-12 w-32' : 'h-12 w-24'} />
+          ))}
         </div>
       ))}
     </div>

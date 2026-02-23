@@ -58,7 +58,7 @@ export async function GET(
       const doctor = await prisma.doctor.findUnique({
         where: { userId: session.user.id },
       });
-      hasAccess = doctor && consultation.doctorId === doctor.id;
+      hasAccess = !!(doctor && consultation.doctorId === doctor.id);
     } else if (session.user.role === 'PATIENT') {
       // Paciente só pode ver suas próprias consultas
       hasAccess = consultation.patientId === session.user.id;

@@ -63,9 +63,10 @@ export async function POST(request: NextRequest) {
         });
         if (byEmail) {
           doctor = byEmail;
-          await prisma.doctor.update({
+          const userId = session.user.id ?? '';
+          if (userId) await prisma.doctor.update({
             where: { id: byEmail.id },
-            data: { userId: session.user.id },
+            data: { userId },
           });
         }
       }

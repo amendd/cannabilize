@@ -92,9 +92,10 @@ export async function GET(request: NextRequest) {
           const doctorByEmail = await fetchDoctorByEmail(emailToUse);
           if (doctorByEmail) {
             doctor = doctorByEmail;
-            await prisma.doctor.update({
+            const userId = session.user.id ?? '';
+            if (userId) await prisma.doctor.update({
               where: { id: doctorByEmail.id },
-              data: { userId: session.user.id },
+              data: { userId },
             });
           }
         }

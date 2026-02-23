@@ -168,14 +168,14 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user && data.cpf) {
-      user = await prisma.user.findFirst({
+      user = (await prisma.user.findFirst({
         where: { cpf: data.cpf },
-      }) ?? undefined;
+      })) ?? null;
     }
     if (!user && data.phone) {
-      user = await prisma.user.findFirst({
+      user = (await prisma.user.findFirst({
         where: { phone: data.phone },
-      }) ?? undefined;
+      })) ?? null;
     }
 
     const isNewUser = !user;

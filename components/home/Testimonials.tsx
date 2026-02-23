@@ -36,7 +36,7 @@ export default function Testimonials({ config }: TestimonialsProps) {
         shortQuote: t.shortQuote,
         fullQuote: t.fullQuote,
         source: t.source,
-        photoUrl: t.photoUrl ?? undefined,
+        photoUrl: t.photoUrl ?? '',
         featured: t.featured,
         condition: (t as TestimonialItem).condition,
         age: (t as TestimonialItem).age,

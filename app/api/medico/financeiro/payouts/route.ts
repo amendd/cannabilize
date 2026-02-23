@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
     // Disponível: apenas pagamentos de consultas COMPLETED com receita emitida - repasses reservados/realizados
     const completedConsultationsWithPrescriptions = await prisma.consultation.findMany({
       where: {
-        doctorId,
+        doctorId: doctorId as string,
         status: 'COMPLETED',
         prescription: {
           isNot: null, // Deve ter receita associada
@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
           isNot: null, // Deve ter pagamento
           status: 'PAID', // Pagamento deve estar pago
         },
-      },
+      } as Parameters<typeof prisma.consultation.findMany>[0]['where'],
       include: {
         payment: {
           select: {
@@ -149,7 +149,7 @@ export async function POST(request: NextRequest) {
 
     // Somar os valores dos pagamentos das consultas concluídas com receita
     const allTimePaid = completedConsultationsWithPrescriptions.reduce(
-      (sum, consultation) => sum + (consultation.payment?.amount || 0),
+      (sum, consultation) => sum + ((consultation as { payment?: { amount: number } }).payment?.amount || 0),
       0
     );
 

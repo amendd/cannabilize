@@ -306,7 +306,7 @@ export default function DoctorDashboard() {
     loadRetornosPrevistos();
     fetch('/api/config/booking-features')
       .then((res) => (res.ok ? res.json() : {}))
-      .then((data) => {
+      .then((data: { rescheduleInvitesEnabled?: boolean }) => {
         if (typeof data?.rescheduleInvitesEnabled === 'boolean') {
           setRescheduleInvitesEnabled(data.rescheduleInvitesEnabled);
         }

@@ -259,7 +259,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     if (!session || !canAccessAdmin(session.user?.role)) return;
     fetch('/api/admin/pending', { credentials: 'include' })
       .then((res) => (res.ok ? res.json() : {}))
-      .then((data) => {
+      .then((data: { consultations?: number; prescriptions?: number; anvisa?: number; patientCards?: number }) => {
         setPending({
           consultations: data.consultations ?? 0,
           prescriptions: data.prescriptions ?? 0,

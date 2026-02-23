@@ -14,6 +14,8 @@ declare module 'next-auth' {
       name: string;
       role: string;
       adminMenuPermissions?: string[];
+      doctorId?: string;
+      rescheduleInvitesEnabled?: boolean;
     };
   }
 }
