@@ -637,7 +637,7 @@ export default function AppointmentForm({ initialPathologies = [] }: Appointment
                   </option>
                   {availableSlots.map(slot => (
                     <option key={slot.time} value={slot.time}>
-                      {slot.time} {slot.doctorName && `(${slot.doctorName})`}
+                      {slot.time}
                     </option>
                   ))}
                 </select>
