@@ -42,6 +42,12 @@ export async function GET(request: NextRequest) {
     
     const authError = checkAuth(session);
     if (authError) return authError;
+    if (!session) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
+    if (!session.user) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
 
     if (session.user.role !== 'ADMIN' && session.user.role !== 'DOCTOR') {
       return NextResponse.json(
@@ -112,13 +118,12 @@ export async function GET(request: NextRequest) {
         };
       }
 
-      consultationStats = await prisma.consultation.groupBy({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Prisma groupBy types bug: parameter typed as array
+      consultationStats = (await (prisma.consultation.groupBy as any)({
         by: ['doctorId', 'status'],
         where,
-        _count: {
-          _all: true,
-        },
-      });
+        _count: { _all: true },
+      })) as typeof consultationStats;
     }
 
     const metricsByDoctor: Record<
