@@ -1,7 +1,7 @@
 # 🎨 Análise Completa: Layout, Design, UI e UX
 
 **Data:** 28 de Janeiro de 2026  
-**Projeto:** Click Cannabis / CannaLize
+**Projeto:** CannabiLizi
 
 ---
 

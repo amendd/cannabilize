@@ -42,18 +42,16 @@ next-env.d.ts
 # prisma
 /prisma/migrations
 *.db
-*.db-journal
-
-# logs
+*.db-journal# backups locais (nunca commitar dumps com dados reais)
+/backups/
+*.sql.gz
+*.dump# logs
 logs/
-*.log
-
-# scripts de desenvolvimento (Windows)
-*.bat
-
-# arquivos com credenciais (NUNCA commitar!)
+*.log# scripts de desenvolvimento (Windows)
+*.bat# arquivos com credenciais (NUNCA commitar!)
 *CREDENCIAIS*
 *SENHAS*
 *PASSWORDS*
 LOGINS_SENHAS.txt
 CREDENCIAIS_ACESSO.md
+MINHAS_CREDENCIAIS_PRODUCAO.md

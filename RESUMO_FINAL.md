@@ -1,4 +1,4 @@
-# 🎉 RESUMO FINAL - Click Cannabis Replica
+# 🎉 RESUMO FINAL - CannabiLizi Replica
 
 ## ✅ IMPLEMENTAÇÃO 100% COMPLETA
 
@@ -252,5 +252,5 @@ O sistema está pronto para ser configurado, testado e colocado em produção. A
 
 **🎉 Projeto Completo!**
 
-*Desenvolvido replicando o modelo Click Cannabis*
+*Desenvolvido replicando o modelo CannabiLizi*
 *Data: 27 de Janeiro de 2026*

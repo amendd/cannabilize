@@ -1,90 +1,127 @@
-# 📋 Instruções para Executar a Migração
+# 🔄 Instruções de Migração - Novas Funcionalidades
 
-## ✅ Migração Criada
-
-A migração para adicionar o sistema de convites de remarcação foi criada em:
-- `prisma/migrations/20260128000000_add_reschedule_invites/migration.sql`
-
-## 🚀 Como Executar
-
-### Opção 1: Usando o Script Node.js (Recomendado)
-
-```bash
-npx tsx scripts/run-reschedule-invites-migration.ts
-```
-
-### Opção 2: Usando Prisma Migrate
-
-```bash
-npx prisma migrate deploy
-```
-
-Ou se estiver em desenvolvimento:
-
-```bash
-npx prisma migrate dev
-```
-
-### Opção 3: Executar SQL Manualmente
-
-Se preferir executar manualmente, conecte-se ao banco SQLite e execute o conteúdo do arquivo:
-`prisma/migrations/20260128000000_add_reschedule_invites/migration.sql`
-
-## 📊 O que a Migração Cria
-
-1. **Tabela `consultation_reschedule_invites`** com os campos:
-   - `id` (TEXT, PRIMARY KEY)
-   - `consultation_id` (TEXT, FOREIGN KEY)
-   - `patient_id` (TEXT, FOREIGN KEY)
-   - `doctor_id` (TEXT, FOREIGN KEY)
-   - `current_scheduled_at` (DATETIME)
-   - `new_scheduled_at` (DATETIME)
-   - `new_scheduled_date` (TEXT)
-   - `new_scheduled_time` (TEXT)
-   - `status` (TEXT, DEFAULT 'PENDING')
-   - `message` (TEXT, nullable)
-   - `expires_at` (DATETIME)
-   - `responded_at` (DATETIME, nullable)
-   - `created_at` (DATETIME)
-   - `updated_at` (DATETIME)
-
-2. **5 Índices** para otimização:
-   - `consultation_id`
-   - `patient_id`
-   - `doctor_id`
-   - `status`
-   - `expires_at`
-
-## ✅ Verificar Migração
-
-Após executar, você pode verificar se a tabela foi criada:
-
-```bash
-npx prisma studio
-```
-
-Ou usando SQL:
-
-```sql
-SELECT name FROM sqlite_master WHERE type='table' AND name='consultation_reschedule_invites';
-```
-
-## 🔄 Próximos Passos
-
-Após executar a migração:
-
-1. ✅ Tabela criada no banco de dados
-2. ✅ Sistema de convites pronto para uso
-3. ✅ APIs funcionando
-4. ✅ Interface integrada
-
-## ⚠️ Notas Importantes
-
-- A migração é **idempotente** - pode ser executada múltiplas vezes sem problemas
-- O script verifica se a tabela já existe antes de criar
-- Todas as foreign keys estão configuradas corretamente
-- Os índices melhoram a performance das consultas
+**Data:** 29 de Janeiro de 2026
 
 ---
 
-**Migração criada com sucesso! Execute o script para aplicar ao banco de dados.** 🎉
+## ⚠️ IMPORTANTE: Execute a Migração do Banco de Dados
+
+Após as implementações, você precisa executar a migração do Prisma para adicionar os novos campos e tabelas.
+
+### Passo 1: Gerar Migração
+
+```bash
+npx prisma migrate dev --name add_audit_log_and_password_changed_at
+```
+
+Isso irá:
+- Criar a tabela `audit_logs`
+- Adicionar campo `password_changed_at` na tabela `users`
+- Criar os indexes necessários
+
+### Passo 2: Gerar Cliente Prisma
+
+```bash
+npx prisma generate
+```
+
+---
+
+## 📋 O QUE FOI IMPLEMENTADO
+
+### ✅ LGPD Compliance Completo
+- Páginas de Política de Privacidade e Termos de Uso
+- Consentimento obrigatório no cadastro
+- Exportação de dados pessoais
+- Exclusão de conta (direito ao esquecimento)
+
+### ✅ Sistema de Auditoria
+- Modelo AuditLog no banco
+- Serviço de auditoria (`lib/audit.ts`)
+- Logs em ações críticas
+
+### ✅ Segurança Melhorada
+- Validação aprimorada de webhook Stripe
+- Invalidação de sessão ao alterar senha
+- Logs de tentativas suspeitas
+
+### ✅ Camada de Serviços
+- `services/consultation.service.ts`
+- `services/user.service.ts`
+- Preparado para expansão
+
+---
+
+## 🧪 TESTES RECOMENDADOS
+
+### 1. Testar LGPD
+```bash
+# 1. Acesse http://localhost:3000/privacidade
+# 2. Acesse http://localhost:3000/termos
+# 3. Tente agendar consulta sem aceitar termos
+# 4. Faça login e teste exportação: GET /api/user/export
+```
+
+### 2. Testar Auditoria
+```bash
+# 1. Faça login
+# 2. Crie/edite uma consulta
+# 3. Verifique logs: SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT 10;
+```
+
+### 3. Testar Invalidação de Sessão
+```bash
+# 1. Faça login em uma aba
+# 2. Em outra aba, altere sua senha (via admin)
+# 3. Volte para primeira aba e tente usar (deve falhar)
+```
+
+---
+
+## 📝 ARQUIVOS CRIADOS/MODIFICADOS
+
+### Novos Arquivos
+- `app/privacidade/page.tsx`
+- `app/termos/page.tsx`
+- `app/api/user/export/route.ts`
+- `app/api/user/delete/route.ts`
+- `lib/audit.ts`
+- `services/consultation.service.ts`
+- `services/user.service.ts`
+- `RESUMO_IMPLEMENTACOES.md`
+- `INSTRUCOES_MIGRACAO.md`
+
+### Arquivos Modificados
+- `prisma/schema.prisma` (AuditLog, passwordChangedAt)
+- `lib/auth.ts` (invalidação de sessão)
+- `lib/account-setup.ts` (passwordChangedAt)
+- `components/layout/Footer.tsx` (links LGPD)
+- `components/consultation/AppointmentForm.tsx` (consentimento)
+- `app/api/consultations/route.ts` (validação consentimento)
+- `app/api/payments/webhook/route.ts` (auditoria e validação)
+
+---
+
+## ⚡ PRÓXIMOS PASSOS
+
+1. **Execute a migração** (comando acima)
+2. **Teste as funcionalidades** (testes recomendados)
+3. **Revise logs de auditoria** (verificar se estão sendo criados)
+4. **Continue implementações** (2FA, mais serviços, etc.)
+
+---
+
+## 🐛 PROBLEMAS COMUNS
+
+### Erro: "Table 'audit_logs' doesn't exist"
+**Solução:** Execute a migração do Prisma
+
+### Erro: "Column 'password_changed_at' doesn't exist"
+**Solução:** Execute a migração do Prisma
+
+### Sessão não invalida após alterar senha
+**Solução:** Verifique se `passwordChangedAt` está sendo atualizado e se o callback JWT está funcionando
+
+---
+
+**Última atualização:** 29 de Janeiro de 2026

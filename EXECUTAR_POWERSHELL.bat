@@ -1,0 +1,3 @@
+@echo off
+cd /d "%~dp0"
+powershell -NoExit -Command "cd '%CD%'; Write-Host '========================================' -ForegroundColor Cyan; Write-Host '  CLICK CANNABIS - SERVIDOR' -ForegroundColor Cyan; Write-Host '========================================' -ForegroundColor Cyan; Write-Host ''; Write-Host 'Pasta:' '%CD%' -ForegroundColor Yellow; Write-Host ''; Write-Host 'Executando servidor...' -ForegroundColor Green; Write-Host 'Aguarde aparecer: Local: http://localhost:3000' -ForegroundColor Yellow; Write-Host ''; Write-Host 'Para parar: Ctrl+C' -ForegroundColor Red; Write-Host ''; Write-Host '========================================' -ForegroundColor Cyan; Write-Host ''; npm run dev"

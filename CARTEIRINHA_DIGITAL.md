@@ -1,4 +1,4 @@
-# 🎫 Sistema de Carteirinha Digital - Click Cannabis
+# 🎫 Sistema de Carteirinha Digital - CannabiLizi
 
 ## 📋 Visão Geral
 

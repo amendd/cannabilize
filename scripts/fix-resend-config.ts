@@ -27,7 +27,7 @@ async function fixResendConfig() {
       where: { provider: 'RESEND' },
       data: {
         fromEmail: 'onboarding@resend.dev',
-        fromName: config.fromName || 'Click Cannabis',
+        fromName: config.fromName || 'CannabiLizi',
         enabled: true, // Garantir que está habilitado
       },
     });

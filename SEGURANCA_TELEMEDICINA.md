@@ -39,11 +39,12 @@ Cada reunião é **100% única** e vinculada a uma consulta específica:
 - ✅ Links não são compartilhados entre consultas
 - ✅ Dados da reunião armazenados com `consultationId` para rastreamento
 
-### 5. **Sala de Espera (Zoom)**
+### 5. **Entrada direta (Zoom) — sem sala de espera**
 
-- ✅ `waiting_room: true` por padrão
-- ✅ Host (médico) precisa aprovar participantes
-- ✅ Previne entrada não autorizada mesmo com link e senha
+- ✅ `waiting_room: false` por padrão (telemedicina: fluxo rápido e dinâmico)
+- ✅ `join_before_host: true`: paciente pode entrar antes do médico, sem "aguardando host"
+- ✅ Médico clica para gerar a reunião → abre link de host; link de convidado fica disponível para o paciente
+- ✅ Segurança mantida por senha única por reunião e validação de acesso por consulta
 
 ### 6. **Logs de Segurança**
 

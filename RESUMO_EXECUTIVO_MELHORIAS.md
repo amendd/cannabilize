@@ -1,6 +1,6 @@
 # 📊 Resumo Executivo - Análise de Melhorias
 
-**Projeto:** Click Cannabis Replica  
+**Projeto:** CannabiLizi  
 **Data:** 28 de Janeiro de 2026  
 **Status:** ✅ Funcional | ⚠️ Precisa Melhorias
 

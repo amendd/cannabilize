@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Carregando...</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; }
+    #frame {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      border: none;
+      display: block;
+    }
+    #loading {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: #f5f5f5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: system-ui, sans-serif;
+      color: #666;
+      z-index: 0;
+    }
+    #frame.loaded ~ #loading { display: none; }
+  </style>
+</head>
+<body>
+  <!--
+    CONFIGURAÇÃO: altere a URL abaixo para a do seu túnel (ngrok, Cloudflare Tunnel, etc.)
+    Ex.: https://abc123.ngrok-free.app  ou  https://app.seudominio.com.br (túnel)
+  -->
+  <iframe
+    id="frame"
+    src=""
+    allow="fullscreen; camera; microphone"
+    allowfullscreen
+    referrerpolicy="no-referrer-when-downgrade"
+    loading="eager"
+  ></iframe>
+  <div id="loading">Carregando...</div>
+
+  <script>
+    (function () {
+      // ========== URL DO TÚNEL – altere aqui ==========
+      var TUNNEL_URL = 'https://crushingly-genealogic-terica.ngrok-free.dev';
+      // Exemplos:
+      // var TUNNEL_URL = 'https://abc123.ngrok-free.app';
+      // var TUNNEL_URL = 'https://app.seudominio.com.br';
+      // ================================================
+
+      var frame = document.getElementById('frame');
+      if (!TUNNEL_URL || TUNNEL_URL.indexOf('SEU-TUNEL') !== -1) {
+        document.getElementById('loading').innerHTML = 'Configure a URL do túnel no arquivo index.html (variável TUNNEL_URL).';
+        return;
+      }
+      frame.src = TUNNEL_URL.replace(/\/$/, '');
+      frame.onload = function () {
+        frame.classList.add('loaded');
+      };
+    })();
+  </script>
+</body>
+</html>

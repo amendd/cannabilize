@@ -121,7 +121,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Click Hemp | Líder em Tratamentos com Cannabis Medicinal",
+  title: "CannabiLizi | Líder em Tratamentos com Cannabis Medicinal",
   description: "Consultas online com médicos especialistas em cannabis medicinal por apenas R$50. Suporte completo no processo de importação legal.",
   keywords: "cannabis medicinal, CBD, consulta médica online, telemedicina, tratamento com cannabis",
 };
@@ -694,7 +694,7 @@ export default function Navbar() {
           {/* Logo */}
           <Link href="/" className="flex items-center">
             <span className="text-2xl font-bold text-primary">
-              Click Hemp
+              CannabiLizi
             </span>
           </Link>
 

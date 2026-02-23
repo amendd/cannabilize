@@ -1,8 +1,8 @@
-# ✅ Alterações Realizadas - Click Hemp
+# ✅ Alterações Realizadas - CannabiLizi
 
 ## 📝 Resumo das Mudanças
 
-### 1. **Renomeação: Click Cannabis → Click Hemp**
+### 1. **Renomeação: Click Cannabis → CannabiLizi**
 - ✅ Navbar atualizado
 - ✅ Footer atualizado
 - ✅ Layout principal (metadata)
@@ -120,7 +120,7 @@
 
 ## 📋 Checklist de Verificação
 
-- [x] Nome alterado para "Click Hemp"
+- [x] Nome alterado para "CannabiLizi"
 - [x] HeroSection melhorado
 - [x] ProcessSteps melhorado
 - [x] Statistics melhorado

@@ -1,0 +1,67 @@
+# Backup diário do PostgreSQL (produção/staging).
+# Requer secrets: BACKUP_DATABASE_URL
+# Opcional (upload S3): AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, BACKUP_BUCKET (ex: s3://meu-bucket/backups/)
+# Opcional (upload GCS): BACKUP_GCS_BUCKET, GCP_SA_KEY (JSON da service account)
+#
+# Schedule: 02:00 UTC (madrugada, menor impacto)
+# Retentativa: 2x em caso de falha
+
+name: Backup Database
+
+on:
+  schedule:
+    - cron: '0 2 * * *'   # 02:00 UTC diário
+  workflow_dispatch:       # Permite disparo manual
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PostgreSQL client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y postgresql-client
+
+      - name: Run backup script
+        env:
+          BACKUP_DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+          BACKUP_BUCKET: ${{ secrets.BACKUP_BUCKET }}
+          BACKUP_GCS_BUCKET: ${{ secrets.BACKUP_GCS_BUCKET }}
+          BACKUP_OUTPUT_DIR: ${{ github.workspace }}/backups
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION || 'us-east-1' }}
+        run: |
+          chmod +x scripts/backup-postgres.sh
+          for attempt in 1 2 3; do
+            if scripts/backup-postgres.sh; then exit 0; fi
+            [[ $attempt -lt 3 ]] && echo "Tentativa $attempt falhou; nova tentativa em 60s..." && sleep 60
+          done
+          exit 1
+
+      - name: Upload to S3 (optional fallback)
+        if: success()
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION || 'us-east-1' }}
+          BACKUP_BUCKET: ${{ secrets.BACKUP_BUCKET }}
+        run: |
+          [[ -z "$BACKUP_BUCKET" ]] && exit 0
+          FILE=$(ls -t backups/backup-*.sql.gz 2>/dev/null | head -1)
+          [[ -z "$FILE" ]] && exit 0
+          aws s3 cp "$FILE" "$BACKUP_BUCKET/$(basename "$FILE")" --sse AES256 || true
+        continue-on-error: true
+
+      - name: Upload artifact (fallback, 7 days)
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-backup-${{ github.run_id }}
+          path: backups/
+          retention-days: 7
+        if: always() && hashFiles('backups/*.sql.gz') != ''

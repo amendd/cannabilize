@@ -1,4 +1,4 @@
-# 🛠️ Exemplos Práticos de Melhorias - Click Hemp
+# 🛠️ Exemplos Práticos de Melhorias - CannabiLizi
 
 Este documento contém exemplos de código para implementar as melhorias mais críticas identificadas na análise.
 
@@ -686,10 +686,10 @@ export default function SkipLinks() {
       <Link 
         href="/" 
         className="flex items-center"
-        aria-label="Click Hemp - Página inicial"
+        aria-label="CannabiLizi - Página inicial"
       >
         <span className="text-2xl font-bold text-primary">
-          Click Hemp
+          CannabiLizi
         </span>
       </Link>
 
@@ -750,7 +750,7 @@ export async function sendEmail({
   to,
   subject,
   html,
-  from = 'Click Hemp <noreply@clickhemp.com>',
+  from = 'CannabiLizi <noreply@cannabilizi.com>',
 }: {
   to: string;
   subject: string;
@@ -815,7 +815,7 @@ export async function notifyAdminByEmail(data: ConsultationNotificationData) {
   if (data.adminEmail) {
     return await sendEmail({
       to: data.adminEmail,
-      subject: 'Nova Consulta Agendada - Click Hemp',
+      subject: 'Nova Consulta Agendada - CannabiLizi',
       html,
     });
   }
@@ -862,7 +862,7 @@ export async function sendWhatsApp({
 export async function notifyAdminByWhatsApp(data: ConsultationNotificationData) {
   if (!data.adminPhone) return { success: false, error: 'Telefone não fornecido' };
 
-  const message = `🔔 *Nova Consulta Agendada - Click Hemp*
+  const message = `🔔 *Nova Consulta Agendada - CannabiLizi*
 
 👤 *Paciente:* ${data.patientName}
 📧 *Email:* ${data.patientEmail}

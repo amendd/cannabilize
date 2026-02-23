@@ -1,8 +1,8 @@
-# ✅ Implementação Completa - Click Cannabis Replica
+# ✅ Implementação Completa - CannabiLizi Replica
 
 ## 📊 Resumo da Implementação
 
-Foi criado um sistema completo replicando o site e modelo de negócio da Click Cannabis, incluindo todas as funcionalidades principais.
+Foi criado um sistema completo replicando o site e modelo de negócio da CannabiLizi, incluindo todas as funcionalidades principais.
 
 ---
 
@@ -348,7 +348,7 @@ await prisma.user.create({
 
 ## ✅ CONCLUSÃO
 
-Foi implementado um sistema completo e funcional que replica o modelo de negócio e site da Click Cannabis, incluindo:
+Foi implementado um sistema completo e funcional que replica o modelo de negócio e site da CannabiLizi, incluindo:
 
 ✅ Site completo com todas as páginas  
 ✅ Sistema de agendamento de consultas  

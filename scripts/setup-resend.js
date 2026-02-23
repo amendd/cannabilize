@@ -36,7 +36,7 @@ async function setupResendConfig() {
           enabled: true,
           apiKey: apiKey,
           fromEmail: 'onboarding@resend.dev',
-          fromName: 'Click Cannabis',
+          fromName: 'CannabiLizi',
         },
       });
       console.log('✅ Configuração criada com sucesso\n');

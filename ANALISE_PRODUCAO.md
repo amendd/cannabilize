@@ -1,4 +1,4 @@
-# 📊 Análise para Produção - Click Cannabis / CannaLize
+# 📊 Análise para Produção - CannabiLizi
 
 **Data**: Janeiro 2026  
 **Objetivo**: Identificar tudo que é necessário para colocar o sistema em produção e organizar a execução.

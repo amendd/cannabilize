@@ -1,0 +1,135 @@
+﻿app/api/consultations/[id]/route.ts(61,7): error TS2322: Type 'boolean | null' is not assignable to type 'boolean'.
+  Type 'null' is not assignable to type 'boolean'.
+app/api/consultations/route.ts(171,7): error TS2322: Type '{ id: string; createdAt: Date; updatedAt: Date; name: string; email: string; cpf: string | null; phone: string | null; password: string | null; role: string; adminMenuPermissions: string | null; ... 5 more ...; deletedAt: Date | null; } | undefined' is not assignable to type '{ id: string; createdAt: Date; updatedAt: Date; name: string; email: string; cpf: string | null; phone: string | null; password: string | null; role: string; adminMenuPermissions: string | null; ... 5 more ...; deletedAt: Date | null; } | null'.
+  Type 'undefined' is not assignable to type '{ id: string; createdAt: Date; updatedAt: Date; name: string; email: string; cpf: string | null; phone: string | null; password: string | null; role: string; adminMenuPermissions: string | null; ... 5 more ...; deletedAt: Date | null; } | null'.
+app/api/consultations/route.ts(176,7): error TS2322: Type '{ id: string; createdAt: Date; updatedAt: Date; name: string; email: string; cpf: string | null; phone: string | null; password: string | null; role: string; adminMenuPermissions: string | null; ... 5 more ...; deletedAt: Date | null; } | undefined' is not assignable to type '{ id: string; createdAt: Date; updatedAt: Date; name: string; email: string; cpf: string | null; phone: string | null; password: string | null; role: string; adminMenuPermissions: string | null; ... 5 more ...; deletedAt: Date | null; } | null'.
+  Type 'undefined' is not assignable to type '{ id: string; createdAt: Date; updatedAt: Date; name: string; email: string; cpf: string | null; phone: string | null; password: string | null; role: string; adminMenuPermissions: string | null; ... 5 more ...; deletedAt: Date | null; } | null'.
+app/api/doctors/activity/route.ts(57,9): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+app/api/doctors/me/route.ts(89,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+app/api/medico/financeiro/debug/route.ts(21,24): error TS2339: Property 'doctorId' does not exist on type '{ id: string; email: string; name: string; role: string; adminMenuPermissions?: string[] | undefined; }'.
+app/api/medico/financeiro/debug/route.ts(22,33): error TS2339: Property 'doctorId' does not exist on type '{ id: string; email: string; name: string; role: string; adminMenuPermissions?: string[] | undefined; }'.
+app/api/medico/financeiro/payouts/route.ts(138,11): error TS2322: Type 'string' is not assignable to type 'undefined'.
+app/api/medico/financeiro/payouts/route.ts(152,50): error TS2339: Property 'payment' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; name: string | null; meetingLink: string | null; scheduledAt: Date; status: string; email: string | null; phone: string | null; ... 17 more ...; nextReturnDate: Date | null; }'.
+app/api/medico/financeiro/summary/route.ts(56,22): error TS2339: Property 'doctorId' does not exist on type '{ id: string; email: string; name: string; role: string; adminMenuPermissions?: string[] | undefined; }'.
+app/api/medico/financeiro/summary/route.ts(57,31): error TS2339: Property 'doctorId' does not exist on type '{ id: string; email: string; name: string; role: string; adminMenuPermissions?: string[] | undefined; }'.
+app/api/medico/financeiro/summary/route.ts(209,11): error TS2322: Type 'string' is not assignable to type 'undefined'.
+app/api/medico/financeiro/summary/route.ts(228,50): error TS2339: Property 'payment' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; name: string | null; meetingLink: string | null; scheduledAt: Date; status: string; email: string | null; phone: string | null; ... 17 more ...; nextReturnDate: Date | null; }'.
+app/api/medico/prontuario/[patientId]/route.ts(93,20): error TS2353: Object literal may only specify known properties, and 'createdAt' does not exist in type 'ConsultationFileOrderByWithRelationInput | ConsultationFileOrderByWithRelationInput[]'.
+app/api/medico/stats/route.ts(25,62): error TS2339: Property 'doctorId' does not exist on type '{ id: string; email: string; name: string; role: string; adminMenuPermissions?: string[] | undefined; }'.
+app/api/medico/stats/route.ts(26,31): error TS2339: Property 'doctorId' does not exist on type '{ id: string; email: string; name: string; role: string; adminMenuPermissions?: string[] | undefined; }'.
+app/api/payments/create-intent/route.ts(9,3): error TS2322: Type '"2024-06-20"' is not assignable to type '"2025-02-24.acacia"'.
+app/api/payments/webhook/route.ts(9,3): error TS2322: Type '"2024-06-20"' is not assignable to type '"2025-02-24.acacia"'.
+app/api/whatsapp/webhook/route.ts(161,54): error TS2339: Property 'trim' does not exist on type '{}'.
+app/api/whatsapp/webhook/route.ts(177,25): error TS2322: Type '{}' is not assignable to type 'string'.
+app/gpp-canna/pacientes/page.tsx(93,26): error TS2322: Type '{ rows: number; cols: number; }' is not assignable to type 'IntrinsicAttributes'.
+  Property 'rows' does not exist on type 'IntrinsicAttributes'.
+app/medico/consultas/page.tsx(87,28): error TS2339: Property 'rescheduleInvitesEnabled' does not exist on type '{}'.
+app/medico/consultas/page.tsx(88,46): error TS2339: Property 'rescheduleInvitesEnabled' does not exist on type '{}'.
+app/medico/consultas/page.tsx(112,40): error TS2339: Property 'doctorId' does not exist on type '{ id: string; email: string; name: string; role: string; adminMenuPermissions?: string[] | undefined; }'.
+app/medico/page.tsx(310,26): error TS2339: Property 'rescheduleInvitesEnabled' does not exist on type '{}'.
+app/medico/page.tsx(311,44): error TS2339: Property 'rescheduleInvitesEnabled' does not exist on type '{}'.
+app/recuperar-senha/[token]/page.tsx(160,14): error TS2304: Cannot find name 'LogoImage'.
+app/recuperar-senha/page.tsx(100,14): error TS2304: Cannot find name 'LogoImage'.
+components/admin/PrescriptionView.tsx(25,19): error TS2552: Cannot find name 'useLogoUrl'. Did you mean 'logoUrl'?
+components/home/Testimonials.tsx(30,9): error TS2322: Type '{ id: string; name: string; displayDate: string; rating: number; shortQuote: string; fullQuote: string; source: string; photoUrl: string; featured: boolean; condition?: string | undefined; age?: number | undefined; months?: string | undefined; }[] | { ...; }[]' is not assignable to type '{ id: string; name: string; displayDate: string; rating: number; shortQuote: string; fullQuote: string; source: string; photoUrl: string; featured: boolean; condition?: string | undefined; age?: number | undefined; months?: string | undefined; }[]'.
+  Type '{ id: string; name: string; displayDate: string; rating: number; shortQuote: string; fullQuote: string; source: string; photoUrl: string | undefined; featured: boolean; condition: string | undefined; age: number | undefined; months: string | undefined; }[]' is not assignable to type '{ id: string; name: string; displayDate: string; rating: number; shortQuote: string; fullQuote: string; source: string; photoUrl: string; featured: boolean; condition?: string | undefined; age?: number | undefined; months?: string | undefined; }[]'.
+    Type '{ id: string; name: string; displayDate: string; rating: number; shortQuote: string; fullQuote: string; source: string; photoUrl: string | undefined; featured: boolean; condition: string | undefined; age: number | undefined; months: string | undefined; }' is not assignable to type '{ id: string; name: string; displayDate: string; rating: number; shortQuote: string; fullQuote: string; source: string; photoUrl: string; featured: boolean; condition?: string | undefined; age?: number | undefined; months?: string | undefined; }'.
+      Types of property 'photoUrl' are incompatible.
+        Type 'string | undefined' is not assignable to type 'string'.
+          Type 'undefined' is not assignable to type 'string'.
+components/layout/AdminLayout.tsx(264,31): error TS2339: Property 'consultations' does not exist on type '{}'.
+components/layout/AdminLayout.tsx(265,31): error TS2339: Property 'prescriptions' does not exist on type '{}'.
+components/layout/AdminLayout.tsx(266,24): error TS2339: Property 'anvisa' does not exist on type '{}'.
+components/layout/AdminLayout.tsx(267,30): error TS2339: Property 'patientCards' does not exist on type '{}'.
+components/layout/ErpCannaLayout.tsx(50,19): error TS2552: Cannot find name 'useLogoUrl'. Did you mean 'logoUrl'?
+components/layout/GppCannaLayout.tsx(117,18): error TS2304: Cannot find name 'LogoImage'.
+components/medico/PrescriptionBuilder.tsx(198,22): error TS2339: Property 'otherCannabinoids' does not exist on type 'Medication'.
+components/medico/PrescriptionBuilder.tsx(198,68): error TS2339: Property 'otherCannabinoids' does not exist on type 'Medication'.
+components/medico/PrescriptionBuilder.tsx(199,20): error TS2339: Property 'otherCannabinoids' does not exist on type 'Medication'.
+components/ui/Button.tsx(40,6): error TS2322: Type '{ children: (ReactNode | Element)[]; form?: string | undefined; formAction?: string | ((formData: FormData) => void | Promise<void>) | undefined; ... 285 more ...; disabled: boolean | undefined; }' is not assignable to type 'Omit<HTMLMotionProps<"button">, "ref">'.
+  Types of property 'onDrag' are incompatible.
+    Type 'DragEventHandler<HTMLButtonElement> | undefined' is not assignable to type '((event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => void) | undefined'.
+      Type 'DragEventHandler<HTMLButtonElement>' is not assignable to type '(event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => void'.
+        Types of parameters 'event' and 'event' are incompatible.
+          Type 'MouseEvent | TouchEvent | PointerEvent' is not assignable to type 'DragEvent<HTMLButtonElement>'.
+            Type 'MouseEvent' is missing the following properties from type 'DragEvent<HTMLButtonElement>': dataTransfer, nativeEvent, isDefaultPrevented, isPropagationStopped, persist
+criar-dados-completos.ts(379,9): error TS2322: Type '{ title: string; slug: string; excerpt: string; content: string; category: string; tags: string[]; published: boolean; publishedAt: Date; }' is not assignable to type '(Without<BlogPostUpdateInput, BlogPostUncheckedUpdateInput> & BlogPostUncheckedUpdateInput) | (Without<...> & BlogPostUpdateInput)'.
+  Type '{ title: string; slug: string; excerpt: string; content: string; category: string; tags: string[]; published: boolean; publishedAt: Date; }' is not assignable to type 'Without<BlogPostUncheckedUpdateInput, BlogPostUpdateInput> & BlogPostUpdateInput'.
+    Types of property 'tags' are incompatible.
+      Type 'string[]' is not assignable to type 'string | NullableStringFieldUpdateOperationsInput | null | undefined'.
+lib/backup.ts(72,31): error TS2339: Property 'startsWith' does not exist on type 'keyof PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+  Property 'startsWith' does not exist on type 'symbol'.
+lib/backup.ts(72,54): error TS2339: Property 'startsWith' does not exist on type 'keyof PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+  Property 'startsWith' does not exist on type 'symbol'.
+lib/backup.ts(133,32): error TS2554: Expected 0 arguments, but got 1.
+lib/backup.ts(144,23): error TS2352: Conversion of type '(() => Promise<void>) | (() => Promise<void>) | ((cb: Middleware<any>) => void) | (<T = unknown>(query: TemplateStringsArray | Sql, ...values: any[]) => PrismaPromise<...>) | ... 60 more ... | NotificationDelegate<...>' to type '{ createMany: (args: { data: unknown[]; skipDuplicates?: boolean | undefined; }) => Promise<{ count: number; }>; }' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'NotificationDelegate<DefaultArgs>' is not comparable to type '{ createMany: (args: { data: unknown[]; skipDuplicates?: boolean | undefined; }) => Promise<{ count: number; }>; }'.
+    Types of property 'createMany' are incompatible.
+      Type '<T extends NotificationCreateManyArgs>(args?: SelectSubset<T, NotificationCreateManyArgs<DefaultArgs>> | undefined) => PrismaPromise<...>' is not comparable to type '(args: { data: unknown[]; skipDuplicates?: boolean | undefined; }) => Promise<{ count: number; }>'.
+        Types of parameters 'args' and 'args' are incompatible.
+          Type '{ data: unknown[]; skipDuplicates?: boolean | undefined; }' is not comparable to type 'SelectSubset<any, NotificationCreateManyArgs<DefaultArgs>> | undefined'.
+            Type '{ data: unknown[]; skipDuplicates?: boolean | undefined; }' is not comparable to type '{ [x: string]: never; } & "Please either choose `select` or `omit`."'.
+              Type '{ data: unknown[]; skipDuplicates?: boolean | undefined; }' is not comparable to type '{ [x: string]: never; }'.
+                Property 'data' is incompatible with index signature.
+                  Type 'unknown[]' is not comparable to type 'never'.
+lib/compliance-gates.ts(39,34): error TS2345: Argument of type 'string' is not assignable to parameter of type '"REPLACED" | "CANCELLED" | "EXPIRED"'.
+lib/compliance-gates.ts(41,33): error TS2345: Argument of type 'string' is not assignable to parameter of type '"ACTIVE" | "EXPIRING"'.
+lib/error-handler.ts(36,23): error TS7053: Element implicitly has an 'any' type because expression of type '0' can't be used to index type '{}'.
+  Property '0' does not exist on type '{}'.
+lib/prescription-generator.ts(191,14): error TS2339: Property 'phone' does not exist on type '{ name: string; crm: string; }'.
+lib/prescription-generator.ts(192,38): error TS2339: Property 'phone' does not exist on type '{ name: string; crm: string; }'.
+lib/prescription-generator.ts(203,14): error TS2339: Property 'address' does not exist on type '{ name: string; crm: string; }'.
+lib/prescription-generator.ts(204,50): error TS2339: Property 'address' does not exist on type '{ name: string; crm: string; }'.
+lib/prescription-generator.ts(428,12): error TS2339: Property 'address' does not exist on type '{ name: string; crm: string; }'.
+lib/prescription-generator.ts(428,42): error TS2339: Property 'address' does not exist on type '{ name: string; crm: string; }'.
+lib/prescription-generator.ts(429,12): error TS2339: Property 'phone' does not exist on type '{ name: string; crm: string; }'.
+lib/prescription-generator.ts(429,40): error TS2339: Property 'phone' does not exist on type '{ name: string; crm: string; }'.
+lib/prescription-generator.ts(430,12): error TS2339: Property 'email' does not exist on type '{ name: string; crm: string; }'.
+lib/prescription-generator.ts(430,37): error TS2339: Property 'email' does not exist on type '{ name: string; crm: string; }'.
+lib/roles-permissions.ts(24,84): error TS2345: Argument of type 'Role' is not assignable to parameter of type '"ADMIN" | "SUPER_ADMIN" | "SUBADMIN" | "OPERATOR"'.
+  Type '"PATIENT"' is not assignable to type '"ADMIN" | "SUPER_ADMIN" | "SUBADMIN" | "OPERATOR"'.
+lib/roles-permissions.ts(36,84): error TS2345: Argument of type 'Role' is not assignable to parameter of type '"ADMIN" | "SUPER_ADMIN" | "SUBADMIN" | "OPERATOR"'.
+  Type '"PATIENT"' is not assignable to type '"ADMIN" | "SUPER_ADMIN" | "SUBADMIN" | "OPERATOR"'.
+lib/roles-permissions.ts(42,84): error TS2345: Argument of type 'Role' is not assignable to parameter of type '"ADMIN" | "SUPER_ADMIN" | "SUBADMIN" | "OPERATOR"'.
+  Type '"PATIENT"' is not assignable to type '"ADMIN" | "SUPER_ADMIN" | "SUBADMIN" | "OPERATOR"'.
+lib/roles-permissions.ts(54,97): error TS2345: Argument of type 'Role' is not assignable to parameter of type '"ADMIN" | "PATIENT" | "SUPER_ADMIN" | "OPERATOR" | "DOCTOR"'.
+  Type '"SUBADMIN"' is not assignable to type '"ADMIN" | "PATIENT" | "SUPER_ADMIN" | "OPERATOR" | "DOCTOR"'.
+lib/roles-permissions.ts(60,97): error TS2345: Argument of type 'Role' is not assignable to parameter of type '"ADMIN" | "PATIENT" | "SUPER_ADMIN" | "OPERATOR" | "DOCTOR"'.
+  Type '"SUBADMIN"' is not assignable to type '"ADMIN" | "PATIENT" | "SUPER_ADMIN" | "OPERATOR" | "DOCTOR"'.
+lib/roles-permissions.ts(77,84): error TS2345: Argument of type 'Role' is not assignable to parameter of type '"ADMIN" | "SUPER_ADMIN" | "SUBADMIN" | "OPERATOR"'.
+  Type '"PATIENT"' is not assignable to type '"ADMIN" | "SUPER_ADMIN" | "SUBADMIN" | "OPERATOR"'.
+lib/roles-permissions.ts(83,84): error TS2345: Argument of type 'Role' is not assignable to parameter of type '"ADMIN" | "SUPER_ADMIN" | "SUBADMIN" | "OPERATOR"'.
+  Type '"PATIENT"' is not assignable to type '"ADMIN" | "SUPER_ADMIN" | "SUBADMIN" | "OPERATOR"'.
+lib/security/recaptcha.ts(87,22): error TS18048: 'threshold' is possibly 'undefined'.
+lib/whatsapp-capture-flow.ts(861,36): error TS2339: Property 'error' does not exist on type '{ message: string; slotOptions: SlotOption[]; } | { error: string; }'.
+  Property 'error' does not exist on type '{ message: string; slotOptions: SlotOption[]; }'.
+lib/whatsapp-capture-flow.ts(861,82): error TS2339: Property 'message' does not exist on type '{ message: string; slotOptions: SlotOption[]; } | { error: string; }'.
+  Property 'message' does not exist on type '{ error: string; }'.
+lib/whatsapp-capture-flow.ts(942,40): error TS2339: Property 'error' does not exist on type '{ message: string; slotOptions: SlotOption[]; } | { error: string; }'.
+  Property 'error' does not exist on type '{ message: string; slotOptions: SlotOption[]; }'.
+lib/whatsapp-capture-flow.ts(942,86): error TS2339: Property 'message' does not exist on type '{ message: string; slotOptions: SlotOption[]; } | { error: string; }'.
+  Property 'message' does not exist on type '{ error: string; }'.
+lib/whatsapp-capture-flow.ts(985,24): error TS2339: Property 'error' does not exist on type '{ message: string; slotOptions: SlotOption[]; } | { error: string; }'.
+  Property 'error' does not exist on type '{ message: string; slotOptions: SlotOption[]; }'.
+lib/whatsapp-capture-flow.ts(991,48): error TS2339: Property 'error' does not exist on type '{ message: string; slotOptions: SlotOption[]; } | { error: string; }'.
+  Property 'error' does not exist on type '{ message: string; slotOptions: SlotOption[]; }'.
+lib/whatsapp-capture-flow.ts(993,54): error TS2339: Property 'message' does not exist on type '{ message: string; slotOptions: SlotOption[]; } | { error: string; }'.
+  Property 'message' does not exist on type '{ error: string; }'.
+lib/whatsapp-capture-flow.ts(1006,22): error TS2339: Property 'error' does not exist on type '{ message: string; slotOptions: SlotOption[]; } | { error: string; }'.
+  Property 'error' does not exist on type '{ message: string; slotOptions: SlotOption[]; }'.
+lib/whatsapp-capture-flow.ts(1012,46): error TS2339: Property 'error' does not exist on type '{ message: string; slotOptions: SlotOption[]; } | { error: string; }'.
+  Property 'error' does not exist on type '{ message: string; slotOptions: SlotOption[]; }'.
+lib/whatsapp-capture-flow.ts(1014,31): error TS2339: Property 'message' does not exist on type '{ message: string; slotOptions: SlotOption[]; } | { error: string; }'.
+  Property 'message' does not exist on type '{ error: string; }'.
+lib/whatsapp-lead-to-patient.ts(67,5): error TS2322: Type '{ id: string; createdAt: Date; updatedAt: Date; name: string; email: string; cpf: string | null; phone: string | null; password: string | null; role: string; adminMenuPermissions: string | null; ... 5 more ...; deletedAt: Date | null; } | undefined' is not assignable to type '{ id: string; createdAt: Date; updatedAt: Date; name: string; email: string; cpf: string | null; phone: string | null; password: string | null; role: string; adminMenuPermissions: string | null; ... 5 more ...; deletedAt: Date | null; } | null'.
+  Type 'undefined' is not assignable to type '{ id: string; createdAt: Date; updatedAt: Date; name: string; email: string; cpf: string | null; phone: string | null; password: string | null; role: string; adminMenuPermissions: string | null; ... 5 more ...; deletedAt: Date | null; } | null'.
+lib/whatsapp-lead-to-patient.ts(77,5): error TS2322: Type 'undefined' is not assignable to type '{ id: string; createdAt: Date; updatedAt: Date; name: string; email: string; cpf: string | null; phone: string | null; password: string | null; role: string; adminMenuPermissions: string | null; ... 5 more ...; deletedAt: Date | null; } | null'.
+lib/whatsapp.ts(543,9): error TS2353: Object literal may only specify known properties, and 'errorCode' does not exist in type '{ success: boolean; message?: string | undefined; error?: string | undefined; messageId?: string | undefined; status?: string | undefined; }'.
+lib/zapi-sync.ts(101,19): error TS2345: Argument of type '(c: { phone?: string; lastMessageTime?: string; }) => { phone: string; lastMessageTime: string | undefined; }' is not assignable to parameter of type '(value: unknown, index: number, array: unknown[]) => { phone: string; lastMessageTime: string | undefined; }'.
+  Types of parameters 'c' and 'value' are incompatible.
+    Type 'unknown' is not assignable to type '{ phone?: string | undefined; lastMessageTime?: string | undefined; }'.
+prisma/seed.ts(499,57): error TS18047: 'order1' is possibly 'null'.
+scripts/criar-receita-teste.ts(96,26): error TS2339: Property 'form' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; name: string; active: boolean; description: string | null; order: number; productType: string; pharmaceuticalForm: string; activePrinciples: string; ... 13 more ...; recordHash: string | null; }'.
+scripts/criar-receita-teste.ts(97,26): error TS2339: Property 'activeIngredient' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; name: string; active: boolean; description: string | null; order: number; productType: string; pharmaceuticalForm: string; activePrinciples: string; ... 13 more ...; recordHash: string | null; }'.

@@ -1,4 +1,4 @@
-# ✅ Projeto Centralizado - CannaLize
+# ✅ Projeto Centralizado - CannabiLizi
 
 ## 🎯 Tudo em Uma Única Pasta!
 
