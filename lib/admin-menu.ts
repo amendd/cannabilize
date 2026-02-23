@@ -17,20 +17,25 @@ export const ADMIN_MENU_GROUPS = [
 
 export type AdminMenuGroupId = (typeof ADMIN_MENU_GROUPS)[number]['id'];
 
-export const ADMIN_MENU_GROUP_IDS = ADMIN_MENU_GROUPS.map((g) => g.id);
+export const ADMIN_MENU_GROUP_IDS: readonly AdminMenuGroupId[] = ADMIN_MENU_GROUPS.map((g) => g.id);
+
+/** Verifica se uma string é um ID válido de grupo do menu admin (evita erro de tipo em .includes). */
+export function isValidAdminMenuGroupId(id: string): id is AdminMenuGroupId {
+  return (ADMIN_MENU_GROUP_IDS as readonly string[]).includes(id);
+}
 
 export function parseAdminMenuPermissions(json: string | null): string[] {
   if (!json || json.trim() === '') return [];
   try {
     const arr = JSON.parse(json) as unknown;
     if (!Array.isArray(arr)) return [];
-    return arr.filter((x): x is string => typeof x === 'string' && ADMIN_MENU_GROUP_IDS.includes(x));
+    return arr.filter((x): x is string => typeof x === 'string' && isValidAdminMenuGroupId(x));
   } catch {
     return [];
   }
 }
 
 export function stringifyAdminMenuPermissions(ids: string[]): string {
-  const valid = ids.filter((id) => ADMIN_MENU_GROUP_IDS.includes(id));
+  const valid = ids.filter((id) => isValidAdminMenuGroupId(id));
   return JSON.stringify(valid);
 }
