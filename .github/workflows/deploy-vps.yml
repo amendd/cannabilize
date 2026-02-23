@@ -26,9 +26,17 @@ jobs:
       - name: Configurar SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          printf '%s\n' "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Testar conexão SSH
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new -o BatchMode=yes \
+            "$VPS_USER@$VPS_HOST" "echo 'Conexão SSH OK'" || { echo "::error::Falha na conexão SSH. Verifique VPS_HOST, VPS_USER e VPS_SSH_KEY (chave privada e authorized_keys na VPS)."; exit 1; }
 
       - name: Deploy na VPS
         env:
