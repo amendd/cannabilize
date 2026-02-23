@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import BlogList from '@/components/blog/BlogList';
 
+export const dynamic = 'force-dynamic';
+
 export default async function BlogPage() {
   const posts = await prisma.blogPost.findMany({
     where: { published: true },
@@ -13,10 +15,10 @@ export default async function BlogPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Blog CannaLize
+            Central de Conhecimento Cannabilize
           </h1>
-          <p className="text-xl text-gray-600">
-            Explore artigos e notícias sobre o universo da Cannabis Medicinal
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            Conteúdos desenvolvidos para orientar pacientes e profissionais sobre o uso seguro e responsável da cannabis medicinal.
           </p>
         </div>
         <BlogList posts={posts} />

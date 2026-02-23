@@ -3,13 +3,20 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import Stripe from 'stripe';
 import { prisma } from '@/lib/prisma';
+import { getConsultationDefaultAmount } from '@/lib/consultation-price';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-06-20',
-});
+function getStripe(): Stripe | null {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) return null;
+  return new Stripe(key, { apiVersion: '2024-06-20' });
+}
 
 export async function POST(request: NextRequest) {
   try {
+    const stripe = getStripe();
+    if (!stripe) {
+      return NextResponse.json({ error: 'Pagamentos não configurados' }, { status: 500 });
+    }
     const session = await getServerSession(authOptions);
     
     if (!session) {
@@ -20,7 +27,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { consultationId } = body;
+    const { consultationId, paymentMethod } = body;
 
     // Buscar consulta e pagamento
     const consultation = await prisma.consultation.findUnique({
@@ -54,7 +61,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const amount = consultation.payment?.amount || 50.00;
+    const defaultAmount = await getConsultationDefaultAmount();
+    const amount = consultation.payment?.amount ?? defaultAmount;
 
     // Criar Payment Intent no Stripe
     const paymentIntent = await stripe.paymentIntents.create({
@@ -63,16 +71,18 @@ export async function POST(request: NextRequest) {
       metadata: {
         consultationId,
         patientId: consultation.patientId,
+        paymentMethod: paymentMethod || undefined,
       },
     });
 
-    // Atualizar pagamento com stripePaymentId
+    // Atualizar pagamento com stripePaymentId e forma de pagamento (para notificação ao admin)
     if (consultation.payment) {
       await prisma.payment.update({
         where: { id: consultation.payment.id },
         data: {
           stripePaymentId: paymentIntent.id,
           status: 'PROCESSING',
+          ...(paymentMethod && { paymentMethod: String(paymentMethod) }),
         },
       });
 

@@ -47,7 +47,7 @@ export async function GET(
         where: { userId: session.user.id },
         select: { id: true },
       });
-      hasAccess = doctor && (consultation.doctorId === doctor.id || !consultation.doctorId);
+      hasAccess = !!(doctor && (consultation.doctorId === doctor.id || !consultation.doctorId));
     } else if (session.user.role === 'PATIENT') {
       hasAccess = consultation.patientId === session.user.id;
     }

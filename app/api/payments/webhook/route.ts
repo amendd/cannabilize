@@ -1,15 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { createPatientCardRequest } from '@/lib/patient-card';
 import Stripe from 'stripe';
-import { sendPaymentConfirmationEmail } from '@/lib/email';
+import { createAuditLog, AuditAction, AuditEntity } from '@/lib/audit';
+import { handleApiError } from '@/lib/error-handler';
+import { runAfterPaymentConfirmed } from '@/lib/payment-confirmed';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-06-20',
-});
+function getStripe(): Stripe | null {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) return null;
+  return new Stripe(key, { apiVersion: '2024-06-20' });
+}
 
 export async function POST(request: NextRequest) {
   try {
+    const stripe = getStripe();
+    if (!stripe) {
+      return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 });
+    }
     const body = await request.text();
     const signature = request.headers.get('stripe-signature');
 
@@ -20,11 +27,41 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const event = stripe.webhooks.constructEvent(
-      body,
-      signature,
-      process.env.STRIPE_WEBHOOK_SECRET || ''
-    );
+    // Validar webhook secret
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      console.error('[webhook] STRIPE_WEBHOOK_SECRET não configurado');
+      return NextResponse.json(
+        { error: 'Webhook secret not configured' },
+        { status: 500 }
+      );
+    }
+
+    let event: Stripe.Event;
+    try {
+      event = stripe.webhooks.constructEvent(
+        body,
+        signature,
+        webhookSecret
+      );
+    } catch (err: any) {
+      console.error('[webhook] Erro ao validar assinatura:', err.message);
+      // Log de tentativa de webhook inválido (possível ataque)
+      await createAuditLog({
+        action: AuditAction.PAYMENT,
+        entity: AuditEntity.PAYMENT,
+        metadata: {
+          error: 'Invalid webhook signature',
+          message: err.message,
+          timestamp: new Date().toISOString(),
+        },
+      }).catch(() => {}); // Não bloquear se log falhar
+      
+      return NextResponse.json(
+        { error: 'Invalid signature' },
+        { status: 400 }
+      );
+    }
 
     if (event.type === 'payment_intent.succeeded') {
       const paymentIntent = event.data.object as Stripe.PaymentIntent;
@@ -32,15 +69,32 @@ export async function POST(request: NextRequest) {
       console.log('[webhook] Payment confirmed:', {
         paymentIntentId: paymentIntent.id,
         amount: paymentIntent.amount,
+        currency: paymentIntent.currency,
         metadata: paymentIntent.metadata,
       });
 
-      // Atualizar pagamento no banco
+      // Log de auditoria
+      await createAuditLog({
+        action: AuditAction.PAYMENT,
+        entity: AuditEntity.PAYMENT,
+        entityId: paymentIntent.metadata?.consultationId,
+        metadata: {
+          stripePaymentId: paymentIntent.id,
+          amount: paymentIntent.amount,
+          currency: paymentIntent.currency,
+          status: 'succeeded',
+          source: 'stripe_webhook',
+        },
+      }).catch(() => {}); // Não bloquear se log falhar
+
+      // Atualizar pagamento no banco (forma de pagamento pode vir dos metadados enviados no create-intent)
+      const metadataMethod = paymentIntent.metadata?.paymentMethod;
       const updateResult = await prisma.payment.updateMany({
         where: { stripePaymentId: paymentIntent.id },
         data: {
           status: 'PAID',
           paidAt: new Date(),
+          ...(metadataMethod && { paymentMethod: metadataMethod }),
         },
       });
 
@@ -49,17 +103,8 @@ export async function POST(request: NextRequest) {
         recordsUpdated: updateResult.count,
       });
 
-      // Buscar o pagamento atualizado para obter o patientId e dados relacionados
       const payment = await prisma.payment.findFirst({
         where: { stripePaymentId: paymentIntent.id },
-        include: {
-          consultation: {
-            include: {
-              prescription: true,
-            },
-          },
-          patient: true,
-        },
       });
 
       if (!payment) {
@@ -75,66 +120,25 @@ export async function POST(request: NextRequest) {
         paidAt: payment.paidAt,
       });
 
-      // Se a consulta já venceu, cancelar a consulta (pagamento foi confirmado pelo Stripe,
-      // então o sistema deve tratar como caso de suporte/reagendamento).
-      if (payment?.consultation?.scheduledAt) {
-        const now = new Date();
-        if (payment.consultation.scheduledAt < now && payment.consultation.status === 'SCHEDULED') {
-          await prisma.consultation.update({
-            where: { id: payment.consultation.id },
-            data: { status: 'CANCELLED' },
-          });
-          console.warn(
-            '[payments/webhook] Pagamento confirmado para consulta vencida. Consulta cancelada:',
-            payment.consultation.id
-          );
-        }
-      }
-
-      // Se o pagamento foi confirmado e há uma receita associada, criar solicitação de carteirinha
-      if (payment && payment.consultation?.prescription) {
-        try {
-          await createPatientCardRequest(
-            payment.patientId,
-            payment.consultation.prescription.id
-          );
-          console.log(
-            'Solicitação de carteirinha criada após confirmação de pagamento para paciente:',
-            payment.patientId
-          );
-        } catch (cardError) {
-          console.error(
-            'Erro ao criar solicitação de carteirinha após pagamento (não crítico):',
-            cardError
-          );
-        }
-      }
-
-      // Enviar email de confirmação de pagamento para o paciente (não bloqueia webhook)
-      if (payment?.patient?.email && payment.amount) {
-        const consultationDateTime = payment.consultation?.scheduledAt || null;
-
-        // Evitar mandar email "confirmando consulta" se a consulta já venceu
-        const now = new Date();
-        if (!consultationDateTime || consultationDateTime >= now) {
-          sendPaymentConfirmationEmail({
-            to: payment.patient.email,
-            patientName: payment.patient.name,
-            amount: payment.amount,
-            consultationDateTime,
-          }).catch(error => {
-            console.error('Erro ao enviar email de confirmação de pagamento:', error);
-          });
-        }
-      }
+      // Lógica pós-pagamento centralizada: consulta vencida, carteirinha, email e WhatsApp
+      await runAfterPaymentConfirmed(payment.id);
     }
 
     return NextResponse.json({ received: true });
-  } catch (error: any) {
-    console.error('Webhook error:', error.message);
-    return NextResponse.json(
-      { error: 'Webhook handler failed' },
-      { status: 400 }
-    );
+  } catch (error: unknown) {
+    console.error('[webhook] Erro geral:', error);
+    
+    // Log de erro
+    await createAuditLog({
+      action: AuditAction.PAYMENT,
+      entity: AuditEntity.PAYMENT,
+      metadata: {
+        error: 'Webhook handler failed',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString(),
+      },
+    }).catch(() => {});
+
+    return handleApiError(error);
   }
 }

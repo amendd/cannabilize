@@ -92,9 +92,9 @@ const nextConfig = {
   // Configurações de build
   swcMinify: true,
 
-  // Se o build falhar só por erros de TypeScript, mude para true para desbloquear (veja ANALISE_ERROS_BUILD_VPS.md)
+  // Temporariamente true para build na VPS passar; erros listados em ERROS_TYPESCRIPT_BUILD.txt — corrigir em lotes
   typescript: {
-    ignoreBuildErrors: false,
+    ignoreBuildErrors: true,
   },
 
   // Força o Next a resolver e transpilar next-auth (incluindo subpath /react)

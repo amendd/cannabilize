@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 function parseDataUrl(dataUrl: string): { mimeType: string; bytes: Buffer } | null {
-  const match = /^data:([^;]+);base64,(.*)$/s.exec(dataUrl);
+  const match = /^data:([^;]+);base64,([\s\S]*)$/.exec(dataUrl);
   if (!match) return null;
   const mimeType = match[1] || 'application/octet-stream';
   const base64 = match[2] || '';
@@ -70,7 +70,7 @@ export async function GET(
     headers.set('Content-Disposition', buildContentDisposition(file.fileName, asAttachment));
     headers.set('Cache-Control', 'private, no-store, max-age=0');
 
-    return new NextResponse(parsed.bytes, { status: 200, headers });
+    return new NextResponse(new Uint8Array(parsed.bytes), { status: 200, headers });
   } catch (error) {
     console.error('Erro ao servir arquivo público:', error);
     return NextResponse.json({ error: 'Erro ao servir arquivo' }, { status: 500 });

@@ -91,7 +91,7 @@ export async function GET(
     headers.set('Content-Disposition', buildContentDisposition(file.fileName, asAttachment));
     headers.set('Cache-Control', 'private, no-store, max-age=0');
 
-    return new NextResponse(parsed.bytes, { status: 200, headers });
+    return new NextResponse(new Uint8Array(parsed.bytes), { status: 200, headers });
   } catch (error) {
     console.error('Erro ao servir arquivo:', error);
     return NextResponse.json({ error: 'Erro ao servir arquivo' }, { status: 500 });
