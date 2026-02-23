@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 function parseDataUrl(dataUrl: string): { mimeType: string; bytes: Buffer } | null {
-  const match = /^data:([^;]+);base64,(.*)$/s.exec(dataUrl);
+  const match = /^data:([^;]+);base64,([\s\S]*)$/.exec(dataUrl);
   if (!match) return null;
   const mimeType = match[1] || 'application/octet-stream';
   const base64 = match[2] || '';
