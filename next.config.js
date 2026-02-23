@@ -1,8 +1,15 @@
 /** @type {import('next').NextConfig} */
 const path = require('path');
-const withBundleAnalyzer = require('@next/bundle-analyzer')({
-  enabled: process.env.ANALYZE === 'true',
-});
+
+// Bundle analyzer opcional: se não estiver instalado (ex.: npm install --production), o build segue sem ele
+let withBundleAnalyzer = (config) => config;
+try {
+  withBundleAnalyzer = require('@next/bundle-analyzer')({
+    enabled: process.env.ANALYZE === 'true',
+  });
+} catch (_) {
+  // @next/bundle-analyzer não instalado; ignorar
+}
 
 const nextConfig = {
   // Permitir acesso ao servidor de desenvolvimento pela rede local e por túnel (ngrok)
