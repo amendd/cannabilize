@@ -12,6 +12,14 @@ try {
 }
 
 const nextConfig = {
+  // Limite de tamanho do body para uploads (ex.: documentos na página de confirmação da consulta).
+  // Em VPS com nginx, configure também: client_max_body_size 10m; no server { }.
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '10mb',
+    },
+  },
+
   // Permitir acesso ao servidor de desenvolvimento pela rede local e por túnel (ngrok)
   // Sem isso, acessos por IP ou ngrok podem bloquear CSS/JS/imagens em dev.
   allowedDevOrigins: [

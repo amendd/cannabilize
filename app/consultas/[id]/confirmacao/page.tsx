@@ -206,8 +206,20 @@ export default function ConfirmationPage() {
           fileInputRef.current.value = '';
         }
       } else {
-        const error = await response.json();
-        toast.error(error.error || 'Erro ao enviar documento');
+        // 413 = servidor rejeitou por tamanho; resposta pode vir como HTML
+        const text = await response.text();
+        let message = 'Erro ao enviar documento';
+        if (response.status === 413) {
+          message = 'Arquivo muito grande. Tamanho máximo: 10MB. Se o problema continuar, o servidor pode estar com limite menor.';
+        } else {
+          try {
+            const data = JSON.parse(text);
+            if (data?.error) message = data.error;
+          } catch {
+            // resposta em HTML ou outro formato
+          }
+        }
+        toast.error(message);
       }
     } catch (error) {
       console.error('Erro ao fazer upload:', error);
