@@ -34,6 +34,9 @@ export async function GET(_request: NextRequest) {
     const session = await getServerSession(authOptions);
     const authError = checkAuth(session);
     if (authError) return authError;
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
 
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
@@ -68,6 +71,9 @@ export async function PATCH(request: NextRequest) {
     const session = await getServerSession(authOptions);
     const authError = checkAuth(session);
     if (authError) return authError;
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
 
     const body = await request.json();
     const data = updateMeSchema.parse(body);

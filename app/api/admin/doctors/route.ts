@@ -226,6 +226,9 @@ export async function POST(request: NextRequest) {
     
     const authError = checkAuth(session, 'ADMIN');
     if (authError) return authError;
+    if (!session || !session.user) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
 
     const body = await request.json();
     

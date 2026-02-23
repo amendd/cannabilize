@@ -27,6 +27,7 @@ export async function GET(
     
     const authError = checkAuth(session);
     if (authError) return authError;
+    if (!session?.user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
     if (session.user.role !== 'ADMIN') {
       return NextResponse.json(
@@ -128,6 +129,7 @@ export async function PATCH(
     
     const authError = checkAuth(session, 'ADMIN');
     if (authError) return authError;
+    if (!session?.user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
     const body = await request.json();
     
@@ -257,6 +259,7 @@ export async function DELETE(
     
     const authError = checkAuth(session, 'ADMIN');
     if (authError) return authError;
+    if (!session?.user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
     const patient = await prisma.user.findUnique({
       where: { id: params.id },

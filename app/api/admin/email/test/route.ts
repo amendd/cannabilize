@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import nodemailer from 'nodemailer';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
       try {
         const resend = new Resend(config.apiKey);
         const fromEmail = config.fromEmail || 'onboarding@resend.dev';
-        const fromName = config.fromName || 'Click Cannabis';
+        const fromName = config.fromName || 'CannabiLizi';
         const from = fromName ? `${fromName} <${fromEmail}>` : fromEmail;
 
         console.log('[EMAIL TEST] Enviando email via Resend:', {
@@ -53,9 +54,9 @@ export async function POST(request: NextRequest) {
         const result = await resend.emails.send({
           from,
           to: testEmail,
-          subject: 'Teste de Email - Click Cannabis',
+          subject: 'Teste de Email - CannabiLizi',
           html: '<h1>Este é um email de teste</h1><p>Se você recebeu este email, a configuração do Resend está funcionando corretamente.</p>',
-          reply_to: config.replyTo || undefined,
+          replyTo: config.replyTo || undefined,
         });
 
         console.log('[EMAIL TEST] Resposta do Resend:', result);
@@ -124,6 +125,73 @@ export async function POST(request: NextRequest) {
           },
         });
 
+        return NextResponse.json(errorResult, { status: 500 });
+      }
+    }
+
+    // Envio real de email de teste quando o provedor for SMTP
+    if (provider === 'SMTP' && config.smtpHost && config.smtpUser && config.smtpPassword) {
+      try {
+        const transporter = nodemailer.createTransport({
+          host: config.smtpHost.trim(),
+          port: config.smtpPort ?? 587,
+          secure: config.smtpSecure ?? false,
+          auth: {
+            user: config.smtpUser.trim(),
+            pass: config.smtpPassword,
+          },
+        });
+
+        const fromName = config.fromName || 'CannabiLizi';
+        const fromEmail = config.fromEmail || config.smtpUser;
+        const from = fromName ? `${fromName} <${fromEmail}>` : fromEmail;
+
+        console.log('[EMAIL TEST] Enviando email via SMTP:', {
+          from,
+          to: testEmail,
+          host: config.smtpHost,
+        });
+
+        await transporter.sendMail({
+          from,
+          to: testEmail,
+          replyTo: config.replyTo || undefined,
+          subject: 'Teste de Email - CannabiLizi',
+          html: '<h1>Este é um email de teste</h1><p>Se você recebeu este email, a configuração SMTP (ex.: Gmail) está funcionando corretamente.</p>',
+        });
+
+        const testResult = {
+          success: true,
+          message: 'Email de teste enviado com sucesso via SMTP',
+          timestamp: new Date().toISOString(),
+        };
+
+        await prisma.emailConfig.update({
+          where: { provider },
+          data: {
+            lastTestAt: new Date(),
+            lastTestResult: JSON.stringify(testResult),
+          },
+        });
+
+        return NextResponse.json(testResult);
+      } catch (smtpError: unknown) {
+        console.error('[EMAIL TEST] Erro ao enviar email via SMTP:', smtpError);
+        const errorMessage = smtpError instanceof Error ? smtpError.message : String(smtpError);
+        const errorResult = {
+          success: false,
+          message: 'Erro ao enviar email via SMTP',
+          error: errorMessage,
+          timestamp: new Date().toISOString(),
+          suggestion: 'Para Gmail: use porta 587, desmarque "Usar SSL" e use uma Senha de app do Google (não a senha da conta).',
+        };
+        await prisma.emailConfig.update({
+          where: { provider },
+          data: {
+            lastTestAt: new Date(),
+            lastTestResult: JSON.stringify(errorResult),
+          },
+        });
         return NextResponse.json(errorResult, { status: 500 });
       }
     }
