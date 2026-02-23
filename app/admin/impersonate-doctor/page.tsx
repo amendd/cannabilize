@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { setImpersonatedDoctorId } from '@/components/impersonation/useEffectiveDoctorId';
 import LoadingPage from '@/components/ui/Loading';
 
-export default function ImpersonateDoctorPage() {
+function ImpersonateDoctorContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -34,4 +34,12 @@ export default function ImpersonateDoctorPage() {
   }, [status, session?.user?.role, doctorId]);
 
   return <LoadingPage />;
+}
+
+export default function ImpersonateDoctorPage() {
+  return (
+    <Suspense fallback={<LoadingPage />}>
+      <ImpersonateDoctorContent />
+    </Suspense>
+  );
 }

@@ -1,15 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 import { motion } from 'framer-motion';
-import { Lock, CheckCircle2, XCircle, Eye, EyeOff } from 'lucide-react';
+import { Lock, Mail, XCircle, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Breadcrumbs from '@/components/ui/Breadcrumbs';
 
-export default function ConcluirCadastroPage() {
+function ConcluirCadastroContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
@@ -17,11 +18,13 @@ export default function ConcluirCadastroPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [valid, setValid] = useState(false);
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<{
+    email?: string;
     password?: string;
     confirmPassword?: string;
   }>({});
@@ -60,6 +63,13 @@ export default function ConcluirCadastroPage() {
 
   const validateForm = (): boolean => {
     const newErrors: typeof errors = {};
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!email.trim()) {
+      newErrors.email = 'Informe seu e-mail';
+    } else if (!emailRegex.test(email.trim())) {
+      newErrors.email = 'Informe um e-mail válido';
+    }
 
     if (password.length < 6) {
       newErrors.password = 'A senha deve ter pelo menos 6 caracteres';
@@ -85,14 +95,26 @@ export default function ConcluirCadastroPage() {
       const response = await fetch('/api/auth/setup-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, password }),
+        body: JSON.stringify({ token, email: email.trim(), password }),
       });
 
       if (response.ok) {
-        toast.success('Senha definida com sucesso! Redirecionando...');
-        setTimeout(() => {
-          router.push('/login');
-        }, 2000);
+        const data = await response.json();
+        toast.success('Senha definida com sucesso! Redirecionando para sua consulta...');
+        const redirectPath = data.consultationId
+          ? `/paciente/consultas/${data.consultationId}`
+          : '/paciente/consultas';
+        const signInResult = await signIn('credentials', {
+          email: data.email,
+          password,
+          redirect: false,
+        });
+        if (signInResult?.error) {
+          toast.error('Senha salva, mas o login automático falhou. Faça login manualmente.');
+          router.push(`/login?callbackUrl=${encodeURIComponent(redirectPath)}`);
+        } else {
+          window.location.href = redirectPath;
+        }
       } else {
         const error = await response.json();
         toast.error(error.error || 'Erro ao definir senha');
@@ -156,11 +178,31 @@ export default function ConcluirCadastroPage() {
                 Concluir seu Cadastro
               </h1>
               <p className="text-gray-600">
-                Defina uma senha para acessar sua conta no Click Cannabis
+                Defina uma senha para acessar sua conta no CannabiLizi
               </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  E-mail
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                  <Input
+                    type="email"
+                    value={email}
+                    onChange={e => {
+                      setEmail(e.target.value);
+                      if (errors.email) setErrors(prev => ({ ...prev, email: undefined }));
+                    }}
+                    placeholder="seu@email.com"
+                    error={errors.email}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Nova Senha
@@ -230,9 +272,9 @@ export default function ConcluirCadastroPage() {
                 type="submit"
                 loading={saving}
                 className="w-full"
-                disabled={!password || !confirmPassword}
+                disabled={!email.trim() || !password || !confirmPassword}
               >
-                Definir Senha
+                Concluir cadastro
               </Button>
             </form>
 
@@ -251,5 +293,13 @@ export default function ConcluirCadastroPage() {
         </motion.div>
       </div>
     </div>
+  );
+}
+
+export default function ConcluirCadastroPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Carregando...</div>}>
+      <ConcluirCadastroContent />
+    </Suspense>
   );
 }
