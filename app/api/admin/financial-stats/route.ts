@@ -204,8 +204,8 @@ export async function GET(request: NextRequest) {
       paymentMethods: paymentMethodsData,
       statusStats: statusStats.map((s) => ({
         status: s.status,
-        count: s._count,
-        total: s._sum.amount || 0,
+        count: s.count,
+        total: s.total,
       })),
       period,
       dateRange: {
