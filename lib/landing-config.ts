@@ -73,6 +73,9 @@ export interface LandingConfigPublic {
     source: string;
     rating: number;
     featured: boolean;
+    condition?: string | null;
+    treatmentTime?: string | null;
+    age?: number | null;
   }>;
 }
 
@@ -180,6 +183,9 @@ async function getLandingTestimonials(): Promise<LandingConfigPublic['testimonia
       source: t.source,
       rating: t.rating,
       featured: t.featured,
+      condition: t.condition ?? undefined,
+      treatmentTime: t.treatmentTime ?? undefined,
+      age: t.age ?? undefined,
     }));
   } catch {
     return [];

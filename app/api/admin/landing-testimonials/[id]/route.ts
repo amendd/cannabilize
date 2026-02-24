@@ -16,6 +16,9 @@ const updateSchema = z.object({
   sortOrder: z.number().int().optional(),
   featured: z.boolean().optional(),
   active: z.boolean().optional(),
+  condition: z.string().max(200).optional().nullable(),
+  treatmentTime: z.string().max(100).optional().nullable(),
+  age: z.number().int().min(1).max(120).optional().nullable(),
 });
 
 export async function GET(
@@ -73,6 +76,9 @@ export async function PUT(
         ...(parsed.sortOrder !== undefined && { sortOrder: parsed.sortOrder }),
         ...(parsed.featured !== undefined && { featured: parsed.featured }),
         ...(parsed.active !== undefined && { active: parsed.active }),
+        ...(parsed.condition !== undefined && { condition: parsed.condition }),
+        ...(parsed.treatmentTime !== undefined && { treatmentTime: parsed.treatmentTime }),
+        ...(parsed.age !== undefined && { age: parsed.age }),
       },
     });
     return NextResponse.json(testimonial);

@@ -88,6 +88,9 @@ type LandingConfig = {
     source: string;
     rating: number;
     featured: boolean;
+    condition?: string | null;
+    treatmentTime?: string | null;
+    age?: number | null;
   }>;
 };
 
@@ -131,6 +134,9 @@ export default function AdminIdentidadeVisualPage() {
     rating: 5,
     featured: false,
     active: true,
+    condition: '' as string,
+    treatmentTime: '' as string,
+    age: '' as string,
   });
 
   useEffect(() => {
@@ -251,10 +257,17 @@ export default function AdminIdentidadeVisualPage() {
         ? `/api/admin/landing-testimonials/${editingTestimonial}`
         : '/api/admin/landing-testimonials';
       const method = editingTestimonial ? 'PUT' : 'POST';
+      const ageNum = formTestimonial.age ? parseInt(formTestimonial.age, 10) : undefined;
+      const basePayload = {
+        ...formTestimonial,
+        condition: formTestimonial.condition || undefined,
+        treatmentTime: formTestimonial.treatmentTime || undefined,
+        age: ageNum && ageNum >= 1 && ageNum <= 120 ? ageNum : undefined,
+      };
       const body = editingTestimonial
-        ? formTestimonial
+        ? basePayload
         : {
-            ...formTestimonial,
+            ...basePayload,
             photoUrl: formTestimonial.photoUrl || undefined,
           };
       const res = await fetch(url, {
@@ -276,6 +289,9 @@ export default function AdminIdentidadeVisualPage() {
           rating: 5,
           featured: false,
           active: true,
+          condition: '',
+          treatmentTime: '',
+          age: '',
         });
         load();
       } else {
@@ -316,6 +332,9 @@ export default function AdminIdentidadeVisualPage() {
       rating: t.rating,
       featured: t.featured,
       active: (t as { active?: boolean }).active ?? true,
+      condition: (t as { condition?: string | null }).condition ?? '',
+      treatmentTime: (t as { treatmentTime?: string | null }).treatmentTime ?? '',
+      age: (t as { age?: number | null }).age != null ? String((t as { age?: number | null }).age) : '',
     });
     setShowTestimonialForm(true);
   };
@@ -1267,6 +1286,39 @@ export default function AdminIdentidadeVisualPage() {
                   rows={3}
                   className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900"
                   placeholder="Texto completo do depoimento"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Condição tratada</label>
+                <p className="text-xs text-gray-500">Ex.: Ansiedade, Insônia crônica, Dor crônica. Aparece acima do texto do depoimento.</p>
+                <Input
+                  value={formTestimonial.condition}
+                  onChange={(e) => setFormTestimonial({ ...formTestimonial, condition: e.target.value })}
+                  className="mt-1"
+                  placeholder="Ex: Ansiedade e insônia"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Tempo de tratamento</label>
+                <p className="text-xs text-gray-500">Ex.: 6 semanas, 30 dias, 3 meses de acompanhamento.</p>
+                <Input
+                  value={formTestimonial.treatmentTime}
+                  onChange={(e) => setFormTestimonial({ ...formTestimonial, treatmentTime: e.target.value })}
+                  className="mt-1"
+                  placeholder="Ex: 30 dias"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Idade (opcional)</label>
+                <p className="text-xs text-gray-500">Faixa etária ou perfil. Deixe em branco se não quiser exibir.</p>
+                <Input
+                  type="number"
+                  min={1}
+                  max={120}
+                  value={formTestimonial.age}
+                  onChange={(e) => setFormTestimonial({ ...formTestimonial, age: e.target.value })}
+                  className="mt-1"
+                  placeholder="Ex: 42"
                 />
               </div>
               <div>

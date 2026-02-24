@@ -16,6 +16,9 @@ const createSchema = z.object({
   sortOrder: z.number().int().optional(),
   featured: z.boolean().optional(),
   active: z.boolean().optional(),
+  condition: z.string().max(200).optional().nullable(),
+  treatmentTime: z.string().max(100).optional().nullable(),
+  age: z.number().int().min(1).max(120).optional().nullable(),
 });
 
 export async function GET() {
@@ -60,6 +63,9 @@ export async function POST(request: NextRequest) {
         sortOrder: parsed.sortOrder ?? 0,
         featured: parsed.featured ?? false,
         active: parsed.active ?? true,
+        condition: parsed.condition ?? undefined,
+        treatmentTime: parsed.treatmentTime ?? undefined,
+        age: parsed.age ?? undefined,
       },
     });
     return NextResponse.json(testimonial);

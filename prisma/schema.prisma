@@ -872,21 +872,24 @@ model SystemConfig {
   @@map("system_configs")
 }
 
-// Depoimentos da landing page (gerenciados pelo admin: foto, nome, citação, destaque)
+// Depoimentos da landing page (gerenciados pelo admin: foto, nome, citação, destaque, contexto clínico)
 model LandingTestimonial {
-  id          String   @id @default(uuid())
-  name        String
-  photoUrl    String?   @map("photo_url")
-  shortQuote  String    @map("short_quote")   // 1 linha / impacto rápido
-  fullQuote   String    @map("full_quote")
-  displayDate String   @map("display_date")   // ex: "17/05/2025"
-  source      String   @default("Google")    // ex: Google, Instagram
-  rating      Int      @default(5)
-  sortOrder   Int      @default(0) @map("sort_order")
-  featured    Boolean  @default(false)       // destaque emocional (1 por vez)
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id            String   @id @default(uuid())
+  name          String
+  photoUrl      String?   @map("photo_url")
+  shortQuote    String    @map("short_quote")   // 1 linha / impacto rápido
+  fullQuote     String    @map("full_quote")
+  displayDate   String   @map("display_date")   // ex: "17/05/2025"
+  source        String   @default("Google")    // ex: Google, Instagram
+  rating        Int      @default(5)
+  sortOrder     Int      @default(0) @map("sort_order")
+  featured      Boolean  @default(false)       // destaque emocional (1 por vez)
+  active        Boolean  @default(true)
+  condition     String?  // ex: Ansiedade, Insônia crônica
+  treatmentTime String?  @map("treatment_time") // ex: 6 semanas, 30 dias
+  age           Int?     // faixa/perfil opcional
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   @@map("landing_testimonials")
 }
