@@ -204,9 +204,9 @@ export async function generatePrescriptionPDF(
     doctorInfoBottomY = drawMultilineText(doctor.address, margin, currentDoctorY, 280, 10, font, darkGray) - lineHeight * 0.5;
   }
 
-  // Coluna direita: Logo CannabiLizi
+  // Coluna direita: Logo Cannabilize
   const logoRightX = 350;
-  drawTextSafe('CannabiLizi', {
+  drawTextSafe('Cannabilize', {
     x: logoRightX,
     y: headerY,
     size: 20,
@@ -442,7 +442,7 @@ export async function generatePrescriptionPDF(
   });
 
   footerLeftY -= lineHeight * 1;
-  drawTextSafe('Prescricao Digital Emitida em CannabiLizi', {
+  drawTextSafe('Prescricao Digital Emitida em Cannabilize', {
     x: margin,
     y: footerLeftY,
     size: 8,

@@ -42,7 +42,7 @@ export async function notifyAdminByEmail(data: ConsultationNotificationData) {
     const dateStr = new Date(data.scheduledDate).toLocaleDateString('pt-BR');
     await sendEmail({
       to,
-      subject: 'Nova Consulta Agendada - CannabiLizi',
+      subject: 'Nova Consulta Agendada - Cannabilize',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #00A859;">Nova Consulta Agendada</h2>
@@ -54,7 +54,7 @@ export async function notifyAdminByEmail(data: ConsultationNotificationData) {
           <p><strong>Data:</strong> ${dateStr}</p>
           <p><strong>Horário:</strong> ${data.scheduledTime}</p>
           <p><strong>ID da Consulta:</strong> ${data.consultationId}</p>
-          <p style="margin-top: 24px;">Atenciosamente,<br>Equipe CannabiLizi</p>
+          <p style="margin-top: 24px;">Atenciosamente,<br>Equipe Cannabilize</p>
         </div>
       `,
     });
@@ -121,7 +121,7 @@ export async function notifyAdminPaymentConfirmed(data: {
 💰 *Valor:* R$ ${amountStr}
 💳 *Forma de pagamento:* ${methodLabel}${linkLine}
 
-CannabiLizi 💚`;
+Cannabilize 💚`;
     const result = await sendWhatsAppMessage({
       to: data.adminPhone,
       message,
@@ -147,7 +147,7 @@ export async function notifyDoctorByEmail(data: ConsultationNotificationData) {
     const dateStr = new Date(data.scheduledDate).toLocaleDateString('pt-BR');
     await sendEmail({
       to,
-      subject: 'Nova Consulta Agendada - Você foi designado - CannabiLizi',
+      subject: 'Nova Consulta Agendada - Você foi designado - Cannabilize',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #00A859;">Nova Consulta Designada</h2>
@@ -159,7 +159,7 @@ export async function notifyDoctorByEmail(data: ConsultationNotificationData) {
           <p><strong>Data:</strong> ${dateStr}</p>
           <p><strong>Horário:</strong> ${data.scheduledTime}</p>
           <p><strong>ID da Consulta:</strong> ${data.consultationId}</p>
-          <p style="margin-top: 24px;">Atenciosamente,<br>Equipe CannabiLizi</p>
+          <p style="margin-top: 24px;">Atenciosamente,<br>Equipe Cannabilize</p>
         </div>
       `,
     });

@@ -1,4 +1,4 @@
-# Acesso ao CannabiLizi pela rede local
+# Acesso ao Cannabilize pela rede local
 
 Para que colegas acessem o sistema pelo IP da sua máquina (ex.: `http://10.0.0.115:3000`) sem ver erro 404, siga estes passos.
 

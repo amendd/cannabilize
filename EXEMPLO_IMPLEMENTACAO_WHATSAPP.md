@@ -1,6 +1,6 @@
 # 💻 Exemplo Prático de Implementação - WhatsApp
 
-Este documento contém exemplos de código práticos para implementar a integração do WhatsApp no CannabiLizi.
+Este documento contém exemplos de código práticos para implementar a integração do WhatsApp no Cannabilize.
 
 ---
 
@@ -316,7 +316,7 @@ ${data.platform ? `💻 A consulta será realizada via ${data.platform}.` : ''}
 
 Em caso de dúvidas, estamos à disposição.
 
-CannabiLizi 💚`;
+Cannabilize 💚`;
 }
 
 /**
@@ -340,7 +340,7 @@ ${data.meetingLink ? `🔗 *Link:* ${data.meetingLink}` : ''}
 
 Não esqueça de estar em um local tranquilo e com boa conexão de internet.
 
-CannabiLizi 💚`;
+Cannabilize 💚`;
 }
 
 /**
@@ -357,7 +357,7 @@ ${data.meetingLink ? `🔗 *Link:* ${data.meetingLink}` : ''}
 
 Por favor, esteja pronto para a consulta.
 
-CannabiLizi 💚`;
+Cannabilize 💚`;
 }
 
 /**
@@ -378,7 +378,7 @@ ${data.transactionId ? `📄 *ID:* ${data.transactionId}` : ''}
 
 Sua consulta está confirmada!
 
-CannabiLizi 💚`;
+Cannabilize 💚`;
 }
 
 /**
@@ -400,7 +400,7 @@ Olá ${data.patientName}! Você possui um pagamento pendente:
 
 🔗 Acesse sua área do paciente para realizar o pagamento.
 
-CannabiLizi 💚`;
+Cannabilize 💚`;
 }
 
 /**
@@ -423,7 +423,7 @@ ${data.medications && data.medications.length > 0
 
 📄 Acesse sua área do paciente para visualizar e baixar a receita.
 
-CannabiLizi 💚`;
+Cannabilize 💚`;
 }
 
 /**
@@ -451,7 +451,7 @@ Olá ${data.patientName}! O Dr. ${data.doctorName} tem disponibilidade para adia
 
 ⏱️ Este convite é válido por 24 horas.
 
-CannabiLizi 💚`;
+Cannabilize 💚`;
 }
 ```
 
@@ -770,7 +770,7 @@ import { sendWhatsAppMessage } from '../lib/whatsapp';
 async function test() {
   const result = await sendWhatsAppMessage({
     to: '+5511999999999', // Seu número de teste
-    message: 'Teste de integração WhatsApp CannabiLizi! 🚀',
+    message: 'Teste de integração WhatsApp Cannabilize! 🚀',
   });
 
   console.log('Resultado:', result);

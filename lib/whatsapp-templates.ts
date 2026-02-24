@@ -52,7 +52,7 @@ Olá {{patientName}}! Sua consulta foi confirmada:
 
 Em caso de dúvidas, estamos à disposição.
 
-CannabiLizi 💚`;
+Cannabilize 💚`;
 
   return generateMessage('CONSULTATION_CONFIRMED', {
     patientName: data.patientName,
@@ -83,7 +83,7 @@ ${data.meetingLink ? `🔗 *Link:* ${data.meetingLink}` : ''}
 
 Não esqueça de estar em um local tranquilo e com boa conexão de internet.
 
-CannabiLizi 💚`;
+Cannabilize 💚`;
 }
 
 /**
@@ -103,7 +103,7 @@ ${data.meetingLink ? `🔗 *Link:* ${data.meetingLink}` : ''}
 
 Por favor, esteja pronto para a consulta.
 
-CannabiLizi 💚`;
+Cannabilize 💚`;
 }
 
 /**
@@ -120,7 +120,7 @@ ${data.meetingLink ? `🔗 *Link:* ${data.meetingLink}` : ''}
 
 Por favor, esteja pronto para a consulta.
 
-CannabiLizi 💚`;
+Cannabilize 💚`;
 }
 
 /**
@@ -137,14 +137,14 @@ ${data.meetingLink ? `🔗 *Link:* ${data.meetingLink}` : ''}
 
 Entre na sala alguns minutos antes. Até já!
 
-CannabiLizi 💚`;
+Cannabilize 💚`;
 }
 
 /**
  * Template: Boas-vindas (paciente novo)
  */
 export async function getAccountWelcomeMessage(data: { patientName: string }): Promise<string> {
-  const fallbackTemplate = `👋 *Bem-vindo(a) ao CannabiLizi!*
+  const fallbackTemplate = `👋 *Bem-vindo(a) ao Cannabilize!*
 
 Olá {{patientName}}!
 
@@ -157,7 +157,7 @@ Ficamos felizes em tê-lo(a) conosco. Aqui você terá acesso a:
 
 Qualquer dúvida, estamos à disposição.
 
-CannabiLizi 💚`;
+Cannabilize 💚`;
 
   return generateMessage('ACCOUNT_WELCOME', { patientName: data.patientName }, fallbackTemplate);
 }
@@ -170,7 +170,7 @@ export async function getAccountSetupMessage(data: { patientName: string; setupU
 
 Olá {{patientName}}!
 
-Para acessar sua conta no CannabiLizi e acompanhar consultas e receitas, defina sua senha:
+Para acessar sua conta no Cannabilize e acompanhar consultas e receitas, defina sua senha:
 
 🔗 {{setupUrl}}
 
@@ -178,7 +178,7 @@ Para acessar sua conta no CannabiLizi e acompanhar consultas e receitas, defina 
 
 Se você não solicitou este link, ignore esta mensagem.
 
-CannabiLizi 💚`;
+Cannabilize 💚`;
 
   return generateMessage('ACCOUNT_SETUP', { patientName: data.patientName, setupUrl: data.setupUrl }, fallbackTemplate);
 }
@@ -237,7 +237,7 @@ Olá {{patientName}}! Seu pagamento foi processado:
 
 Sua consulta está confirmada!
 
-CannabiLizi 💚`;
+Cannabilize 💚`;
 
   return generateMessage('PAYMENT_CONFIRMED', {
     patientName: data.patientName,
@@ -266,7 +266,7 @@ Olá ${data.patientName}! Você possui um pagamento pendente:
 
 🔗 Acesse sua área do paciente para realizar o pagamento.
 
-CannabiLizi 💚`;
+Cannabilize 💚`;
 }
 
 /**
@@ -287,7 +287,7 @@ Olá {{patientName}}! Sua receita foi emitida:
 
 📄 Acesse sua área do paciente para visualizar e baixar a receita.
 
-CannabiLizi 💚`;
+Cannabilize 💚`;
 
   return generateMessage('PRESCRIPTION_ISSUED', {
     patientName: data.patientName,
@@ -322,7 +322,7 @@ Olá {{patientName}}! O Dr. {{doctorName}} tem disponibilidade para adiantar sua
 
 ⏱️ Este convite é válido por 24 horas.
 
-CannabiLizi 💚`;
+Cannabilize 💚`;
 
   return generateMessage('RESCHEDULE_INVITE', data, fallbackTemplate);
 }
@@ -356,7 +356,7 @@ Olá ${data.patientName}! Sua autorização foi aprovada:
 
 📋 Acesse sua área do paciente para ver detalhes.
 
-CannabiLizi 💚`;
+Cannabilize 💚`;
 }
 
 /**
@@ -386,7 +386,7 @@ Dr. {{doctorName}}! Você foi designado para uma nova consulta:
 
 {{#consultationLink}}📋 Ver consulta (anamnese, documentos): {{consultationLink}}{{/consultationLink}}
 
-CannabiLizi 💚`;
+Cannabilize 💚`;
 
   return generateMessage('DOCTOR_CONSULTATION_ASSIGNED', data, fallbackTemplate);
 }
@@ -427,7 +427,7 @@ Nova consulta no sistema:
 
 📋 Ver: [Link Admin]
 
-CannabiLizi 💚`;
+Cannabilize 💚`;
 
   const paymentMethodLabel = formatPaymentMethodLabel(data.paymentMethod);
   return generateMessage('ADMIN_CONSULTATION_SCHEDULED', {

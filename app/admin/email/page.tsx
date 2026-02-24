@@ -592,7 +592,7 @@ export default function EmailConfigPage() {
                       type="text"
                       value={config.fromName || ''}
                       onChange={(e) => updateConfig(config.provider, { fromName: e.target.value })}
-                      placeholder="CannabiLizi"
+                      placeholder="Cannabilize"
                     />
                   </div>
 

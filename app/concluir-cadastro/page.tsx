@@ -178,7 +178,7 @@ function ConcluirCadastroContent() {
                 Concluir seu Cadastro
               </h1>
               <p className="text-gray-600">
-                Defina uma senha para acessar sua conta no CannabiLizi
+                Defina uma senha para acessar sua conta no Cannabilize
               </p>
             </div>
 

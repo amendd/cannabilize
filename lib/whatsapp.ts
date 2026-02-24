@@ -443,7 +443,7 @@ export async function testWhatsAppConnection(
       return { success: false, error: 'Número de teste inválido' };
     }
 
-    const testMessageBody = '✅ Teste de integração WhatsApp CannabiLizi! Se você recebeu esta mensagem, a configuração está funcionando corretamente. 🚀';
+    const testMessageBody = '✅ Teste de integração WhatsApp Cannabilize! Se você recebeu esta mensagem, a configuração está funcionando corretamente. 🚀';
 
     if (config.provider === 'META') {
       const result = await sendWhatsAppMessage({ to: formattedPhone, message: testMessageBody });
@@ -682,7 +682,7 @@ ${meetingLink ? `Link da consulta: ${meetingLink}` : ''}
 
 Em caso de dúvidas, estamos à disposição.
 
-CannabiLizi 💚`;
+Cannabilize 💚`;
 }
 
 export function getPrescriptionNotificationMessage(patientName: string): string {
@@ -692,7 +692,7 @@ Sua receita médica foi emitida e está disponível na sua área do paciente.
 
 Acesse: https://cannalize.com/paciente/receitas
 
-CannabiLizi 💚`;
+Cannabilize 💚`;
 }
 
 export function getPaymentReminderMessage(patientName: string, amount: number): string {
@@ -702,5 +702,5 @@ Você possui um pagamento pendente de R$ ${amount.toLocaleString('pt-BR', { mini
 
 Acesse sua área do paciente para realizar o pagamento: https://cannalize.com/paciente
 
-CannabiLizi 💚`;
+Cannabilize 💚`;
 }

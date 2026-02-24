@@ -38,7 +38,7 @@ Isso criará a tabela `account_setup_tokens` no banco de dados.
    - Preencha:
      - **API Key**: Cole a chave copiada
      - **Email Remetente**: `noreply@seudominio.com` (ou use um email verificado)
-     - **Nome Remetente**: `CannabiLizi`
+     - **Nome Remetente**: `Cannabilize`
      - **Reply-To**: `contato@seudominio.com` (opcional)
    - Clique em "Salvar Configuração"
    - Clique em "Testar Envio" para verificar

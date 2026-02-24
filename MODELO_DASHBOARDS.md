@@ -2,7 +2,7 @@
 
 ## 🎯 Visão Geral
 
-Este documento apresenta o modelo de dashboard diferenciado para cada nível de usuário do sistema CannabiLizi, com layouts, funcionalidades e experiências específicas para cada perfil.
+Este documento apresenta o modelo de dashboard diferenciado para cada nível de usuário do sistema Cannabilize, com layouts, funcionalidades e experiências específicas para cada perfil.
 
 ---
 

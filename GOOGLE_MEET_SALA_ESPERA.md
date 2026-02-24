@@ -8,12 +8,12 @@ Quando médico ou paciente entram no link do Meet e aparece **"Aguarde até que 
 
 A configuração em **"Controles do organizador"** (Tipo de acesso: Abrir / Confiável / Restrito) vale **só para aquela reunião**.  
 
-O CannabiLizi **cria cada reunião pela API** do Google Calendar. Cada nova consulta gera um **evento novo** no Meet, e esse evento usa o **padrão da conta** (em muitas contas Gmail o padrão é **"Confiável"**, não "Abrir"). Por isso:
+O Cannabilize **cria cada reunião pela API** do Google Calendar. Cada nova consulta gera um **evento novo** no Meet, e esse evento usa o **padrão da conta** (em muitas contas Gmail o padrão é **"Confiável"**, não "Abrir"). Por isso:
 
 - Mudar **uma** reunião que você criou manualmente no Meet para "Abrir" **não** altera as reuniões que o sistema cria sozinho.
 - A **API do Google Calendar não permite** definir "Abrir" ao criar o evento; o Google usa o padrão da conta.
 
-Ou seja: **não existe como “ativar de uma vez” para todas as reuniões futuras** só pela conta Gmail. O que dá para fazer é o **workaround** abaixo para **cada** reunião gerada pelo CannabiLizi.
+Ou seja: **não existe como “ativar de uma vez” para todas as reuniões futuras** só pela conta Gmail. O que dá para fazer é o **workaround** abaixo para **cada** reunião gerada pelo Cannabilize.
 
 ---
 
@@ -27,7 +27,7 @@ Como a API não define "Abrir", alguém precisa abrir o link da reunião e mudar
    - *"Ninguém precisa pedir para participar. Qualquer pessoa pode ligar para a reunião."*
 4. Fecha o painel. A partir daí, o **paciente** pode entrar pelo mesmo link **sem** ver "Aguarde um organizador".
 
-Ou seja: **para cada consulta**, quem inicia a reunião abre o link primeiro, coloca em "Abrir", e depois o paciente entra. Não precisa criar reunião de teste no Meet; o que importa é abrir o **link que o CannabiLizi gerou** e mudar **essa** reunião para "Abrir".
+Ou seja: **para cada consulta**, quem inicia a reunião abre o link primeiro, coloca em "Abrir", e depois o paciente entra. Não precisa criar reunião de teste no Meet; o que importa é abrir o **link que o Cannabilize gerou** e mudar **essa** reunião para "Abrir".
 
 ---
 

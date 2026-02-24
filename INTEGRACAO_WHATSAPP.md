@@ -1,9 +1,9 @@
-# 📱 Integração WhatsApp - CannabiLizi
+# 📱 Integração WhatsApp - Cannabilize
 
 ## 📋 Índice
 1. [Visão Geral](#visão-geral)
 2. [Tipos de Integração](#tipos-de-integração)
-3. [Casos de Uso no CannabiLizi](#casos-de-uso-no-cannalize)
+3. [Casos de Uso no Cannabilize](#casos-de-uso-no-cannalize)
 4. [Comparação de Soluções](#comparação-de-soluções)
 5. [Etapas de Implementação](#etapas-de-implementação)
 6. [Arquitetura Técnica](#arquitetura-técnica)
@@ -14,7 +14,7 @@
 
 ## 🎯 Visão Geral
 
-A integração do WhatsApp no CannabiLizi permitirá:
+A integração do WhatsApp no Cannabilize permitirá:
 - **Notificações automáticas** para pacientes, médicos e administradores
 - **Lembretes de consultas** com links de telemedicina
 - **Confirmações de pagamento** e atualizações de status
@@ -114,7 +114,7 @@ A integração do WhatsApp no CannabiLizi permitirá:
 
 ---
 
-## 🎯 Casos de Uso no CannabiLizi
+## 🎯 Casos de Uso no Cannabilize
 
 ### **1. Notificações de Consultas**
 
@@ -309,7 +309,7 @@ Nova consulta no sistema:
 
 #### 6.1 Atendimento Automatizado
 ```
-🤖 Olá! Sou o assistente virtual da CannabiLizi.
+🤖 Olá! Sou o assistente virtual da Cannabilize.
 
 Como posso ajudar?
 1️⃣ Agendar consulta

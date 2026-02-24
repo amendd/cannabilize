@@ -1,4 +1,4 @@
-# Resumo do Sistema de Notificações – CannabiLizi
+# Resumo do Sistema de Notificações – Cannabilize
 
 Resumo de como está o sistema de notificações hoje: integrações, disparos e conteúdos.
 
@@ -70,7 +70,7 @@ Resumo rápido:
 
 Templates padrão (podem ser sobrescritos no banco):
 
-- **ACCOUNT_WELCOME** – Boas-vindas ao CannabiLizi.
+- **ACCOUNT_WELCOME** – Boas-vindas ao Cannabilize.
 - **ACCOUNT_SETUP** – Conclusão de cadastro, link para definir senha (expira 7 dias).
 - **CONSULTATION_CONFIRMED** – Data/hora e link da consulta.
 - **CONSULTATION_REMINDER_24H / 2H / NOW** – Lembretes 24h, 2h e “agora”.

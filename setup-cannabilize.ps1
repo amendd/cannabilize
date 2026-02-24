@@ -1,8 +1,8 @@
-# Script de Setup Automatizado - Projeto CannabiLizi
+# Script de Setup Automatizado - Projeto Cannabilize
 # Este script automatiza todo o processo de configuração inicial do projeto
 
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "  SETUP PROJETO CANNABILIZI" -ForegroundColor Cyan
+Write-Host "  SETUP PROJETO CANNABILIZE" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 

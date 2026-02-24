@@ -3,7 +3,7 @@
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "   CANNABILIZI - INICIAR SERVIDOR" -ForegroundColor Cyan
+Write-Host "   CANNABILIZE - INICIAR SERVIDOR" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 

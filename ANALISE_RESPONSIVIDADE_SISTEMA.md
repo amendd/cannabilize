@@ -1,7 +1,7 @@
-# Análise da Responsividade do Sistema CannabiLizi
+# Análise da Responsividade do Sistema Cannabilize
 
 **Data:** 29 de Janeiro de 2026  
-**Projeto:** CannabiLizi
+**Projeto:** Cannabilize
 
 ---
 

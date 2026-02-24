@@ -1,4 +1,4 @@
-# 📊 Análise Completa do Projeto CannabiLizi - Melhorias e Sugestões
+# 📊 Análise Completa do Projeto Cannabilize - Melhorias e Sugestões
 
 **Data da Análise:** 28 de Janeiro de 2026  
 **Versão do Projeto:** 1.0.0  

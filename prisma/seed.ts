@@ -116,7 +116,7 @@ async function main() {
   await prisma.systemConfig.upsert({
     where: { key: 'CONTACT_EMAIL' },
     update: {},
-    create: { key: 'CONTACT_EMAIL', value: 'contato@cannabilizi.com.br' },
+    create: { key: 'CONTACT_EMAIL', value: 'contato@cannabilize.com.br' },
   });
   await prisma.systemConfig.upsert({
     where: { key: 'CONSULTATION_DEFAULT_AMOUNT' },
@@ -205,9 +205,9 @@ async function main() {
   // Criar eventos
   const events = [
     {
-      title: 'CannabiLizi Runner',
+      title: 'Cannabilize Runner',
       slug: 'cannalize-runner',
-      description: 'Evento de corrida organizada pela CannabiLizi no RJ',
+      description: 'Evento de corrida organizada pela Cannabilize no RJ',
       eventDate: new Date('2024-06-15'),
       location: 'Rio de Janeiro, RJ',
       active: true,

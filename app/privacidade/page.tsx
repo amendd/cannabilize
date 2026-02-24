@@ -3,8 +3,8 @@ import ConditionalNavbar from '@/components/layout/ConditionalNavbar';
 import ConditionalFooter from '@/components/layout/ConditionalFooter';
 
 export const metadata: Metadata = {
-  title: 'Política de Privacidade | CannabiLizi',
-  description: 'Política de privacidade e proteção de dados pessoais da CannabiLizi',
+  title: 'Política de Privacidade | Cannabilize',
+  description: 'Política de privacidade e proteção de dados pessoais da Cannabilize',
 };
 
 export default function PrivacyPolicyPage() {
@@ -28,7 +28,7 @@ export default function PrivacyPolicyPage() {
                   1. Introdução
                 </h2>
                 <p className="text-gray-700 mb-4">
-                  A CannabiLizi ("nós", "nosso" ou "empresa") está comprometida em proteger sua 
+                  A Cannabilize ("nós", "nosso" ou "empresa") está comprometida em proteger sua 
                   privacidade e seus dados pessoais. Esta Política de Privacidade descreve como 
                   coletamos, usamos, armazenamos e protegemos suas informações pessoais quando 
                   você utiliza nossos serviços de telemedicina e consultas com cannabis medicinal.

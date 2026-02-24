@@ -2,7 +2,7 @@
 
 ## 📋 Visão Geral
 
-O sistema de emails transacionais do CannabiLizi foi implementado com suporte completo para:
+O sistema de emails transacionais do Cannabilize foi implementado com suporte completo para:
 - ✅ Integração com provedores de email (Resend, SendGrid, AWS SES, SMTP)
 - ✅ Templates editáveis pelo admin
 - ✅ Envio automático em eventos de negócio
@@ -75,7 +75,7 @@ O sistema de emails transacionais do CannabiLizi foi implementado com suporte co
    - Preencha:
      - **API Key**: `re_xxxxx` (sua chave)
      - **Email Remetente**: `noreply@seudominio.com` (ou o email verificado)
-     - **Nome Remetente**: `CannabiLizi`
+     - **Nome Remetente**: `Cannabilize`
      - **Reply-To**: `contato@seudominio.com` (opcional)
    - Clique em "Salvar Configuração"
    - Teste o envio com o botão "Testar Envio"
@@ -190,7 +190,7 @@ jobs:
 ```
 
 Configure os secrets no GitHub:
-- `APP_URL`: URL da sua aplicação (ex: `https://cannabilizi.com`)
+- `APP_URL`: URL da sua aplicação (ex: `https://cannabilize.com`)
 - `CRON_SECRET`: Mesma chave usada no `.env`
 
 ### Opção 3: Servidor próprio (cron tradicional)

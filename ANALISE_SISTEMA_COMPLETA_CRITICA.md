@@ -1,4 +1,4 @@
-# Análise Completa, Profunda e Crítica do Sistema — CannabiLizi
+# Análise Completa, Profunda e Crítica do Sistema — Cannabilize
 
 **Data:** 30/01/2025  
 **Escopo:** Código, estrutura, layout, fluxos e decisões atuais. Foco em inconsistências, melhorias técnicas, produto, UX/UI, fluxos e riscos.
@@ -108,14 +108,14 @@ Ambas têm lógica similar (carregar consulta, anotações, prescrição, vídeo
 
 ---
 
-### 1.2.4 Inconsistência de nomes: CannabiLizi vs Cannalize
+### 1.2.4 Inconsistência de nomes: Cannabilize vs Cannalize
 
-**Problema:** No layout raiz o metadata usa “CannabiLizi”; em vários lugares a logo e referências usam “CannabiLizi” ou “Cannalize”. Imagem em `public` é `cannalize-logo.png`.  
+**Problema:** No layout raiz o metadata usa “Cannabilize”; em vários lugares a logo e referências usam “Cannabilize” ou “Cannalize”. Imagem em `public` é `cannalize-logo.png`.  
 Pode ser apenas grafia, mas gera dúvida de marca e parece descuido.
 
 **Solução:**  
-- Definir um único nome oficial (ex.: CannabiLizi) e usar em metadata, alt texts e documentação.  
-- Renomear assets se necessário (ex.: `cannabilizi-logo.png`) e atualizar referências.
+- Definir um único nome oficial (ex.: Cannabilize) e usar em metadata, alt texts e documentação.  
+- Renomear assets se necessário (ex.: `cannabilize-logo.png`) e atualizar referências.
 
 ---
 

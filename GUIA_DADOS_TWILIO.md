@@ -101,7 +101,7 @@ ngrok http 3000
 
 ---
 
-## 📍 PASSO 4: Configurar no Sistema CannabiLizi
+## 📍 PASSO 4: Configurar no Sistema Cannabilize
 
 ### Via Interface Admin:
 

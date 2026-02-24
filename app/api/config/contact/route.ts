@@ -14,7 +14,7 @@ export async function GET() {
   } catch (error) {
     console.error('Erro ao buscar contato:', error);
     return NextResponse.json(
-      { phone: '(11) 99999-9999', email: 'contato@cannabilizi.com.br' },
+      { phone: '(11) 99999-9999', email: 'contato@cannabilize.com.br' },
       { status: 200 }
     );
   }

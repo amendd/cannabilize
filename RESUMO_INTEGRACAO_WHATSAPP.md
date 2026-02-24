@@ -7,7 +7,7 @@
 
 ## 🎯 O que foi implementado
 
-Integração completa do WhatsApp via Twilio no sistema CannabiLizi, permitindo envio automático de notificações para pacientes, médicos e administradores.
+Integração completa do WhatsApp via Twilio no sistema Cannabilize, permitindo envio automático de notificações para pacientes, médicos e administradores.
 
 ---
 

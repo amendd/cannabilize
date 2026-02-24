@@ -45,13 +45,13 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<EmailTemplateType, EmailTemplateCon
     id: 'ACCOUNT_WELCOME',
     name: 'Boas-vindas',
     description: 'Enviado ao paciente quando cria uma conta ou agenda a primeira consulta.',
-    subject: 'Bem-vindo(a) ao CannabiLizi!',
+    subject: 'Bem-vindo(a) ao Cannabilize!',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #00A859;">Bem-vindo(a) ao CannabiLizi!</h2>
+        <h2 style="color: #00A859;">Bem-vindo(a) ao Cannabilize!</h2>
         <p>Olá {{patientName}},</p>
         <p>Ficamos felizes em tê-lo(a) conosco!</p>
-        <p>No CannabiLizi, você terá acesso a:</p>
+        <p>No Cannabilize, você terá acesso a:</p>
         <ul style="line-height: 1.8;">
           <li>Consultas médicas especializadas em cannabis medicinal</li>
           <li>Receitas digitais seguras e rastreáveis</li>
@@ -59,7 +59,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<EmailTemplateType, EmailTemplateCon
           <li>Carteirinha digital para acesso facilitado</li>
         </ul>
         <p>Se precisar de ajuda, nossa equipe está sempre disponível para você.</p>
-        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe CannabiLizi</p>
+        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe Cannabilize</p>
       </div>
     `,
   },
@@ -67,12 +67,12 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<EmailTemplateType, EmailTemplateCon
     id: 'ACCOUNT_SETUP',
     name: 'Conclusão de Cadastro',
     description: 'Enviado ao paciente para concluir o cadastro e definir uma senha de acesso.',
-    subject: 'Conclua seu cadastro - CannabiLizi',
+    subject: 'Conclua seu cadastro - Cannabilize',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #00A859;">Conclua seu cadastro</h2>
         <p>Olá {{patientName}},</p>
-        <p>Para acessar sua conta no CannabiLizi e acompanhar suas consultas, receitas e histórico, você precisa definir uma senha de acesso.</p>
+        <p>Para acessar sua conta no Cannabilize e acompanhar suas consultas, receitas e histórico, você precisa definir uma senha de acesso.</p>
         <p style="margin: 24px 0;">
           <a href="{{setupUrl}}" style="background: #00A859; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
             Definir Minha Senha
@@ -80,7 +80,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<EmailTemplateType, EmailTemplateCon
         </p>
         <p><strong>Este link expira em 7 dias.</strong></p>
         <p>Se você não solicitou este email, pode ignorá-lo com segurança.</p>
-        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe CannabiLizi</p>
+        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe Cannabilize</p>
       </div>
     `,
   },
@@ -88,12 +88,12 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<EmailTemplateType, EmailTemplateCon
     id: 'PASSWORD_RESET',
     name: 'Recuperação de Senha',
     description: 'Enviado ao usuário quando solicita recuperação de senha.',
-    subject: 'Recuperar sua senha - CannabiLizi',
+    subject: 'Recuperar sua senha - Cannabilize',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #00A859;">Recuperar Senha</h2>
         <p>Olá {{userName}},</p>
-        <p>Recebemos uma solicitação para redefinir a senha da sua conta no CannabiLizi.</p>
+        <p>Recebemos uma solicitação para redefinir a senha da sua conta no Cannabilize.</p>
         <p style="margin: 24px 0;">
           <a href="{{resetUrl}}" style="background: #00A859; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
             Redefinir Minha Senha
@@ -101,7 +101,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<EmailTemplateType, EmailTemplateCon
         </p>
         <p><strong>Este link expira em 1 hora.</strong></p>
         <p>Se você não solicitou esta recuperação de senha, pode ignorar este email com segurança. Sua senha não será alterada.</p>
-        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe CannabiLizi</p>
+        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe Cannabilize</p>
       </div>
     `,
   },
@@ -109,7 +109,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<EmailTemplateType, EmailTemplateCon
     id: 'CONSULTATION_CONFIRMED',
     name: 'Confirmação de Consulta',
     description: 'Enviado ao paciente imediatamente após o agendamento da consulta.',
-    subject: 'Consulta Agendada - CannabiLizi',
+    subject: 'Consulta Agendada - Cannabilize',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #00A859;">Consulta Agendada com Sucesso!</h2>
@@ -125,7 +125,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<EmailTemplateType, EmailTemplateCon
         {{/if}}
         <p>Se precisar reagendar ou cancelar, acesse sua área do paciente.</p>
         <p>Em caso de dúvidas, entre em contato conosco.</p>
-        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe CannabiLizi</p>
+        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe Cannabilize</p>
       </div>
     `,
   },
@@ -133,7 +133,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<EmailTemplateType, EmailTemplateCon
     id: 'PAYMENT_CONFIRMED',
     name: 'Confirmação de Pagamento',
     description: 'Enviado ao paciente quando o pagamento da consulta é confirmado.',
-    subject: 'Pagamento Confirmado - CannabiLizi',
+    subject: 'Pagamento Confirmado - Cannabilize',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #00A859;">Pagamento Confirmado!</h2>
@@ -146,7 +146,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<EmailTemplateType, EmailTemplateCon
           <p><a href="{{confirmationUrl}}" style="background: #00A859; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; margin: 16px 0;">Ver detalhes da consulta</a></p>
         {{/if}}
         <p>Você pode acessar os detalhes da consulta e os recibos diretamente na plataforma.</p>
-        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe CannabiLizi</p>
+        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe Cannabilize</p>
       </div>
     `,
   },
@@ -154,7 +154,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<EmailTemplateType, EmailTemplateCon
     id: 'CONSULTATION_REMINDER_24H',
     name: 'Lembrete de Consulta (24h antes)',
     description: 'Enviado ao paciente 24 horas antes da consulta agendada.',
-    subject: 'Lembrete: Sua consulta é amanhã - CannabiLizi',
+    subject: 'Lembrete: Sua consulta é amanhã - Cannabilize',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #00A859;">Lembrete de Consulta</h2>
@@ -167,7 +167,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<EmailTemplateType, EmailTemplateCon
           <p><strong>Importante:</strong> Acesse o link alguns minutos antes do horário agendado.</p>
         {{/if}}
         <p>Se precisar reagendar ou cancelar, acesse sua área do paciente o quanto antes.</p>
-        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe CannabiLizi</p>
+        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe Cannabilize</p>
       </div>
     `,
   },
@@ -175,7 +175,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<EmailTemplateType, EmailTemplateCon
     id: 'CONSULTATION_REMINDER_2H',
     name: 'Lembrete de Consulta (2h antes)',
     description: 'Enviado ao paciente 2 horas antes da consulta agendada.',
-    subject: 'Lembrete: Sua consulta é em breve - CannabiLizi',
+    subject: 'Lembrete: Sua consulta é em breve - Cannabilize',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #00A859;">Sua consulta é em breve!</h2>
@@ -191,7 +191,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<EmailTemplateType, EmailTemplateCon
           </p>
           <p><strong>Dica:</strong> Acesse o link alguns minutos antes para garantir que tudo está funcionando.</p>
         {{/if}}
-        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe CannabiLizi</p>
+        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe Cannabilize</p>
       </div>
     `,
   },
@@ -199,7 +199,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<EmailTemplateType, EmailTemplateCon
     id: 'CONSULTATION_REMINDER_1H',
     name: 'Lembrete de Consulta (1h antes)',
     description: 'Enviado ao paciente 1 hora antes da consulta agendada.',
-    subject: 'Lembrete: Sua consulta é em 1 hora - CannabiLizi',
+    subject: 'Lembrete: Sua consulta é em 1 hora - Cannabilize',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #00A859;">Sua consulta é em 1 hora!</h2>
@@ -214,7 +214,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<EmailTemplateType, EmailTemplateCon
             </a>
           </p>
         {{/if}}
-        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe CannabiLizi</p>
+        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe Cannabilize</p>
       </div>
     `,
   },
@@ -222,7 +222,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<EmailTemplateType, EmailTemplateCon
     id: 'CONSULTATION_REMINDER_10MIN',
     name: 'Lembrete de Consulta (10 min antes)',
     description: 'Enviado ao paciente 10 minutos antes da consulta agendada.',
-    subject: 'Sua consulta é em 10 minutos! - CannabiLizi',
+    subject: 'Sua consulta é em 10 minutos! - Cannabilize',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #00A859;">Sua consulta é em 10 minutos!</h2>
@@ -235,7 +235,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<EmailTemplateType, EmailTemplateCon
             </a>
           </p>
         {{/if}}
-        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe CannabiLizi</p>
+        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe Cannabilize</p>
       </div>
     `,
   },
@@ -243,7 +243,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<EmailTemplateType, EmailTemplateCon
     id: 'CONSULTATION_REMINDER_NOW',
     name: 'Lembrete de Consulta (na hora)',
     description: 'Enviado ao paciente no horário agendado da consulta.',
-    subject: 'Sua consulta é agora! - CannabiLizi',
+    subject: 'Sua consulta é agora! - Cannabilize',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #00A859;">Sua consulta é agora!</h2>
@@ -261,7 +261,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<EmailTemplateType, EmailTemplateCon
         {{else}}
           <p>Entre em contato com seu médico ou acesse sua área do paciente para mais informações.</p>
         {{/if}}
-        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe CannabiLizi</p>
+        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe Cannabilize</p>
       </div>
     `,
   },
@@ -269,7 +269,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<EmailTemplateType, EmailTemplateCon
     id: 'CONSULTATION_FOLLOWUP',
     name: 'Follow-up Pós-Consulta',
     description: 'Enviado ao paciente algumas horas após a consulta ser concluída.',
-    subject: 'Como foi sua consulta? - CannabiLizi',
+    subject: 'Como foi sua consulta? - Cannabilize',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #00A859;">Obrigado pela sua consulta!</h2>
@@ -285,7 +285,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<EmailTemplateType, EmailTemplateCon
         {{/if}}
         <p>Se tiver dúvidas sobre seu tratamento ou precisar de suporte, nossa equipe está à disposição.</p>
         <p>Você pode acessar todas as informações da sua consulta, receitas e histórico na sua área do paciente.</p>
-        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe CannabiLizi</p>
+        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe Cannabilize</p>
       </div>
     `,
   },
@@ -293,7 +293,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<EmailTemplateType, EmailTemplateCon
     id: 'PRESCRIPTION_ISSUED',
     name: 'Receita Emitida',
     description: 'Enviado ao paciente quando uma nova receita é emitida.',
-    subject: 'Receita Médica Emitida - CannabiLizi',
+    subject: 'Receita Médica Emitida - Cannabilize',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #00A859;">Receita Médica Emitida</h2>
@@ -305,7 +305,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<EmailTemplateType, EmailTemplateCon
           </a>
         </p>
         <p>Caso tenha dúvidas sobre o uso do medicamento, entre em contato com seu médico.</p>
-        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe CannabiLizi</p>
+        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe Cannabilize</p>
       </div>
     `,
   },
@@ -313,7 +313,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<EmailTemplateType, EmailTemplateCon
     id: 'RESCHEDULE_INVITE',
     name: 'Convite para Adiantar Consulta',
     description: 'Enviado ao paciente quando o médico sugere adiantar a consulta.',
-    subject: 'Oportunidade: Adiantar sua consulta - CannabiLizi',
+    subject: 'Oportunidade: Adiantar sua consulta - Cannabilize',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #00A859;">Oportunidade de Adiantar sua Consulta</h2>
@@ -341,7 +341,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<EmailTemplateType, EmailTemplateCon
           </a>
         </div>
         <p style="color: #666; font-size: 14px;">Ou acesse sua área do paciente para responder ao convite.</p>
-        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe CannabiLizi</p>
+        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe Cannabilize</p>
       </div>
     `,
   },
@@ -349,7 +349,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<EmailTemplateType, EmailTemplateCon
     id: 'RESCHEDULE_INVITE_ACCEPTED',
     name: 'Convite Aceito - Confirmação',
     description: 'Enviado ao paciente quando ele aceita o convite de remarcação.',
-    subject: 'Consulta Remarcada com Sucesso - CannabiLizi',
+    subject: 'Consulta Remarcada com Sucesso - Cannabilize',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #00A859;">Consulta Remarcada com Sucesso!</h2>
@@ -365,7 +365,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<EmailTemplateType, EmailTemplateCon
           </p>
         {{/if}}
         <p>Lembre-se de estar disponível no horário agendado.</p>
-        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe CannabiLizi</p>
+        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe Cannabilize</p>
       </div>
     `,
   },
@@ -383,7 +383,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<EmailTemplateType, EmailTemplateCon
           <p style="margin: 0;"><strong>Horário mantido:</strong> {{currentDateTime}}</p>
         </div>
         <p>A consulta permanece agendada para o horário original.</p>
-        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe CannabiLizi</p>
+        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe Cannabilize</p>
       </div>
     `,
   },
@@ -401,7 +401,7 @@ export const DEFAULT_EMAIL_TEMPLATES: Record<EmailTemplateType, EmailTemplateCon
           <p style="margin: 0;"><strong>Horário proposto:</strong> {{newDateTime}}</p>
         </div>
         <p>A consulta permanece agendada para o horário original.</p>
-        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe CannabiLizi</p>
+        <p style="margin-top: 24px;">Atenciosamente,<br>Equipe Cannabilize</p>
       </div>
     `,
   },
@@ -418,7 +418,7 @@ function getEnvSmtpConfig(): (Awaited<ReturnType<typeof prisma.emailConfig.findF
   const pass = process.env.SMTP_PASS?.trim() || process.env.SMTP_PASSWORD?.trim();
   if (!host || !user || !pass) return null;
   const port = parseInt(process.env.SMTP_PORT || '587', 10);
-  const from = process.env.SMTP_FROM?.trim(); // ex: "CannabiLizi <email@...>"
+  const from = process.env.SMTP_FROM?.trim(); // ex: "Cannabilize <email@...>"
   const replyTo = process.env.SMTP_REPLY_TO?.trim();
   let fromEmail: string | null = null;
   let fromName: string | null = null;
@@ -432,7 +432,7 @@ function getEnvSmtpConfig(): (Awaited<ReturnType<typeof prisma.emailConfig.findF
     }
   }
   if (!fromEmail) fromEmail = user;
-  if (!fromName) fromName = 'CannabiLizi';
+  if (!fromName) fromName = 'Cannabilize';
   return {
     id: 'env-smtp',
     provider: 'SMTP',
@@ -772,7 +772,7 @@ export async function sendEmail(data: EmailData): Promise<void> {
         fromEmail = 'onboarding@resend.dev';
       }
       
-      const fromName = config.fromName || 'CannabiLizi';
+      const fromName = config.fromName || 'Cannabilize';
       const from = fromName ? `${fromName} <${fromEmail}>` : fromEmail;
 
       console.log('[EMAIL] Enviando via Resend:', { from, to: finalTo, originalTo: redirectTo ? originalTo : undefined });
@@ -814,7 +814,7 @@ export async function sendEmail(data: EmailData): Promise<void> {
         auth: { user, pass },
       });
 
-      const fromName = config.fromName || 'CannabiLizi';
+      const fromName = config.fromName || 'Cannabilize';
       const fromEmail = config.fromEmail || user;
       const from = fromName ? `${fromName} <${fromEmail}>` : fromEmail;
 

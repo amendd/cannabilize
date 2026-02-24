@@ -232,7 +232,7 @@ export async function generateMedicalReport(
 
   // Footer
   y = 100;
-  page.drawText('Este laudo foi emitido pela CannabiLizi através de consulta médica online.', {
+  page.drawText('Este laudo foi emitido pela Cannabilize através de consulta médica online.', {
     x: margin,
     y,
     size: 10,

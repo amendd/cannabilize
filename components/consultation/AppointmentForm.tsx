@@ -718,7 +718,7 @@ export default function AppointmentForm({ initialPathologies = [] }: Appointment
               >
                 Termos de Uso
               </a>
-              {' '}dos serviços da CannabiLizi.
+              {' '}dos serviços da Cannabilize.
             </label>
           </div>
           {errors.consentTerms && (

@@ -41,7 +41,7 @@ async function setupResendConfig() {
           enabled: true,
           apiKey: apiKey,
           fromEmail: 'onboarding@resend.dev',
-          fromName: 'CannabiLizi',
+          fromName: 'Cannabilize',
         },
       });
       console.log('✅ Configuração criada com sucesso\n');

@@ -1,4 +1,4 @@
-# 📊 Análise Geral do Projeto CannabiLizi
+# 📊 Análise Geral do Projeto Cannabilize
 
 ## Data da Análise: 27 de Janeiro de 2026
 
@@ -6,7 +6,7 @@
 
 ## 🎯 RESUMO EXECUTIVO
 
-O projeto CannabiLizi é uma plataforma completa de telemedicina para cannabis medicinal, desenvolvida em Next.js 14 com TypeScript, Prisma e Tailwind CSS. A aplicação possui funcionalidades robustas, mas há oportunidades significativas de melhoria em design, UX/UI, integrações e performance.
+O projeto Cannabilize é uma plataforma completa de telemedicina para cannabis medicinal, desenvolvida em Next.js 14 com TypeScript, Prisma e Tailwind CSS. A aplicação possui funcionalidades robustas, mas há oportunidades significativas de melhoria em design, UX/UI, integrações e performance.
 
 ---
 
@@ -399,7 +399,7 @@ O projeto CannabiLizi é uma plataforma completa de telemedicina para cannabis m
 
 ## 📝 CONCLUSÃO
 
-O projeto CannabiLizi tem uma base sólida e funcionalidades completas. As principais oportunidades de melhoria estão em:
+O projeto Cannabilize tem uma base sólida e funcionalidades completas. As principais oportunidades de melhoria estão em:
 
 1. **Design Visual** - Tornar mais moderno e profissional
 2. **UX** - Melhorar feedback e fluxos

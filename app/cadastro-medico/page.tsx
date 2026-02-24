@@ -114,7 +114,7 @@ export default function CadastroMedicoPage() {
             Cadastro de Médico Parceiro
           </h1>
           <p className="text-lg text-gray-600">
-            Preencha seus dados para se tornar um médico parceiro da CannabiLizi
+            Preencha seus dados para se tornar um médico parceiro da Cannabilize
           </p>
         </div>
 

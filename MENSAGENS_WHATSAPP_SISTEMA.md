@@ -1,4 +1,4 @@
-# 📱 Mensagens WhatsApp do Sistema CannabiLizi
+# 📱 Mensagens WhatsApp do Sistema Cannabilize
 
 ## 📋 Resumo das Mensagens Enviadas
 
@@ -28,7 +28,7 @@ Olá [Nome do Paciente]! Sua consulta foi confirmada:
 
 Em caso de dúvidas, estamos à disposição.
 
-CannabiLizi 💚
+Cannabilize 💚
 ```
 
 **Onde é enviada:**
@@ -58,7 +58,7 @@ Olá [Nome do Paciente]! Sua consulta está agendada para:
 
 Não esqueça de estar em um local tranquilo e com boa conexão de internet.
 
-CannabiLizi 💚
+Cannabilize 💚
 ```
 
 **Status:** Template criado, mas precisa de job/cron para envio automático
@@ -83,7 +83,7 @@ Olá [Nome do Paciente]! Sua consulta começa em 1 hora!
 
 Por favor, esteja pronto para a consulta.
 
-CannabiLizi 💚
+Cannabilize 💚
 ```
 
 **Status:** Template criado, mas precisa de job/cron para envio automático
@@ -108,7 +108,7 @@ Olá [Nome do Paciente]! Seu pagamento foi processado:
 
 Sua consulta está confirmada!
 
-CannabiLizi 💚
+Cannabilize 💚
 ```
 
 **Onde é enviada:**
@@ -135,7 +135,7 @@ Olá [Nome do Paciente]! Você possui um pagamento pendente:
 
 🔗 Acesse sua área do paciente para realizar o pagamento.
 
-CannabiLizi 💚
+Cannabilize 💚
 ```
 
 **Status:** Template criado, mas precisa de job/cron para envio automático
@@ -160,7 +160,7 @@ Olá [Nome do Paciente]! Sua receita foi emitida:
 
 📄 Acesse sua área do paciente para visualizar e baixar a receita.
 
-CannabiLizi 💚
+Cannabilize 💚
 ```
 
 **Onde é enviada:**
@@ -188,7 +188,7 @@ Olá [Nome do Paciente]! O Dr. [Nome do Médico] tem disponibilidade para adiant
 
 ⏱️ Este convite é válido por 24 horas.
 
-CannabiLizi 💚
+Cannabilize 💚
 ```
 
 **Onde é enviada:**
@@ -214,7 +214,7 @@ Olá [Nome do Paciente]! Sua autorização foi aprovada:
 
 📋 Acesse sua área do paciente para ver detalhes.
 
-CannabiLizi 💚
+Cannabilize 💚
 ```
 
 **Status:** Template criado, mas precisa ser integrado no fluxo de aprovação ANVISA
@@ -243,7 +243,7 @@ Dr. [Nome do Médico]! Você foi designado para uma nova consulta:
 
 📋 Ver Detalhes: [Link Admin]
 
-CannabiLizi 💚
+Cannabilize 💚
 ```
 
 **Onde é enviada:**
@@ -274,7 +274,7 @@ Nova consulta no sistema:
 
 📋 Ver: [Link Admin]
 
-CannabiLizi 💚
+Cannabilize 💚
 ```
 
 **Onde é enviada:**

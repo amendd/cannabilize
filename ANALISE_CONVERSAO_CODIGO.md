@@ -44,7 +44,7 @@ Sua conclusão bate com o que o código mostra:
 
 - **Visual excelente**: Cards, ícones, timeline, expandível "Saiba mais". Confirmado no código.
 - **Linguagem institucional**: Os textos em `steps` são descritivos. Adicionar microfrases ("100% dentro da lei", "Cuidamos de toda a burocracia", "Você não fica sozinho em nenhuma etapa") não exige mudança de estrutura.
-- **Detalhe**: No título aparece "CannabiLizi" (linha 60). Vale padronizar para "CannabiLize" se for o nome oficial.
+- **Detalhe**: No título aparece "Cannabilize" (linha 60). Vale padronizar para "CannabiLize" se for o nome oficial.
 
 ---
 

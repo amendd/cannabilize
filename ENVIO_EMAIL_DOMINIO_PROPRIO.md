@@ -1,6 +1,6 @@
 # Fazer todos os disparos de e-mail saírem com seu domínio
 
-Todos os e-mails da plataforma (confirmação de consulta, lembretes, recuperação de senha, etc.) podem sair com remetente **@seudominio.com.br** (ex.: `noreply@cannabilize.com.br` ou `CannabiLizi <noreply@cannabilize.com.br>`). Há duas formas principais.
+Todos os e-mails da plataforma (confirmação de consulta, lembretes, recuperação de senha, etc.) podem sair com remetente **@seudominio.com.br** (ex.: `noreply@cannabilize.com.br` ou `Cannabilize <noreply@cannabilize.com.br>`). Há duas formas principais.
 
 ---
 
@@ -29,7 +29,7 @@ Aguarde a propagação (minutos a algumas horas). No Resend, use **Verify** até
 2. Preencha a **API Key** do Resend.
 3. **Email Remetente:** use um endereço do seu domínio, por exemplo:
    - `noreply@cannabilize.com.br`
-4. **Nome Remetente:** por exemplo `CannabiLizi`.
+4. **Nome Remetente:** por exemplo `Cannabilize`.
 5. **Domínio Verificado:** informe **só o domínio**, sem `http://` nem `www`, por exemplo:
    - `cannabilize.com.br`
 
@@ -56,7 +56,7 @@ Se o e-mail da clínica é Google Workspace com @cannabilize.com.br:
 4. Na plataforma:
    - **Admin → Email:** habilite **SMTP**, preencha host `smtp.gmail.com`, porta `587`, usuário e senha de app.
    - **Email Remetente:** `noreply@cannabilize.com.br` (ou o e-mail do Workspace que estiver usando).
-   - **Nome Remetente:** `CannabiLizi`.
+   - **Nome Remetente:** `Cannabilize`.
 
 Ou, se usar só variáveis de ambiente (sem config no Admin), no `.env`:
 
@@ -65,7 +65,7 @@ SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=noreply@cannabilize.com.br
 SMTP_PASS=senha-de-app-16-caracteres
-SMTP_FROM="CannabiLizi <noreply@cannabilize.com.br>"
+SMTP_FROM="Cannabilize <noreply@cannabilize.com.br>"
 SMTP_REPLY_TO=contato@cannabilize.com.br
 ```
 
@@ -77,7 +77,7 @@ Se o e-mail do domínio está no Zoho (ou em outro provedor):
 2. Use usuário e senha de uma conta **@cannabilize.com.br** (ou a que o provedor permitir para envio).
 3. Em **Admin → Email** (SMTP) ou no `.env`:
    - **Email Remetente** / **SMTP_FROM:** `noreply@cannabilize.com.br` (ou outro endereço do domínio que o provedor permitir).
-   - **Nome Remetente:** `CannabiLizi`.
+   - **Nome Remetente:** `Cannabilize`.
 
 Assim, todos os disparos saem com o domínio próprio.
 

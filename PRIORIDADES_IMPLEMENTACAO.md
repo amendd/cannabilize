@@ -1,4 +1,4 @@
-# Prioridades de Implementação — CannabiLizi
+# Prioridades de Implementação — Cannabilize
 
 Com base na análise completa do sistema, esta é a ordem sugerida para atacar os problemas e melhorias.
 
@@ -38,7 +38,7 @@ Com base na análise completa do sistema, esta é a ordem sugerida para atacar o
 | 10 | **Validação e tipos nas APIs** | Reduzir erros e manutenção. | Padronizar Zod em todas as entradas POST/PUT; definir tipos de resposta (interfaces) e reduzir `any` nas respostas de API e nos componentes. |
 | 11 | **Centralizar tratamento de erros** | Respostas e logs consistentes. | Usar `lib/error-handler.ts` em todas as API routes: mapear exceções para status HTTP e mensagem segura (sem stack em produção). |
 | 12 | **Acessibilidade e feedback** | Inclusão e menos frustração. | Revisar contraste, foco visível, labels em formulários; garantir toast/skeleton em todas as ações críticas; modais com ESC e focus trap. |
-| 13 | **Nome da marca único** | CannabiLizi vs Cannalize gera dúvida. | Definir um nome oficial, atualizar metadata, alt texts e referências; alinhar nome do asset da logo se necessário. |
+| 13 | **Nome da marca único** | Cannabilize vs Cannalize gera dúvida. | Definir um nome oficial, atualizar metadata, alt texts e referências; alinhar nome do asset da logo se necessário. |
 
 **Estimativa:** 3–4 sprints, em paralelo com features.
 

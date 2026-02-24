@@ -1,4 +1,4 @@
-# ✅ Checklist de Melhorias - CannabiLizi
+# ✅ Checklist de Melhorias - Cannabilize
 
 **Data de Criação:** 29 de Janeiro de 2026  
 **Status:** Em andamento

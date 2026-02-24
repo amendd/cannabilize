@@ -1,6 +1,6 @@
-# 📍 Pontos de Integração WhatsApp - CannabiLizi
+# 📍 Pontos de Integração WhatsApp - Cannabilize
 
-Este documento mapeia **todos os pontos** onde seria interessante integrar o WhatsApp para notificações e contato no sistema CannabiLizi.
+Este documento mapeia **todos os pontos** onde seria interessante integrar o WhatsApp para notificações e contato no sistema Cannabilize.
 
 ---
 
@@ -81,7 +81,7 @@ Olá [Nome]! Sua consulta foi confirmada:
 
 Lembre-se: A consulta será realizada via [Plataforma].
 
-CannabiLizi 💚
+Cannabilize 💚
 ```
 
 **🎯 Benefício:** Paciente recebe confirmação imediata no WhatsApp, aumentando confiança.
@@ -135,7 +135,7 @@ Olá [Nome]! Seu pagamento foi processado:
 
 Sua consulta está confirmada!
 
-CannabiLizi 💚
+Cannabilize 💚
 ```
 
 **🎯 Benefício:** Paciente recebe confirmação instantânea do pagamento, reduzindo ansiedade.
@@ -267,7 +267,7 @@ Olá [Nome]! Sua receita foi emitida:
 
 📄 Acesse sua área do paciente para visualizar e baixar a receita.
 
-CannabiLizi 💚
+Cannabilize 💚
 ```
 
 **🎯 Benefício:** Paciente é notificado imediatamente quando receita está pronta.
@@ -325,7 +325,7 @@ Olá [Nome]! O Dr. [Nome] tem disponibilidade para adiantar sua consulta:
 
 ⏱️ Este convite é válido por 24 horas.
 
-CannabiLizi 💚
+Cannabilize 💚
 ```
 
 **🎯 Benefício:** Aumenta taxa de aceitação de convites (WhatsApp tem maior abertura que email).
@@ -365,7 +365,7 @@ Olá ${authWithPatient.patient.name}! Sua autorização foi aprovada:
 
 📋 Acesse sua área do paciente para ver detalhes.
 
-CannabiLizi 💚`;
+Cannabilize 💚`;
 
     await sendWhatsAppMessage({
       to: authWithPatient.patient.phone,
@@ -389,7 +389,7 @@ Olá [Nome]! Sua autorização foi aprovada:
 
 📋 Acesse sua área do paciente para ver detalhes.
 
-CannabiLizi 💚
+Cannabilize 💚
 ```
 
 **🎯 Benefício:** Paciente é notificado imediatamente da aprovação, importante para importação.
@@ -424,7 +424,7 @@ Dr. [Nome]! Você foi designado para uma nova consulta:
 
 📋 Ver Detalhes: [Link]
 
-CannabiLizi 💚
+Cannabilize 💚
 ```
 
 **🎯 Benefício:** Médico é notificado imediatamente quando recebe nova consulta.
@@ -459,7 +459,7 @@ Nova consulta no sistema:
 
 📋 Ver: [Link Admin]
 
-CannabiLizi 💚
+Cannabilize 💚
 ```
 
 **🎯 Benefício:** Admin fica ciente de todas as novas consultas em tempo real.
@@ -492,7 +492,7 @@ Olá ${consultation.patient.name}! Sua consulta foi cancelada:
 
 Para reagendar, acesse sua área do paciente.
 
-CannabiLizi 💚`;
+Cannabilize 💚`;
 
     await sendWhatsAppMessage({
       to: consultation.patient.phone,
@@ -513,7 +513,7 @@ Olá [Nome]! Sua consulta foi cancelada:
 
 Para reagendar, acesse sua área do paciente.
 
-CannabiLizi 💚
+Cannabilize 💚
 ```
 
 **🎯 Benefício:** Paciente é informado imediatamente sobre cancelamentos.
@@ -545,7 +545,7 @@ Olá [Nome]! Você possui um pagamento pendente:
 
 🔗 Acesse sua área do paciente para realizar o pagamento.
 
-CannabiLizi 💚
+Cannabilize 💚
 ```
 
 **🎯 Benefício:** Reduz pagamentos em atraso.
@@ -577,7 +577,7 @@ Olá ${patientCard.patient.name}! Sua carteirinha digital foi aprovada:
 
 📱 Acesse sua área do paciente para visualizar sua carteirinha.
 
-CannabiLizi 💚`;
+Cannabilize 💚`;
 
   await sendWhatsAppMessage({
     to: patientCard.patient.phone,
@@ -597,7 +597,7 @@ Olá [Nome]! Sua carteirinha digital foi aprovada:
 
 📱 Acesse sua área do paciente para visualizar.
 
-CannabiLizi 💚
+Cannabilize 💚
 ```
 
 **🎯 Benefício:** Paciente é notificado quando carteirinha está pronta.
@@ -616,7 +616,7 @@ CannabiLizi 💚
 'use client';
 
 export default function WhatsAppButton({ phone, message }: { phone: string; message?: string }) {
-  const defaultMessage = encodeURIComponent('Olá! Gostaria de mais informações sobre a CannabiLizi.');
+  const defaultMessage = encodeURIComponent('Olá! Gostaria de mais informações sobre a Cannabilize.');
   const whatsappUrl = `https://wa.me/${phone.replace(/\D/g, '')}?text=${message || defaultMessage}`;
 
   return (

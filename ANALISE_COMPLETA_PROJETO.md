@@ -1,4 +1,4 @@
-# 📊 Análise Completa do Projeto - CannabiLizi
+# 📊 Análise Completa do Projeto - Cannabilize
 
 **Data:** 29 de Janeiro de 2026  
 **Versão do Projeto:** 1.0.0  

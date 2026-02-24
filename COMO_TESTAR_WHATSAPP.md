@@ -44,7 +44,7 @@ Após salvar com sucesso:
 Se o teste foi bem-sucedido:
 
 - Você receberá uma mensagem no WhatsApp do número informado
-- A mensagem dirá: *"✅ Teste de integração WhatsApp CannabiLizi! Se você recebeu esta mensagem, a configuração está funcionando corretamente. 🚀"*
+- A mensagem dirá: *"✅ Teste de integração WhatsApp Cannabilize! Se você recebeu esta mensagem, a configuração está funcionando corretamente. 🚀"*
 
 ---
 
@@ -119,7 +119,7 @@ Se o teste foi bem-sucedido:
 Quando o teste for bem-sucedido, você receberá esta mensagem no WhatsApp:
 
 ```
-✅ Teste de integração WhatsApp CannabiLizi! 
+✅ Teste de integração WhatsApp Cannabilize! 
 Se você recebeu esta mensagem, a configuração está funcionando corretamente. 🚀
 ```
 

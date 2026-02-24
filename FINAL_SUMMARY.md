@@ -1,4 +1,4 @@
-# 🎉 RESUMO FINAL COMPLETO - CannabiLizi Replica
+# 🎉 RESUMO FINAL COMPLETO - Cannabilize Replica
 
 ## ✅ PROJETO 100% COMPLETO E OTIMIZADO
 
@@ -270,7 +270,7 @@ npm run dev
 **Sistema 100% funcional, completo e otimizado!**
 
 Todas as funcionalidades principais foram implementadas:
-- ✅ Replicação completa do modelo CannabiLizi
+- ✅ Replicação completa do modelo Cannabilize
 - ✅ Todas as páginas e funcionalidades
 - ✅ Área administrativa completa
 - ✅ Área do paciente completa
@@ -285,6 +285,6 @@ O sistema está **pronto para produção** e pode ser expandido com integraçõe
 
 **🎊 Projeto Completo e Otimizado!**
 
-*Desenvolvido replicando o modelo CannabiLizi*  
+*Desenvolvido replicando o modelo Cannabilize*  
 *Versão: 1.0.0*  
 *Data: 27 de Janeiro de 2026*

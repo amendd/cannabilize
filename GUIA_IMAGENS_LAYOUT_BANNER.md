@@ -35,7 +35,7 @@ Este documento descreve **todos os pontos do site** onde há imagens que fazem p
 - **Proporção sugerida:** algo em torno de **200×60 px** (ou proporção similar, ex.: 3:1). O código exibe com `height` ~44–50 px no navbar e ~50 px no footer, com largura automática (`w-auto`).
 - **Formato:** **PNG com transparência** (fundo transparente), para funcionar bem no navbar branco e no footer escuro.
 - **Tamanho de arquivo:** idealmente até **~50 KB**.
-- **Conteúdo:** apenas o logo (marca, ícone + texto “CannabiLizi” ou o que for a identidade). Sem bordas ou fundo colorido que quebrem em fundos claros/escuros.
+- **Conteúdo:** apenas o logo (marca, ícone + texto “Cannabilize” ou o que for a identidade). Sem bordas ou fundo colorido que quebrem em fundos claros/escuros.
 
 ### Onde configurar / substituir
 - **Admin → Identidade Visual → Marca e logo:** campo “URL do logo”. Ao salvar, o logo passa a ser usado em **todo o site** (navbar, footer, login, áreas logadas, receita, favicon). Pode ser caminho local (ex.: `/images/cannalize-logo.png`) ou URL externa.
@@ -191,7 +191,7 @@ Este documento descreve **todos os pontos do site** onde há imagens que fazem p
 ## 10. Outros pontos que usam imagens (contexto)
 
 - **Carteirinha digital:** usa a **foto do paciente** (vinda do perfil do usuário), não uma imagem fixa de layout.
-- **Receita médica (PDF):** o gerador de PDF usa **texto** para “CannabiLizi” e subtítulos no cabeçalho; **não** desenha o logo como imagem no PDF. A **visualização em HTML** da receita no admin (`PrescriptionView`) usa a imagem do logo em `/images/cannalize-logo.png`.
+- **Receita médica (PDF):** o gerador de PDF usa **texto** para “Cannabilize” e subtítulos no cabeçalho; **não** desenha o logo como imagem no PDF. A **visualização em HTML** da receita no admin (`PrescriptionView`) usa a imagem do logo em `/images/cannalize-logo.png`.
 - **Placeholders gerais:** componente `OptimizedImage` usa fallback `/images/placeholder.jpg` quando não informado. Útil ter um placeholder genérico em `public/images/placeholder.jpg` para evitar ícone de erro.
 
 ---

@@ -1,4 +1,4 @@
-# 🛠️ Exemplos Práticos de Melhorias - CannabiLizi
+# 🛠️ Exemplos Práticos de Melhorias - Cannabilize
 
 Este documento contém exemplos de código para implementar as melhorias mais críticas identificadas na análise.
 
@@ -686,10 +686,10 @@ export default function SkipLinks() {
       <Link 
         href="/" 
         className="flex items-center"
-        aria-label="CannabiLizi - Página inicial"
+        aria-label="Cannabilize - Página inicial"
       >
         <span className="text-2xl font-bold text-primary">
-          CannabiLizi
+          Cannabilize
         </span>
       </Link>
 
@@ -750,7 +750,7 @@ export async function sendEmail({
   to,
   subject,
   html,
-  from = 'CannabiLizi <noreply@cannabilizi.com>',
+  from = 'Cannabilize <noreply@cannabilize.com>',
 }: {
   to: string;
   subject: string;
@@ -815,7 +815,7 @@ export async function notifyAdminByEmail(data: ConsultationNotificationData) {
   if (data.adminEmail) {
     return await sendEmail({
       to: data.adminEmail,
-      subject: 'Nova Consulta Agendada - CannabiLizi',
+      subject: 'Nova Consulta Agendada - Cannabilize',
       html,
     });
   }
@@ -862,7 +862,7 @@ export async function sendWhatsApp({
 export async function notifyAdminByWhatsApp(data: ConsultationNotificationData) {
   if (!data.adminPhone) return { success: false, error: 'Telefone não fornecido' };
 
-  const message = `🔔 *Nova Consulta Agendada - CannabiLizi*
+  const message = `🔔 *Nova Consulta Agendada - Cannabilize*
 
 👤 *Paciente:* ${data.patientName}
 📧 *Email:* ${data.patientEmail}

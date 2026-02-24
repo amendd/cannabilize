@@ -1,4 +1,4 @@
-# 🎫 Sistema de Carteirinha Digital - CannabiLizi
+# 🎫 Sistema de Carteirinha Digital - Cannabilize
 
 ## 📋 Visão Geral
 

@@ -29,8 +29,8 @@ export async function getContactEmail(): Promise<string> {
       where: { key: CONTACT_EMAIL_KEY },
     });
     if (entry?.value?.trim()) return entry.value.trim();
-    return process.env.CONTACT_EMAIL?.trim() || 'contato@cannabilizi.com.br';
+    return process.env.CONTACT_EMAIL?.trim() || 'contato@cannabilize.com.br';
   } catch {
-    return process.env.CONTACT_EMAIL?.trim() || 'contato@cannabilizi.com.br';
+    return process.env.CONTACT_EMAIL?.trim() || 'contato@cannabilize.com.br';
   }
 }

@@ -21,7 +21,7 @@ type LogoImageProps = {
  * Usa unoptimized para não converter para AVIF/WebP e evitar fundo branco.
  */
 export default function LogoImage({
-  alt = 'CannabiLizi',
+  alt = 'Cannabilize',
   className = 'h-11 w-auto',
   width = 180,
   height = 56,

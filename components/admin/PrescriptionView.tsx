@@ -447,7 +447,7 @@ export default function PrescriptionView({
             <p className="text-xs mb-2" style={{ color: '#666666' }}>Assinatura</p>
             <div className="h-16 border-b-2 border-dashed flex items-center" style={{ borderColor: '#EAEAEA' }}>
               <p className="text-xs italic" style={{ color: '#999999' }}>
-                Assinatura Digital - Receita emitida através da plataforma CannabiLizi
+                Assinatura Digital - Receita emitida através da plataforma Cannabilize
               </p>
             </div>
           </div>
@@ -478,7 +478,7 @@ export default function PrescriptionView({
                 <Shield size={12} style={{ color: '#1F5E3B' }} />
                 <span>
                   <span className="font-medium">Sistema: </span>
-                  CannabiLizi
+                  Cannabilize
                 </span>
               </div>
             </div>

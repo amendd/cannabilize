@@ -220,7 +220,7 @@ SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=cannabilizeagora@gmail.com
 SMTP_PASS=sua-senha-de-app-aqui
-SMTP_FROM="CannabiLizi <cannabilizeagora@gmail.com>"
+SMTP_FROM="Cannabilize <cannabilizeagora@gmail.com>"
 SMTP_REPLY_TO=cannabilizeagora@gmail.com
 ```
 
@@ -239,7 +239,7 @@ Se essas variáveis estiverem definidas e **não** houver nenhum provedor de ema
    - **Usuário SMTP**: `cannabilizeagora@gmail.com`
    - **Senha SMTP**: sua senha de app do Google
    - **Usar SSL**: **desmarque** (para porta 587)
-   - **Remetente (nome)**: `CannabiLizi`
+   - **Remetente (nome)**: `Cannabilize`
    - **Remetente (email)**: `cannabilizeagora@gmail.com`
    - **Reply-To**: `cannabilizeagora@gmail.com`
 4. Marque **Habilitado** e salve.

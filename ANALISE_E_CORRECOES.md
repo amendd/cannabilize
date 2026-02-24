@@ -7,7 +7,7 @@
 
 ## 1. Resumo do projeto
 
-- **Nome:** clickcannabis-replica (CannabiLizi / CannabiLize)
+- **Nome:** clickcannabis-replica (Cannabilize / CannabiLize)
 - **Stack:** Next.js 14, Prisma, SQLite (dev) / PostgreSQL (prod), NextAuth, Stripe, Tailwind
 - **Papéis:** PATIENT, DOCTOR, ADMIN
 - **Funcionalidades:** Telemedicina, agendamento, pagamentos, receitas, carteirinha, blog, dashboards (ERP, GPP, IFP)

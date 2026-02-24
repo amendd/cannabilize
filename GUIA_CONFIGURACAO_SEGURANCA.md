@@ -15,7 +15,7 @@
 
 1. Acesse: https://www.google.com/recaptcha/admin/create
 2. Preencha:
-   - **Label**: Nome do seu site (ex: "CannabiLizi")
+   - **Label**: Nome do seu site (ex: "Cannabilize")
    - **Tipo**: Selecione **reCAPTCHA v3**
    - **Domínios**: Adicione seus domínios:
      - `localhost` (para desenvolvimento)

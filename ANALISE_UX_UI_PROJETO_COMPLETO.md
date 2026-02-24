@@ -1,4 +1,4 @@
-# Análise UX/UI — Projeto Completo (CannabiLizi)
+# Análise UX/UI — Projeto Completo (Cannabilize)
 
 Análise de **design**, **UI**, **UX**, **usabilidade**, **facilidade de uso** e **clareza** em **todo o projeto**, incluindo Admin, Médico, Paciente e páginas públicas.
 

@@ -18,7 +18,7 @@
 
 ## 🎯 Visão Geral
 
-Este documento detalha todos os passos necessários para colocar o projeto CannabiLizi em produção de forma segura, escalável e profissional.
+Este documento detalha todos os passos necessários para colocar o projeto Cannabilize em produção de forma segura, escalável e profissional.
 
 ### Stack Atual
 - **Framework**: Next.js 14 (App Router)

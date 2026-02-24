@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       try {
         const resend = new Resend(config.apiKey);
         const fromEmail = config.fromEmail || 'onboarding@resend.dev';
-        const fromName = config.fromName || 'CannabiLizi';
+        const fromName = config.fromName || 'Cannabilize';
         const from = fromName ? `${fromName} <${fromEmail}>` : fromEmail;
 
         console.log('[EMAIL TEST] Enviando email via Resend:', {
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
         const result = await resend.emails.send({
           from,
           to: testEmail,
-          subject: 'Teste de Email - CannabiLizi',
+          subject: 'Teste de Email - Cannabilize',
           html: '<h1>Este é um email de teste</h1><p>Se você recebeu este email, a configuração do Resend está funcionando corretamente.</p>',
           replyTo: config.replyTo || undefined,
         });
@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
           },
         });
 
-        const fromName = config.fromName || 'CannabiLizi';
+        const fromName = config.fromName || 'Cannabilize';
         const fromEmail = config.fromEmail || config.smtpUser;
         const from = fromName ? `${fromName} <${fromEmail}>` : fromEmail;
 
@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
           from,
           to: testEmail,
           replyTo: config.replyTo || undefined,
-          subject: 'Teste de Email - CannabiLizi',
+          subject: 'Teste de Email - Cannabilize',
           html: '<h1>Este é um email de teste</h1><p>Se você recebeu este email, a configuração SMTP (ex.: Gmail) está funcionando corretamente.</p>',
         });
 

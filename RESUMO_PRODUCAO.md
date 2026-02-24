@@ -2,7 +2,7 @@
 
 ## 🎯 Objetivo
 
-Este documento é um resumo rápido das ações necessárias para colocar o projeto CannabiLizi em produção.
+Este documento é um resumo rápido das ações necessárias para colocar o projeto Cannabilize em produção.
 
 ---
 

@@ -75,7 +75,7 @@ export default function ConfirmationPage() {
     fetch('/api/config/contact')
       .then(res => res.json())
       .then(data => setContact(data))
-      .catch(() => setContact({ phone: '(11) 99999-9999', email: 'contato@cannabilizi.com.br' }));
+      .catch(() => setContact({ phone: '(11) 99999-9999', email: 'contato@cannabilize.com.br' }));
   }, []);
 
   // Só redirecionar para a área do paciente se estiver logado E a consulta for dele (evita 403 e redirect para /paciente)
@@ -498,7 +498,7 @@ export default function ConfirmationPage() {
                   <Mail className="w-5 h-5 text-primary" />
                   <div>
                     <p className="text-sm text-gray-600">Email</p>
-                    <p className="font-semibold text-gray-900">{contact?.email ?? 'contato@cannabilizi.com.br'}</p>
+                    <p className="font-semibold text-gray-900">{contact?.email ?? 'contato@cannabilize.com.br'}</p>
                   </div>
                 </div>
               </div>

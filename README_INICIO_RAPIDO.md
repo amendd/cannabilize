@@ -1,4 +1,4 @@
-# 🚀 CannabiLizi - Início Rápido
+# 🚀 Cannabilize - Início Rápido
 
 ## ✅ Projeto Centralizado
 

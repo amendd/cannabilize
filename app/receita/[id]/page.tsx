@@ -136,7 +136,7 @@ export default function ReceitaPublicaPage() {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Receita Médica</h1>
-              <p className="text-gray-600">CannabiLizi - Cannabis Medicinal</p>
+              <p className="text-gray-600">Cannabilize - Cannabis Medicinal</p>
             </div>
           </div>
           <div className="mt-4">{getStatusBadge()}</div>
@@ -293,7 +293,7 @@ export default function ReceitaPublicaPage() {
           {/* Footer */}
           <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
             <p className="text-xs text-gray-500 text-center">
-              Esta receita foi verificada através do QR code de autenticidade do documento (CannabiLizi).
+              Esta receita foi verificada através do QR code de autenticidade do documento (Cannabilize).
               {prescription.patient?.email
                 ? ` Para mais informações, entre em contato através do email: ${prescription.patient.email}`
                 : ' Para mais informações, entre em contato através do site.'}

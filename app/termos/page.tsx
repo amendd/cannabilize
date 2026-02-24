@@ -3,8 +3,8 @@ import ConditionalNavbar from '@/components/layout/ConditionalNavbar';
 import ConditionalFooter from '@/components/layout/ConditionalFooter';
 
 export const metadata: Metadata = {
-  title: 'Termos de Uso | CannabiLizi',
-  description: 'Termos e condições de uso dos serviços da CannabiLizi',
+  title: 'Termos de Uso | Cannabilize',
+  description: 'Termos e condições de uso dos serviços da Cannabilize',
 };
 
 export default function TermsPage() {
@@ -28,7 +28,7 @@ export default function TermsPage() {
                   1. Aceitação dos Termos
                 </h2>
                 <p className="text-gray-700 mb-4">
-                  Ao acessar e utilizar os serviços da CannabiLizi, você concorda em cumprir e 
+                  Ao acessar e utilizar os serviços da Cannabilize, você concorda em cumprir e 
                   estar vinculado a estes Termos de Uso. Se você não concorda com qualquer 
                   parte destes termos, não deve utilizar nossos serviços.
                 </p>
@@ -39,7 +39,7 @@ export default function TermsPage() {
                   2. Descrição dos Serviços
                 </h2>
                 <p className="text-gray-700 mb-4">
-                  A CannabiLizi oferece:
+                  A Cannabilize oferece:
                 </p>
                 <ul className="list-disc pl-6 text-gray-700 mb-4 space-y-2">
                   <li>Plataforma de telemedicina para consultas online</li>
@@ -124,7 +124,7 @@ export default function TermsPage() {
                 </h2>
                 <p className="text-gray-700 mb-4">
                   Todo o conteúdo do site, incluindo textos, gráficos, logos, ícones, imagens, 
-                  downloads digitais e compilações de dados, é propriedade da CannabiLizi ou de 
+                  downloads digitais e compilações de dados, é propriedade da Cannabilize ou de 
                   seus fornecedores de conteúdo e está protegido por leis de direitos autorais.
                 </p>
               </section>
@@ -134,7 +134,7 @@ export default function TermsPage() {
                   8. Limitação de Responsabilidade
                 </h2>
                 <p className="text-gray-700 mb-4">
-                  A CannabiLizi não se responsabiliza por:
+                  A Cannabilize não se responsabiliza por:
                 </p>
                 <ul className="list-disc pl-6 text-gray-700 mb-4 space-y-2">
                   <li>Decisões médicas tomadas pelos médicos credenciados</li>

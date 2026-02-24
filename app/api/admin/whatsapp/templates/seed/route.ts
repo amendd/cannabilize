@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
         description: 'Enviada quando o paciente é novo (primeiro agendamento)',
         category: 'PACIENT',
         enabled: true,
-        content: `👋 *Bem-vindo(a) ao CannabiLizi!*
+        content: `👋 *Bem-vindo(a) ao Cannabilize!*
 
 Olá {{patientName}}!
 
@@ -36,7 +36,7 @@ Ficamos felizes em tê-lo(a) conosco. Aqui você terá acesso a:
 
 Qualquer dúvida, estamos à disposição.
 
-CannabiLizi 💚`,
+Cannabilize 💚`,
         variables: JSON.stringify({ patientName: 'Nome do paciente' }),
       },
       {
@@ -49,7 +49,7 @@ CannabiLizi 💚`,
 
 Olá {{patientName}}!
 
-Para acessar sua conta no CannabiLizi e acompanhar consultas e receitas, defina sua senha:
+Para acessar sua conta no Cannabilize e acompanhar consultas e receitas, defina sua senha:
 
 🔗 {{setupUrl}}
 
@@ -57,7 +57,7 @@ Para acessar sua conta no CannabiLizi e acompanhar consultas e receitas, defina 
 
 Se você não solicitou este link, ignore esta mensagem.
 
-CannabiLizi 💚`,
+Cannabilize 💚`,
         variables: JSON.stringify({
           patientName: 'Nome do paciente',
           setupUrl: 'Link para definir senha',
@@ -82,7 +82,7 @@ Olá {{patientName}}! Sua consulta foi confirmada:
 
 Em caso de dúvidas, estamos à disposição.
 
-CannabiLizi 💚`,
+Cannabilize 💚`,
         variables: JSON.stringify({
           patientName: 'Nome do paciente',
           doctorName: 'Nome do médico',
@@ -108,7 +108,7 @@ Olá {{patientName}}! Seu pagamento foi processado:
 
 Sua consulta está confirmada!
 
-CannabiLizi 💚`,
+Cannabilize 💚`,
         variables: JSON.stringify({
           patientName: 'Nome do paciente',
           amount: 'Valor do pagamento',
@@ -132,7 +132,7 @@ Olá {{patientName}}! Sua receita foi emitida:
 
 📄 Acesse sua área do paciente para visualizar e baixar a receita.
 
-CannabiLizi 💚`,
+Cannabilize 💚`,
         variables: JSON.stringify({
           patientName: 'Nome do paciente',
           doctorName: 'Nome do médico',
@@ -158,7 +158,7 @@ Olá {{patientName}}! O Dr. {{doctorName}} tem disponibilidade para adiantar sua
 
 ⏱️ Este convite é válido por 24 horas.
 
-CannabiLizi 💚`,
+Cannabilize 💚`,
         variables: JSON.stringify({
           patientName: 'Nome do paciente',
           doctorName: 'Nome do médico',
@@ -186,7 +186,7 @@ Olá {{patientName}}! Sua consulta começa em 1 hora!
 
 Por favor, esteja pronto para a consulta.
 
-CannabiLizi 💚`,
+Cannabilize 💚`,
         variables: JSON.stringify({
           patientName: 'Nome do paciente',
           doctorName: 'Nome do médico',
@@ -210,7 +210,7 @@ Olá {{patientName}}!
 
 Entre na sala alguns minutos antes. Até já!
 
-CannabiLizi 💚`,
+Cannabilize 💚`,
         variables: JSON.stringify({
           patientName: 'Nome do paciente',
           doctorName: 'Nome do médico',
@@ -237,7 +237,7 @@ Dr. {{doctorName}}! Você foi designado para uma nova consulta:
 
 {{#consultationLink}}📋 Ver consulta (anamnese, documentos): {{consultationLink}}{{/consultationLink}}
 
-CannabiLizi 💚`,
+Cannabilize 💚`,
         variables: JSON.stringify({
           doctorName: 'Nome do médico',
           patientName: 'Nome do paciente',
@@ -268,7 +268,7 @@ Nova consulta no sistema:
 
 📋 Ver: [Link Admin]
 
-CannabiLizi 💚`,
+Cannabilize 💚`,
         variables: JSON.stringify({
           patientName: 'Nome do paciente',
           doctorName: 'Nome do médico',

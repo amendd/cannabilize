@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       where: { provider: 'RESEND' },
       data: {
         fromEmail: 'onboarding@resend.dev',
-        fromName: config.fromName || 'CannabiLizi',
+        fromName: config.fromName || 'Cannabilize',
         enabled: true, // Garantir que está habilitado
       },
     });

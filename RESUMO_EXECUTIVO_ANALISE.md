@@ -1,7 +1,7 @@
 # 📊 Resumo Executivo - Análise do Projeto
 
 **Data:** 29 de Janeiro de 2026  
-**Projeto:** CannabiLizi
+**Projeto:** Cannabilize
 
 ---
 
